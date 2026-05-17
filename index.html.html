@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deutsch Lernen — A1</title>
+<style>
+:root{--bg:#fff;--bg2:#f5f5f3;--bg3:#ebebea;--txt:#1a1a1a;--txt2:#666;--txt3:#999;--bor:rgba(0,0,0,0.12);--bor2:rgba(0,0,0,0.22);--green:#1D9E75;--gl:#E1F5EE;--gd:#085041;--bl:#E6F1FB;--bd:#0C447C;--rl:#FAECE7;--rd:#7A2010;--yl:#FEF3CD;--yd:#7A5200;--r:10px;--rs:6px;}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a1a;--bg2:#242424;--bg3:#2e2e2e;--txt:#f0f0f0;--txt2:#aaa;--txt3:#666;--bor:rgba(255,255,255,0.1);--bor2:rgba(255,255,255,0.2);--gl:#0F3D2C;--gd:#5DCAA5;--bl:#0C2340;--bd:#85B7EB;--rl:#3D150A;--rd:#F09575;--yl:#3D2F00;--yd:#F0C050;}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+.app{max-width:600px;margin:0 auto;padding-bottom:60px;}
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--bor);position:sticky;top:0;background:var(--bg);z-index:10;}
+.nav-logo{font-size:15px;font-weight:600;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.streak{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:500;padding:3px 10px;border-radius:20px;background:var(--yl);color:var(--yd);}
+.streak.cold{background:var(--bg2);color:var(--txt2);}
+.due-pill{font-size:12px;padding:3px 10px;border-radius:20px;background:var(--bl);color:var(--bd);font-weight:500;}
+.timer-txt{font-size:13px;font-weight:500;color:var(--green);font-variant-numeric:tabular-nums;cursor:pointer;padding:3px 8px;border-radius:20px;border:0.5px solid var(--bor);}
+.timer-txt.warn{color:#D85A30;}
+/* TABS */
+.tabs{display:flex;padding:0 16px;border-bottom:0.5px solid var(--bor);background:var(--bg);position:sticky;top:45px;z-index:9;overflow-x:auto;}
+.tab{flex:1;min-width:52px;padding:10px 4px;text-align:center;font-size:12px;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);font-weight:500;}
+/* CONTENT */
+.content{padding:14px 16px;}
+/* STATS */
+.stats-row{display:flex;gap:8px;margin-bottom:12px;}
+.stat{flex:1;background:var(--bg2);border-radius:var(--rs);padding:9px;text-align:center;}
+.stat-n{font-size:18px;font-weight:600;color:var(--txt);}
+.stat-l{font-size:11px;color:var(--txt2);margin-top:1px;}
+/* PROG BAR */
+.prog-bar{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:12px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.4s;}
+/* CAT BUTTONS */
+.cat-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.cat-btn{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--bor);background:var(--bg);color:var(--txt2);font-size:12px;cursor:pointer;transition:all 0.15s;}
+.cat-btn.active{border-color:var(--green);background:var(--gl);color:var(--gd);font-weight:500;}
+/* MODE ROW */
+.mode-row{display:flex;gap:6px;margin-bottom:12px;}
+.mode-btn{flex:1;padding:7px 4px;border-radius:var(--rs);border:0.5px solid var(--bor);background:var(--bg);color:var(--txt2);font-size:12px;cursor:pointer;transition:all 0.15s;text-align:center;}
+.mode-btn.active{background:var(--green);color:#fff;border-color:var(--green);}
+/* CARD */
+.card{background:var(--bg);border:0.5px solid var(--bor2);border-radius:var(--r);padding:18px;margin-bottom:10px;}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cat-tag{font-size:11px;padding:2px 10px;border-radius:20px;background:var(--bg2);color:var(--txt2);}
+.speak-btn{display:flex;align-items:center;gap:4px;font-size:12px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--bor);background:none;color:var(--txt2);cursor:pointer;}
+.speak-btn.speaking{border-color:var(--green);color:var(--green);background:var(--gl);}
+.word-center{text-align:center;margin-bottom:6px;}
+.art-s{font-size:13px;color:var(--txt3);font-style:italic;margin-bottom:2px;}
+.de-word{font-size:30px;font-weight:600;color:var(--txt);}
+.en-word{font-size:15px;color:var(--green);font-weight:500;text-align:center;margin-bottom:8px;}
+.divider{height:0.5px;background:var(--bor);margin:10px 0;}
+.phrase-block{margin-bottom:7px;padding:9px 11px;background:var(--bg2);border-radius:var(--rs);}
+.phrase-row{display:flex;align-items:flex-start;gap:6px;justify-content:space-between;}
+.phrase-de{font-size:13px;font-weight:500;color:var(--txt);flex:1;line-height:1.5;}
+.phrase-de .hw{color:var(--green);}
+.phrase-en{font-size:12px;color:var(--txt2);margin-top:3px;}
+.psb{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:14px;padding:2px;flex-shrink:0;}
+.psb:hover{color:var(--green);}
+.hint-txt{text-align:center;font-size:12px;color:var(--txt3);margin-top:10px;cursor:pointer;padding:6px;border-radius:var(--rs);}
+.hint-txt:hover{background:var(--bg2);}
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;margin-top:10px;}
+.btn{flex:1;padding:11px;border-radius:var(--rs);border:0.5px solid var(--bor);font-size:13px;cursor:pointer;font-weight:500;transition:all 0.15s;background:var(--bg2);color:var(--txt2);}
+.btn-g{background:var(--gl);color:var(--gd);border-color:var(--green);}
+.btn-b{background:var(--bl);color:var(--bd);border-color:#5DCAA5;}
+.btn-next{width:100%;margin-top:10px;padding:11px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:500;cursor:pointer;}
+.btn-next:hover{background:#0F6E56;}
+.sm2-note{font-size:11px;text-align:center;color:var(--txt3);margin-top:6px;}
+.sm2-note b{color:var(--green);}
+/* QUIZ */
+.quiz-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.q-opt{padding:12px 8px;border-radius:var(--rs);border:0.5px solid var(--bor);background:var(--bg);color:var(--txt);font-size:13px;cursor:pointer;text-align:center;line-height:1.4;transition:all 0.15s;}
+.q-opt:hover:not(:disabled){border-color:var(--green);background:var(--gl);color:var(--gd);}
+.q-opt.correct{background:var(--gl);border-color:var(--green);color:var(--gd);}
+.q-opt.wrong{background:var(--rl);border-color:#D85A30;color:var(--rd);}
+.q-opt:disabled{cursor:default;}
+/* FILL-IN */
+.blank-phrase{font-size:18px;font-weight:500;color:var(--txt);text-align:center;line-height:1.8;}
+.blank{display:inline-block;background:var(--bg2);border-bottom:2px solid var(--green);min-width:80px;height:22px;vertical-align:middle;border-radius:2px;}
+/* GENDER MODE */
+.gender-card{background:var(--bg);border:0.5px solid var(--bor2);border-radius:var(--r);padding:24px 18px;text-align:center;margin-bottom:10px;}
+.gender-word{font-size:36px;font-weight:600;color:var(--txt);margin-bottom:6px;}
+.gender-hint{font-size:13px;color:var(--txt2);margin-bottom:20px;}
+.gender-btns{display:flex;gap:10px;justify-content:center;margin-bottom:12px;}
+.g-btn{flex:1;max-width:120px;padding:14px 8px;border-radius:var(--rs);border:0.5px solid var(--bor2);background:var(--bg2);color:var(--txt);font-size:18px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.g-btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--green);}
+.g-btn.correct{background:var(--gl);border-color:var(--green);color:var(--gd);}
+.g-btn.wrong{background:var(--rl);border-color:#D85A30;color:var(--rd);}
+.g-btn:disabled{cursor:default;}
+.gender-result{font-size:15px;font-weight:500;margin-top:8px;min-height:24px;}
+.gender-result.ok{color:var(--green);}
+.gender-result.no{color:#D85A30;}
+.gender-score{display:flex;gap:8px;margin-bottom:12px;}
+.gscore{flex:1;background:var(--bg2);border-radius:var(--rs);padding:8px;text-align:center;}
+.gscore-n{font-size:20px;font-weight:600;}
+.gscore-l{font-size:11px;color:var(--txt2);}
+/* BROWSE */
+.list-sec{margin-bottom:20px;}
+.list-cat-hdr{font-size:14px;font-weight:600;padding:8px 0 6px;border-bottom:0.5px solid var(--bor);margin-bottom:8px;display:flex;justify-content:space-between;}
+.list-prog{font-size:12px;color:var(--txt2);font-weight:400;}
+.list-word{margin-bottom:6px;border:0.5px solid var(--bor);border-radius:var(--rs);overflow:hidden;}
+.list-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--bg);}
+.list-hdr:hover{background:var(--bg2);}
+.lw-left{display:flex;align-items:center;gap:6px;min-width:0;}
+.lw-art{font-size:11px;color:var(--txt3);font-style:italic;}
+.lw-de{font-size:14px;font-weight:500;}
+.lw-en{font-size:12px;color:var(--txt2);}
+.lw-known{font-size:11px;color:var(--gd);background:var(--gl);border-radius:20px;padding:2px 8px;flex-shrink:0;}
+.lw-due{font-size:11px;color:var(--bd);background:var(--bl);border-radius:20px;padding:2px 8px;flex-shrink:0;}
+.list-body{padding:10px 12px;background:var(--bg2);display:none;}
+.list-body.open{display:block;}
+.list-phrase{margin-bottom:7px;display:flex;align-items:flex-start;gap:8px;}
+.lp-de{font-size:13px;font-weight:500;}
+.lp-de .hw{color:var(--green);}
+.lp-en{font-size:12px;color:var(--txt2);margin-top:2px;}
+.mark-row{margin-top:8px;}
+.mark-btn{font-size:12px;padding:4px 12px;border-radius:20px;cursor:pointer;border:0.5px solid var(--bor);background:var(--bg);color:var(--txt2);}
+.mark-btn.known{background:var(--gl);color:var(--gd);border-color:var(--green);}
+/* PLAN */
+.plan-stats{display:flex;gap:8px;margin-bottom:12px;}
+.day-card{border:0.5px solid var(--bor);border-radius:var(--r);margin-bottom:8px;overflow:hidden;}
+.day-card.today{border-color:var(--green);border-width:1.5px;}
+.day-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--bg);}
+.day-hdr:hover{background:var(--bg2);}
+.day-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;background:var(--bg2);color:var(--txt2);}
+.day-num.t{background:var(--green);color:#fff;}
+.day-num.d{background:var(--gl);color:var(--gd);}
+.day-num.r{background:var(--bl);color:var(--bd);}
+.day-meta{flex:1;min-width:0;}
+.day-title{font-size:14px;font-weight:500;}
+.day-sub{font-size:12px;color:var(--txt2);margin-top:1px;}
+.day-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;}
+.badge-g{background:var(--gl);color:var(--gd);}
+.badge-b{background:var(--bl);color:var(--bd);}
+.badge-today{background:var(--gl);color:var(--gd);font-weight:500;}
+.day-min{font-size:12px;color:var(--txt2);}
+.day-chev{font-size:16px;color:var(--txt3);}
+.day-body{padding:12px 14px;background:var(--bg2);border-top:0.5px solid var(--bor);display:none;}
+.day-body.open{display:block;}
+.sec-lbl{font-size:11px;font-weight:500;color:var(--txt3);letter-spacing:0.05em;margin:10px 0 5px;}
+.sec-lbl:first-child{margin-top:0;}
+.phase-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.ph-min{font-size:12px;font-weight:500;color:var(--green);width:26px;flex-shrink:0;padding-top:2px;}
+.ph-mode{font-size:11px;font-weight:500;color:var(--txt);background:var(--bg);border:0.5px solid var(--bor);border-radius:20px;padding:1px 8px;flex-shrink:0;white-space:nowrap;}
+.ph-desc{font-size:12px;color:var(--txt2);flex:1;line-height:1.5;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.chip{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:0.5px solid var(--bor);color:var(--txt2);}
+.chip.r{border-color:var(--green);color:var(--gd);background:var(--gl);}
+.sci-box{background:var(--bg);border:0.5px solid var(--bor);border-radius:var(--rs);padding:8px 10px;margin-top:4px;font-size:12px;color:var(--txt2);line-height:1.55;}
+.mnem-item{font-size:12px;color:var(--txt2);padding:4px 0;border-bottom:0.5px solid var(--bor);line-height:1.4;}
+.mnem-item:last-child{border:none;}
+.done-btn{width:100%;margin-top:10px;padding:9px;border-radius:var(--rs);border:0.5px solid var(--green);background:var(--green);color:#fff;font-size:13px;font-weight:500;cursor:pointer;}
+.undone-btn{width:100%;margin-top:10px;padding:9px;border-radius:var(--rs);border:0.5px solid var(--bor);background:var(--bg);color:var(--txt2);font-size:13px;cursor:pointer;}
+.end-card{text-align:center;padding:40px 20px;}
+.end-emoji{font-size:40px;margin-bottom:10px;}
+.end-title{font-size:20px;font-weight:600;margin-bottom:8px;}
+.end-sub{font-size:14px;color:var(--txt2);margin-bottom:20px;}
+.info-box{background:var(--bg2);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:12px;}
+.info-box b{color:var(--txt);font-weight:500;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="nav">
+  <div class="nav-logo">🇩🇪 Deutsch Lernen</div>
+  <div class="nav-right">
+    <div class="streak cold" id="streak-el">❄️ 0</div>
+    <div class="due-pill" id="due-pill">— due</div>
+    <div class="timer-txt" id="timer-el" onclick="toggleTimer()">40:00</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="setTab('flash')">Flash</div>
+  <div class="tab" onclick="setTab('quiz')">Quiz</div>
+  <div class="tab" onclick="setTab('fill')">Fill-in</div>
+  <div class="tab" onclick="setTab('gender')">Gender</div>
+  <div class="tab" onclick="setTab('browse')">Browse</div>
+  <div class="tab" onclick="setTab('plan')">Plan</div>
+</div>
+
+<div class="content" id="content"></div>
+</div>
+
+<script>
+const DATA = {
+  "Person":[
+    {de:"Name",art:"der",en:"name",phrases:[["Wie ist dein Name?","What is your name?"],["Mein Name ist Maria.","My name is Maria."]]},
+    {de:"Adresse",art:"die",en:"address",phrases:[["Wie ist deine Adresse?","What is your address?"],["Ich kenne deine Adresse nicht.","I don't know your address."]]},
+    {de:"Telefon",art:"das",en:"telephone",phrases:[["Ich habe kein Telefon.","I don't have a phone."],["Mein Telefon klingelt.","My phone is ringing."]]},
+    {de:"Alter",art:"das",en:"age",phrases:[["Was ist dein Alter?","What is your age?"],["Mein Alter ist 25 Jahre.","My age is 25 years."]]},
+    {de:"Herkunft",art:"die",en:"origin",phrases:[["Was ist deine Herkunft?","What is your origin?"],["Meine Herkunft ist Polen.","My origin is Poland."]]},
+    {de:"Aussehen",art:"das",en:"appearance",phrases:[["Das Aussehen ist wichtig.","Appearance is important."],["Sein Aussehen ist gut.","His appearance is good."]]},
+    {de:"Familie",art:"die",en:"family",phrases:[["Meine Familie ist groß.","My family is big."],["Hast du eine Familie?","Do you have a family?"]]},
+    {de:"Tagesablauf",art:"der",en:"daily routine",phrases:[["Mein Tagesablauf beginnt um 7 Uhr.","My daily routine starts at 7."],["Was ist dein Tagesablauf?","What is your daily routine?"]]}
+  ],
+  "Wohnen":[
+    {de:"Wohnung",art:"die",en:"apartment",phrases:[["Die Wohnung ist groß.","The apartment is big."],["Ich suche eine Wohnung.","I am looking for an apartment."]]},
+    {de:"Zimmer",art:"das",en:"room",phrases:[["Das Zimmer ist klein.","The room is small."],["Wie viele Zimmer hat die Wohnung?","How many rooms does the apartment have?"]]},
+    {de:"Möbel",art:"die",en:"furniture",phrases:[["Die Möbel sind teuer.","The furniture is expensive."],["Ich kaufe neue Möbel.","I am buying new furniture."]]},
+    {de:"Miete",art:"die",en:"rent",phrases:[["Die Miete ist teuer.","The rent is expensive."],["Ich zahle die Miete monatlich.","I pay the rent monthly."]]},
+    {de:"Umzug",art:"der",en:"move",phrases:[["Der Umzug war anstrengend.","The move was exhausting."],["Ich plane einen Umzug.","I am planning a move."]]}
+  ],
+  "Umwelt":[
+    {de:"Wetter",art:"das",en:"weather",phrases:[["Das Wetter ist schön heute.","The weather is nice today."],["Wie ist das Wetter?","What is the weather like?"]]},
+    {de:"Tier",art:"das",en:"animal",phrases:[["Das Tier ist groß.","The animal is big."],["Ich habe ein Tier zu Hause.","I have an animal at home."]]},
+    {de:"Pflanze",art:"die",en:"plant",phrases:[["Die Pflanze braucht Wasser.","The plant needs water."],["Ich habe eine neue Pflanze.","I have a new plant."]]},
+    {de:"Klima",art:"das",en:"climate",phrases:[["Das Klima ist warm hier.","The climate is warm here."],["Das Klima ändert sich.","The climate is changing."]]}
+  ],
+  "Reisen":[
+    {de:"Reise",art:"die",en:"trip",phrases:[["Die Reise war lang.","The trip was long."],["Ich mache eine Reise.","I am going on a trip."]]},
+    {de:"Zug",art:"der",en:"train",phrases:[["Der Zug hat Verspätung.","The train is late."],["Ich fahre mit dem Zug.","I am travelling by train."]]},
+    {de:"Unterkunft",art:"die",en:"accommodation",phrases:[["Ich suche eine Unterkunft.","I am looking for accommodation."],["Die Unterkunft ist günstig.","The accommodation is affordable."]]},
+    {de:"Gepäck",art:"das",en:"luggage",phrases:[["Mein Gepäck ist schwer.","My luggage is heavy."],["Ich habe viel Gepäck.","I have a lot of luggage."]]},
+    {de:"Bahnhof",art:"der",en:"train station",phrases:[["Wo ist der Bahnhof?","Where is the train station?"],["Ich bin am Bahnhof.","I am at the train station."]]}
+  ],
+  "Essen/Trinken":[
+    {de:"Frühstück",art:"das",en:"breakfast",phrases:[["Das Frühstück ist fertig.","Breakfast is ready."],["Was isst du zum Frühstück?","What do you eat for breakfast?"]]},
+    {de:"Getränk",art:"das",en:"drink",phrases:[["Das Getränk ist kalt.","The drink is cold."],["Was ist dein Lieblingsgetränk?","What is your favourite drink?"]]},
+    {de:"Speise",art:"die",en:"dish",phrases:[["Die Speise ist lecker.","The dish is delicious."],["Was ist die Speise des Tages?","What is today's dish?"]]},
+    {de:"Restaurant",art:"das",en:"restaurant",phrases:[["Das Restaurant ist voll.","The restaurant is full."],["Gehen wir ins Restaurant!","Let's go to the restaurant!"]]},
+    {de:"Mahlzeit",art:"die",en:"meal",phrases:[["Die Mahlzeit ist fertig.","The meal is ready."],["Die Mahlzeit war lecker.","The meal was delicious."]]}
+  ],
+  "Einkaufen":[
+    {de:"Preis",art:"der",en:"price",phrases:[["Der Preis ist zu hoch.","The price is too high."],["Was ist der Preis?","What is the price?"]]},
+    {de:"Bezahlen",art:null,en:"paying",phrases:[["Ich möchte bezahlen.","I would like to pay."],["Wie möchtest du bezahlen?","How would you like to pay?"]]},
+    {de:"Kleidung",art:"die",en:"clothing",phrases:[["Die Kleidung ist teuer.","The clothing is expensive."],["Ich kaufe neue Kleidung.","I am buying new clothing."]]},
+    {de:"Geschäft",art:"das",en:"shop",phrases:[["Das Geschäft ist offen.","The shop is open."],["Ich gehe ins Geschäft.","I am going to the shop."]]},
+    {de:"Lebensmittel",art:"die",en:"groceries",phrases:[["Die Lebensmittel sind frisch.","The groceries are fresh."],["Ich kaufe Lebensmittel.","I am buying groceries."]]}
+  ],
+  "Dienstleistungen":[
+    {de:"Post",art:"die",en:"post office",phrases:[["Die Post ist geschlossen.","The post office is closed."],["Ich gehe zur Post.","I am going to the post office."]]},
+    {de:"Bank",art:"die",en:"bank",phrases:[["Die Bank ist in der Nähe.","The bank is nearby."],["Ich gehe zur Bank.","I am going to the bank."]]},
+    {de:"Polizei",art:"die",en:"police",phrases:[["Ich rufe die Polizei.","I am calling the police."],["Die Polizei kommt.","The police are coming."]]},
+    {de:"Apotheke",art:"die",en:"pharmacy",phrases:[["Die Apotheke ist offen.","The pharmacy is open."],["Ich gehe in die Apotheke.","I am going to the pharmacy."]]}
+  ],
+  "Erziehung":[
+    {de:"Schule",art:"die",en:"school",phrases:[["Die Schule beginnt um 8 Uhr.","School starts at 8."],["Das Kind geht in die Schule.","The child goes to school."]]},
+    {de:"Lernen",art:null,en:"learning",phrases:[["Lernen macht Spaß!","Learning is fun!"],["Ich lerne jeden Tag.","I learn every day."]]},
+    {de:"Sprachen",art:"die",en:"languages",phrases:[["Welche Sprachen sprichst du?","Which languages do you speak?"],["Ich lerne viele Sprachen.","I am learning many languages."]]},
+    {de:"Prüfung",art:"die",en:"exam",phrases:[["Ich habe eine Prüfung morgen.","I have an exam tomorrow."],["Die Prüfung war schwer.","The exam was hard."]]}
+  ],
+  "Arbeit/Beruf":[
+    {de:"Beruf",art:"der",en:"profession",phrases:[["Was ist dein Beruf?","What is your profession?"],["Mein Beruf ist Lehrer.","My profession is teacher."]]},
+    {de:"Kollege",art:"der",en:"colleague",phrases:[["Mein Kollege ist nett.","My colleague is nice."],["Ich arbeite mit meinem Kollegen.","I work with my colleague."]]},
+    {de:"Urlaub",art:"der",en:"holiday",phrases:[["Mein Urlaub beginnt morgen.","My holiday starts tomorrow."],["Ich mache Urlaub.","I am on holiday."]]},
+    {de:"Gehalt",art:"das",en:"salary",phrases:[["Mein Gehalt ist gut.","My salary is good."],["Ich bekomme mein Gehalt am Freitag.","I receive my salary on Friday."]]}
+  ],
+  "Freizeit":[
+    {de:"Sport",art:"der",en:"sport",phrases:[["Sport macht Spaß!","Sport is fun!"],["Ich treibe Sport.","I do sport."]]},
+    {de:"Hobby",art:"das",en:"hobby",phrases:[["Mein Hobby ist Lesen.","My hobby is reading."],["Was ist dein Hobby?","What is your hobby?"]]},
+    {de:"Musik",art:"die",en:"music",phrases:[["Die Musik ist laut.","The music is loud."],["Ich höre gern Musik.","I like listening to music."]]},
+    {de:"Kino",art:"das",en:"cinema",phrases:[["Das Kino ist in der Nähe.","The cinema is nearby."],["Ich gehe ins Kino.","I am going to the cinema."]]},
+    {de:"Internet",art:"das",en:"internet",phrases:[["Das Internet ist langsam.","The internet is slow."],["Ich nutze das Internet täglich.","I use the internet daily."]]}
+  ]
+};
+
+const PLAN=[
+  {day:1,date:"Fri May 16",newCat:"Person",newWords:["Name","Adresse","Telefon","Alter","Herkunft","Aussehen","Familie","Tagesablauf"],reviewCats:[],reviewWords:[],totalMin:40,type:"new",mnemonics:["Tagesablauf → 'Tag' (day) + 'ablaufen' (to run out) = daily routine","Aussehen → 'aus' (out) + 'sehen' (see) = how you look outward","Herkunft → 'herkommen' (to come from) = origin"],science:"Pure encoding day. Say each word aloud — dual coding (Paivio, 1971) creates two memory traces.",phases:[{min:15,mode:"Flash DE",desc:"Person category only. See German word + phrases, guess, then reveal."},{min:15,mode:"Fill-in",desc:"Fill-in-blank on all 8 Person words."},{min:10,mode:"Gender",desc:"Drill der/die/das for all 8 Person nouns."}]},
+  {day:2,date:"Sat May 17",newCat:"Wohnen",newWords:["Wohnung","Zimmer","Möbel","Miete","Umzug"],reviewCats:["Person"],reviewWords:["Name","Adresse","Telefon","Alter","Herkunft","Aussehen","Familie","Tagesablauf"],totalMin:40,type:"new",mnemonics:["Wohnung → 'wohnen' (to live) = the place you reside","Möbel → sounds like 'movable' — furniture you can move","Umzug → 'um' (around) + 'Zug' (pull) = moving everything"],science:"Always retrieve before new material (Karpicke & Roediger, 2008). SM-2 will surface Person words automatically.",phases:[{min:12,mode:"Flash DE",desc:"SM-2 will show your due Person words first automatically."},{min:18,mode:"Flash DE",desc:"Wohnen — 5 new words. Use the speaker for each."},{min:10,mode:"Gender",desc:"Mix Person + Wohnen gender drill."}]},
+  {day:3,date:"Sun May 18",newCat:"Umwelt",newWords:["Wetter","Tier","Pflanze","Klima"],reviewCats:["Wohnen"],reviewWords:["Wohnung","Zimmer","Möbel","Miete","Umzug"],totalMin:40,type:"new",mnemonics:["Wetter → near-cognate for 'weather'","Tier → think 'tier' of the animal kingdom","Pflanze → very close to 'plant'"],science:"SM-2 intervals: Day 1 words return after ~1 day, Wohnen after 1 day. Let the app decide order.",phases:[{min:10,mode:"Flash DE",desc:"Open all learned categories — SM-2 shows due cards."},{min:15,mode:"Flash DE",desc:"Umwelt — 4 new words."},{min:10,mode:"Fill-in",desc:"Umwelt fill-in."},{min:5,mode:"Flash EN",desc:"Reverse: English → German on 5 random Person words."}]},
+  {day:4,date:"Mon May 19",newCat:"Reisen",newWords:["Reise","Zug","Unterkunft","Gepäck","Bahnhof"],reviewCats:["Person","Umwelt"],reviewWords:["Alter","Aussehen","Herkunft","Wetter","Tier","Pflanze","Klima"],totalMin:40,type:"new",mnemonics:["Gepäck → 'ge-packed' = the stuff you packed = luggage","Bahnhof → 'Bahn' (rail) + 'Hof' (yard) = station","Unterkunft → a place to shelter"],science:"Interleaving forces discrimination between concepts — 30% more effective (Brunmair & Richter, 2019).",phases:[{min:10,mode:"Quiz",desc:"Quiz all learned categories mixed."},{min:20,mode:"Flash DE",desc:"Reisen — 5 new words. Hear each word and phrase."},{min:10,mode:"Fill-in",desc:"Reisen fill-in."}]},
+  {day:5,date:"Tue May 20",newCat:null,newWords:[],reviewCats:["Person","Wohnen","Umwelt","Reisen"],reviewWords:["all 22 words"],totalMin:40,type:"review",mnemonics:[],science:"Most critical session. SM-2 will surface the most overdue cards first. No new material = max consolidation bandwidth.",phases:[{min:15,mode:"Flash EN",desc:"Reverse on all 4 categories — English → German."},{min:15,mode:"Quiz",desc:"Full quiz across all 22 words. Target: 80%+."},{min:10,mode:"Gender",desc:"Gender drill on all nouns learned so far."}]},
+  {day:6,date:"Wed May 21",newCat:"Essen/Trinken",newWords:["Frühstück","Getränk","Speise","Restaurant","Mahlzeit"],reviewCats:["Reisen"],reviewWords:["Reise","Zug","Unterkunft","Gepäck","Bahnhof"],totalMin:40,type:"new",mnemonics:["Frühstück → 'früh' (early) + 'Stück' (piece) = the early piece of the day","Mahlzeit → 'Mahl' (meal) + 'Zeit' (time) = meal time","Getränk → from 'trinken' = the thing you drink"],science:"Self-reference: think 'I eat X for breakfast' — personal sentences improve retention (Springer, 2025).",phases:[{min:10,mode:"Flash DE",desc:"SM-2 due cards — Reisen will surface."},{min:20,mode:"Flash DE",desc:"Essen/Trinken — 5 food words."},{min:10,mode:"Fill-in",desc:"Essen/Trinken fill-in."}]},
+  {day:7,date:"Thu May 22",newCat:"Einkaufen",newWords:["Preis","Bezahlen","Kleidung","Geschäft","Lebensmittel"],reviewCats:["Person","Essen/Trinken"],reviewWords:["Name","Familie","Alter","Frühstück","Getränk","Speise","Restaurant","Mahlzeit"],totalMin:40,type:"new",mnemonics:["Lebensmittel → 'Leben' (life) + 'Mittel' (means) = groceries","Geschäft → 'Geschäftigkeit' (busyness) = a busy place","Bezahlen → 'zahlen' (to pay) = to pay up"],science:"Person words now at encounter 5+. Nation (2001): 8-12 encounters needed for stable knowledge.",phases:[{min:10,mode:"Quiz",desc:"Interleaved: Person + Essen/Trinken."},{min:20,mode:"Flash DE",desc:"Einkaufen — 5 words."},{min:10,mode:"Fill-in",desc:"Einkaufen fill-in."}]},
+  {day:8,date:"Fri May 23",newCat:"Dienstleistungen + Erziehung",newWords:["Post","Bank","Polizei","Apotheke","Schule","Lernen","Sprachen","Prüfung"],reviewCats:["Wohnen","Einkaufen"],reviewWords:["Wohnung","Zimmer","Möbel","Miete","Umzug","Preis","Bezahlen","Kleidung","Geschäft","Lebensmittel"],totalMin:40,type:"new",mnemonics:["Apotheke → 'apothecary' — same Greek root","Prüfung → 'prüfen' (to test) = exam","Sprachen → same root as English 'speak'"],science:"Near-cognates (Post, Bank, Polizei, Schule) are free wins — spend extra time on Apotheke, Prüfung.",phases:[{min:10,mode:"Quiz",desc:"Wohnen + Einkaufen quiz."},{min:20,mode:"Flash DE",desc:"8 new words — fast on cognates, slow on hard ones."},{min:10,mode:"Gender",desc:"Gender drill on new words."}]},
+  {day:9,date:"Sat May 24",newCat:"Arbeit/Beruf + Freizeit",newWords:["Beruf","Kollege","Urlaub","Gehalt","Sport","Hobby","Musik","Kino","Internet"],reviewCats:["Umwelt","Reisen","Dienstleistungen"],reviewWords:["Wetter","Tier","Reise","Zug","Post","Bank","Polizei","Apotheke"],totalMin:40,type:"new",mnemonics:["Gehalt → 'halten' (to hold) = what you hold from work","Beruf → 'rufen' (to call) = your calling","Urlaub → formally 'permission to be away'"],science:"Umwelt (last seen Day 5) is now 4 days later — maximum desirable difficulty (Pyc & Rawson, 2009).",phases:[{min:10,mode:"Quiz",desc:"Umwelt + Reisen + Dienstleistungen."},{min:20,mode:"Flash DE",desc:"9 new words — cognates fast, Beruf/Gehalt slow."},{min:10,mode:"Fill-in",desc:"All 9 new words."}]},
+  {day:10,date:"Sun May 25",newCat:null,newWords:[],reviewCats:["All 10"],reviewWords:["all 50 words"],totalMin:40,type:"review",mnemonics:[],science:"Sleep after today's retrieval = optimal consolidation. Cepeda ISI:RI ratio ~14% for tomorrow's final.",phases:[{min:15,mode:"Flash EN",desc:"Reverse on ALL 10 categories."},{min:15,mode:"Quiz",desc:"Random quiz all 50 words — note every miss."},{min:10,mode:"Gender",desc:"Full gender drill — all nouns."}]},
+  {day:11,date:"Mon May 26",newCat:null,newWords:[],reviewCats:["All 10"],reviewWords:["all 50 words"],totalMin:35,type:"final",mnemonics:[],science:"Every word has had 7-11 encounters. Nation's 8-encounter threshold: met. Well done.",phases:[{min:10,mode:"Flash EN",desc:"Reverse warm-up. Note weakest categories."},{min:15,mode:"Quiz",desc:"Full 50-word quiz — your final benchmark."},{min:10,mode:"Gender",desc:"Final gender challenge."}]}
+];
+
+// ── SM-2 ──────────────────────────────────────────────
+const SM2={
+  _load(){try{return JSON.parse(localStorage.getItem('sm2')||'{}')}catch(e){return{}}},
+  _save(d){try{localStorage.setItem('sm2',JSON.stringify(d))}catch(e){}},
+  get(de){let d=this._load();return d[de]||{interval:0,reps:0,ef:2.5,next:null}},
+  rate(de,q){
+    let d=this._load(),c=d[de]||{interval:0,reps:0,ef:2.5,next:null};
+    if(q>=3){
+      if(c.reps===0)c.interval=1;
+      else if(c.reps===1)c.interval=6;
+      else c.interval=Math.round(c.interval*c.ef);
+      c.reps++;
+    }else{c.reps=0;c.interval=1;}
+    c.ef=Math.max(1.3,c.ef+0.1-(5-q)*(0.08+(5-q)*0.02));
+    let nx=new Date();nx.setDate(nx.getDate()+c.interval);
+    c.next=nx.toISOString().split('T')[0];
+    d[de]=c;this._save(d);return c;
+  },
+  isDue(de){
+    let c=this.get(de);
+    if(!c.next)return true;
+    return c.next<=new Date().toISOString().split('T')[0];
+  },
+  daysUntil(de){
+    let c=this.get(de);if(!c.next)return 0;
+    let nx=new Date(c.next+'T00:00:00'),td=new Date();
+    td.setHours(0,0,0,0);
+    return Math.max(0,Math.round((nx-td)/86400000));
+  }
+};
+
+// ── STREAK ────────────────────────────────────────────
+const Streak={
+  _today(){return new Date().toISOString().split('T')[0]},
+  _yest(){let d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0]},
+  get(){return parseInt(localStorage.getItem('streak-n')||'0')},
+  active(){
+    let dt=localStorage.getItem('streak-dt');
+    return dt===this._today()||dt===this._yest();
+  },
+  study(){
+    let today=this._today(),dt=localStorage.getItem('streak-dt');
+    let n=this.get();
+    if(dt===today)return n;
+    n=dt===this._yest()?n+1:1;
+    localStorage.setItem('streak-dt',today);
+    localStorage.setItem('streak-n',n);
+    updateNavStreak();
+    return n;
+  }
+};
+
+// ── STATE ─────────────────────────────────────────────
+let tab='flash',flashMode='de',selectedCats=new Set(Object.keys(DATA));
+let known=new Set(),queue=[],qIdx=0,revealed=false;
+let quizState=null,blankState=null;
+let genderQueue=[],gIdx=0,gAnswered=false,gScore={ok:0,total:0};
+let completedDays=new Set();
+let timerSec=40*60,timerOn=false,timerRef=null;
+
+// ── PERSIST ───────────────────────────────────────────
+function save(){
+  try{
+    localStorage.setItem('known',JSON.stringify([...known]));
+    localStorage.setItem('done',JSON.stringify([...completedDays]));
+  }catch(e){}
+}
+function load(){
+  try{
+    let k=localStorage.getItem('known');if(k)known=new Set(JSON.parse(k));
+    let d=localStorage.getItem('done');if(d)completedDays=new Set(JSON.parse(d));
+  }catch(e){}
+}
+
+// ── TIMER ─────────────────────────────────────────────
+function toggleTimer(){
+  if(timerOn){clearInterval(timerRef);timerOn=false;}
+  else{timerOn=true;timerRef=setInterval(()=>{
+    timerSec=Math.max(0,timerSec-1);
+    let m=Math.floor(timerSec/60),s=timerSec%60;
+    let el=document.getElementById('timer-el');
+    if(el){el.textContent=m+':'+(s<10?'0':'')+s;el.className='timer-txt'+(timerSec<120?' warn':'');}
+    if(timerSec===0){clearInterval(timerRef);timerOn=false;}
+  },1000);}
+}
+
+// ── NAV UPDATES ───────────────────────────────────────
+function updateNavStreak(){
+  let el=document.getElementById('streak-el');if(!el)return;
+  let n=Streak.get(),active=Streak.active();
+  el.textContent=(active?'🔥':'❄️')+' '+n;
+  el.className='streak'+(active?'':' cold');
+}
+function updateDuePill(){
+  let el=document.getElementById('due-pill');if(!el)return;
+  let due=allWords().filter(w=>SM2.isDue(w.de)).length;
+  el.textContent=due+' due';
+}
+
+// ── HELPERS ───────────────────────────────────────────
+function speak(text,btn){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  if(btn&&btn.classList.contains('speaking')){btn.classList.remove('speaking');return;}
+  document.querySelectorAll('.speaking').forEach(b=>b.classList.remove('speaking'));
+  let u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=0.88;
+  let v=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('de'));
+  if(v.length)u.voice=v[0];
+  if(btn){btn.classList.add('speaking');u.onend=()=>btn.classList.remove('speaking');}
+  speechSynthesis.speak(u);
+}
+function boldWord(s,w){
+  return s.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:en|es|er|em|s|n)?)','gi'),'<span class="hw">$1</span>');
+}
+function allWords(){
+  let w=[];
+  for(let cat of selectedCats)for(let item of(DATA[cat]||[]))w.push({...item,cat});
+  return w;
+}
+function catProg(cat){let ws=DATA[cat]||[];return{k:ws.filter(w=>known.has(w.de)).length,t:ws.length};}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+function today(){return new Date().toISOString().split('T')[0];}
+function miniRing(k,t){
+  let r=7,c=2*Math.PI*r,p=t?k/t:0,da=(p*c).toFixed(1),ga=((1-p)*c).toFixed(1);
+  let col=p===1?'#1D9E75':p>0?'#5DCAA5':'rgba(128,128,128,0.2)';
+  return `<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="2"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${da} ${ga}" stroke-linecap="round" transform="rotate(-90 8 8)"/></svg>`;
+}
+
+function statsHTML(){
+  let all=allWords(),t=all.length,k=all.filter(x=>known.has(x.de)).length;
+  let due=all.filter(w=>SM2.isDue(w.de)).length;
+  return `<div class="stats-row">
+    <div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--bd)">${due}</div><div class="stat-l">due today</div></div>
+  </div><div class="prog-bar"><div class="prog-fill" style="width:${t?Math.round(k/t*100):0}%"></div></div>`;
+}
+function catGridHTML(){
+  return '<div class="cat-grid">'+Object.keys(DATA).map(cat=>{
+    let p=catProg(cat);
+    return `<button class="cat-btn${selectedCats.has(cat)?' active':''}" onclick="toggleCat('${cat}')">${miniRing(p.k,p.t)}${cat}</button>`;
+  }).join('')+'</div>';
+}
+function toggleCat(cat){
+  if(selectedCats.has(cat)){if(selectedCats.size>1)selectedCats.delete(cat);}else selectedCats.add(cat);
+  setTab(tab);
+}
+
+// ── TABS ──────────────────────────────────────────────
+function setTab(t){
+  tab=t;
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','quiz','fill','gender','browse','plan'][i]===t));
+  updateDuePill();
+  if(t==='flash'){buildSM2Queue();renderFlash();}
+  else if(t==='quiz'){quizState=null;renderQuiz();}
+  else if(t==='fill'){blankState=null;renderFill();}
+  else if(t==='gender'){buildGenderQueue();renderGender();}
+  else if(t==='browse')renderBrowse();
+  else renderPlan();
+}
+
+// ── FLASH + SM-2 ──────────────────────────────────────
+function buildSM2Queue(){
+  let all=allWords();
+  // Due cards first (sorted: never reviewed → overdue → due today), then not-due
+  let due=all.filter(w=>SM2.isDue(w.de));
+  let notDue=all.filter(w=>!SM2.isDue(w.de));
+  // Sort due: never reviewed first, then by next date
+  due.sort((a,b)=>{
+    let ca=SM2.get(a.de),cb=SM2.get(b.de);
+    if(!ca.next&&!cb.next)return 0;
+    if(!ca.next)return -1;
+    if(!cb.next)return 1;
+    return ca.next.localeCompare(cb.next);
+  });
+  queue=[...due,...notDue];
+  qIdx=0;revealed=false;
+}
+
+function renderFlash(){
+  let c=document.getElementById('content');
+  if(!queue.length){c.innerHTML=statsHTML()+catGridHTML()+'<div class="end-card"><div class="end-emoji">🎉</div><div class="end-title">Queue empty!</div><div class="end-sub">Select more categories.</div></div>';return;}
+  if(qIdx>=queue.length){
+    c.innerHTML=statsHTML()+catGridHTML()+`<div class="end-card"><div class="end-emoji">✅</div><div class="end-title">All done!</div><div class="end-sub">Come back tomorrow for your next due cards.</div><button class="btn-next" onclick="buildSM2Queue();renderFlash()">Review again ↺</button></div>`;
+    return;
+  }
+  revealed=false;
+  let item=queue[qIdx];
+  let sm=SM2.get(item.de);
+  let isRev=(flashMode==='en');
+  let dueCount=queue.filter(w=>SM2.isDue(w.de)).length;
+  let artStr=item.art?`<div class="art-s">${item.art}</div>`:'';
+  let phDE=item.phrases.map(p=>`<div class="phrase-block"><div class="phrase-row"><div class="phrase-de">${boldWord(p[0],item.de)}</div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join('');
+  let phFull=item.phrases.map(p=>`<div class="phrase-block"><div class="phrase-row"><div><div class="phrase-de">${boldWord(p[0],item.de)}</div><div class="phrase-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join('');
+  let front=isRev?`<div class="word-center"><div class="de-word" style="font-size:22px;color:var(--green)">${item.en}</div></div><div style="text-align:center;font-size:13px;color:var(--txt2);margin-top:4px">German word?</div>`:`<div class="word-center">${artStr}<div class="de-word">${item.de}</div></div><div class="divider"></div>${phDE}`;
+  let back=isRev?`<div class="word-center">${artStr}<div class="de-word">${item.de}</div></div><div class="divider"></div>${phFull}`:`<div class="en-word">${item.en}</div><div class="divider"></div>${phFull}`;
+  let sm2info=sm.next?`Interval: ${sm.interval}d · EF: ${sm.ef.toFixed(2)} · Next was: ${sm.next}`:'New card';
+  c.innerHTML=statsHTML()+catGridHTML()+
+  `<div class="mode-row"><button class="mode-btn${flashMode==='de'?' active':''}" onclick="flashMode='de';buildSM2Queue();renderFlash()">Flash DE</button><button class="mode-btn${flashMode==='en'?' active':''}" onclick="flashMode='en';buildSM2Queue();renderFlash()">Flash EN</button></div>
+  <div class="info-box">🧠 <b>SM-2 queue:</b> ${dueCount} due today · Card ${qIdx+1} of ${queue.length} · ${sm2info}</div>
+  <div class="card">
+    <div class="card-top"><div style="display:flex;align-items:center;gap:6px"><span class="cat-tag">${item.cat}</span></div><button class="speak-btn" onclick="speak('${item.de.replace(/'/g,"\\'")}',this)">🔊 hören</button></div>
+    <div id="front-c">${front}</div>
+    <div id="back-c" style="display:none">${back}</div>
+    <div class="hint-txt" id="hint" onclick="revealCard()">tap to reveal ↓</div>
+  </div>
+  <div id="fc-btns" style="display:none">
+    <div class="btn-row">
+      <button class="btn btn-rd" style="background:var(--rl);color:var(--rd);border-color:#D85A30" onclick="rateCard(1)">Again</button>
+      <button class="btn" style="background:var(--yl);color:var(--yd);border-color:#D4A020" onclick="rateCard(3)">Hard</button>
+      <button class="btn btn-g" onclick="rateCard(4)">Good</button>
+      <button class="btn" style="background:var(--gl);color:var(--gd);border-color:var(--green);font-weight:600" onclick="rateCard(5)">Easy</button>
+    </div>
+    <div class="sm2-note" id="sm2-note"></div>
+  </div>`;
+}
+
+function revealCard(){
+  if(revealed)return;revealed=true;
+  document.getElementById('front-c').style.display='none';
+  document.getElementById('back-c').style.display='block';
+  document.getElementById('hint').style.display='none';
+  document.getElementById('fc-btns').style.display='block';
+}
+
+function rateCard(q){
+  let item=queue[qIdx];
+  let result=SM2.rate(item.de,q);
+  if(q>=3){known.add(item.de);Streak.study();}
+  save();updateDuePill();updateNavStreak();
+  let msg=q===1?`Repeating tomorrow · EF: ${result.ef.toFixed(2)}`:`Next review in <b>${result.interval} day${result.interval>1?'s':''}</b> · EF: ${result.ef.toFixed(2)}`;
+  document.getElementById('sm2-note').innerHTML=msg;
+  setTimeout(()=>{qIdx++;renderFlash();},800);
+}
+
+// ── QUIZ ──────────────────────────────────────────────
+function renderQuiz(){
+  let c=document.getElementById('content');
+  let ws=allWords();
+  if(ws.length<4){c.innerHTML=statsHTML()+catGridHTML()+'<div class="end-card"><div class="end-title">Select more categories</div></div>';return;}
+  if(!quizState)genQuiz(ws);
+  let q=quizState;
+  let opts=q.options.map(o=>{
+    let cl=q.answered?(o===q.correct?'correct':(o===q.chosen?'wrong':'')):'';
+    return `<button class="q-opt ${cl}" ${q.answered?'disabled':''} onclick="answerQuiz('${o.replace(/'/g,"\\'")}')"><b>${o}</b></button>`;
+  }).join('');
+  let rev=q.answered?q.item.phrases.map(p=>`<div class="phrase-block"><div class="phrase-row"><div><div class="phrase-de">${boldWord(p[0],q.item.de)}</div><div class="phrase-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join(''):'';
+  c.innerHTML=statsHTML()+catGridHTML()+
+  `<div class="card" style="text-align:center">
+    <div class="card-top"><span class="cat-tag">${q.item.cat}</span><button class="speak-btn" onclick="speak('${q.item.de.replace(/'/g,"\\'")}',this)">🔊</button></div>
+    <div class="word-center">${q.item.art?`<div class="art-s">${q.item.art}</div>`:''}<div class="de-word">${q.item.de}</div></div>
+    <div style="font-size:13px;color:var(--txt2);margin-top:6px">What does this mean?</div>
+  </div>
+  <div class="quiz-grid">${opts}</div>${rev}
+  ${q.answered?`<button class="btn-next" onclick="nextQuiz()">Next →</button>`:''}`;
+}
+function genQuiz(ws){
+  let i=Math.floor(Math.random()*ws.length),item=ws[i];
+  let oth=ws.filter((_,j)=>j!==i);shuffle(oth);
+  let opts=[item.en,oth[0].en,oth[1].en,oth[2].en];shuffle(opts);
+  quizState={item,correct:item.en,options:opts,answered:false,chosen:null};
+}
+function answerQuiz(o){quizState.answered=true;quizState.chosen=o;if(o===quizState.correct){known.add(quizState.item.de);SM2.rate(quizState.item.de,4);Streak.study();save();}updateNavStreak();renderQuiz();}
+function nextQuiz(){quizState=null;renderQuiz();}
+
+// ── FILL-IN ───────────────────────────────────────────
+function renderFill(){
+  let c=document.getElementById('content');
+  let ws=allWords();
+  if(ws.length<4){c.innerHTML=statsHTML()+catGridHTML()+'<div class="end-card"><div class="end-title">Select more categories</div></div>';return;}
+  if(!blankState)genBlank(ws);
+  let q=blankState,ph=q.phrase[0];
+  let re=new RegExp(q.item.de,'gi');
+  let display=re.test(ph)?ph.replace(re,'<span class="blank"></span>'):ph+'<span class="blank"></span>';
+  let opts=q.options.map(o=>{
+    let cl=q.answered?(o===q.item.de?'correct':(o===q.chosen?'wrong':'')):'';
+    return `<button class="q-opt ${cl}" ${q.answered?'disabled':''} onclick="answerBlank('${o.replace(/'/g,"\\'")}')"><b>${o}</b></button>`;
+  }).join('');
+  let rev=q.answered?`<div class="phrase-block" style="margin-top:10px"><div class="phrase-row"><div><div class="phrase-de">${boldWord(ph,q.item.de)}</div><div class="phrase-en">${q.phrase[1]}</div></div><button class="psb" onclick="speak('${ph.replace(/'/g,"\\'")}',this)">🔊</button></div></div>`:'';
+  c.innerHTML=statsHTML()+catGridHTML()+
+  `<div class="card" style="text-align:center">
+    <div class="card-top"><span class="cat-tag">${q.item.cat}</span><button class="speak-btn" onclick="speak('${ph.replace(/'/g,"\\'")}',this)">🔊 hören</button></div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:12px">Fill in the missing word:</div>
+    <div class="blank-phrase">${display}</div>
+  </div>
+  <div class="quiz-grid">${opts}</div>${rev}
+  ${q.answered?`<button class="btn-next" onclick="nextBlank()">Next →</button>`:''}`;
+}
+function genBlank(ws){
+  let cands=ws.filter(w=>w.phrases.some(p=>p[0].includes(w.de)));
+  if(!cands.length)cands=ws;
+  let item=cands[Math.floor(Math.random()*cands.length)];
+  let pw=item.phrases.find(p=>p[0].includes(item.de))||item.phrases[0];
+  let oth=ws.filter(w=>w.de!==item.de);shuffle(oth);
+  let opts=[item.de,...oth.slice(0,3).map(w=>w.de)];shuffle(opts);
+  blankState={item,phrase:pw,options:opts.slice(0,4),answered:false,chosen:null};
+}
+function answerBlank(o){blankState.answered=true;blankState.chosen=o;if(o===blankState.item.de){known.add(blankState.item.de);SM2.rate(blankState.item.de,4);Streak.study();save();}updateNavStreak();renderFill();}
+function nextBlank(){blankState=null;renderFill();}
+
+// ── GENDER MODE ───────────────────────────────────────
+function buildGenderQueue(){
+  let nouns=allWords().filter(w=>w.art!==null);
+  // Prioritise: wrong ones first (tracked in genderMisses), then random
+  shuffle(nouns);
+  genderQueue=nouns;gIdx=0;gAnswered=false;
+}
+function renderGender(){
+  let c=document.getElementById('content');
+  let nouns=allWords().filter(w=>w.art!==null);
+  if(!nouns.length){c.innerHTML=statsHTML()+'<div class="end-card"><div class="end-title">No nouns in selection</div></div>';return;}
+  if(gIdx>=genderQueue.length){
+    let pct=gScore.total?Math.round(gScore.ok/gScore.total*100):0;
+    c.innerHTML=statsHTML()+catGridHTML()+
+    `<div class="end-card"><div class="end-emoji">${pct>=80?'🎉':'💪'}</div><div class="end-title">Round complete — ${pct}%</div><div class="end-sub">${gScore.ok} correct out of ${gScore.total}</div><button class="btn-next" style="max-width:240px;margin:0 auto;display:block" onclick="gScore={ok:0,total:0};buildGenderQueue();renderGender()">Try again ↺</button></div>`;
+    return;
+  }
+  let item=genderQueue[gIdx];
+  let arts=['der','die','das'];
+  let btnHtml=arts.map(a=>{
+    let cl=gAnswered?(a===item.art?'correct':(a!==item.art&&a===window._gChosen?'wrong':'')):'';
+    return `<button class="g-btn ${cl}" ${gAnswered?'disabled':''} onclick="answerGender('${a}')">${a}</button>`;
+  }).join('');
+  let result='';
+  if(gAnswered){
+    let ok=window._gChosen===item.art;
+    result=`<div class="gender-result ${ok?'ok':'no'}">${ok?'✓ Richtig!':'✗ '+item.art+' '+item.de}</div>`;
+  }
+  let leftNouns=genderQueue.length-gIdx;
+  c.innerHTML=
+  `<div class="gender-score">
+    <div class="gscore"><div class="gscore-n" style="color:var(--green)">${gScore.ok}</div><div class="gscore-l">correct</div></div>
+    <div class="gscore"><div class="gscore-n" style="color:#D85A30">${gScore.total-gScore.ok}</div><div class="gscore-l">wrong</div></div>
+    <div class="gscore"><div class="gscore-n">${leftNouns}</div><div class="gscore-l">left</div></div>
+  </div>`+
+  catGridHTML()+
+  `<div class="gender-card">
+    <div class="card-top" style="justify-content:flex-end"><button class="speak-btn" onclick="speak('${item.de.replace(/'/g,"\\'")}',this)">🔊 hören</button></div>
+    <div class="cat-tag" style="display:inline-block;margin-bottom:12px">${item.cat}</div>
+    <div class="gender-word">${item.de}</div>
+    <div class="gender-hint">der · die · das — which article?</div>
+    <div class="gender-btns">${btnHtml}</div>
+    ${result}
+    ${gAnswered?`<div style="font-size:13px;color:var(--txt2);margin-top:6px">${item.en}</div><button class="btn-next" style="margin-top:12px" onclick="nextGender()">Next →</button>`:''}
+  </div>`;
+}
+function answerGender(a){
+  if(gAnswered)return;
+  gAnswered=true;window._gChosen=a;
+  let item=genderQueue[gIdx];
+  let ok=a===item.art;
+  gScore.total++;if(ok)gScore.ok++;
+  if(ok){known.add(item.de);Streak.study();save();}
+  updateNavStreak();
+  renderGender();
+}
+function nextGender(){gIdx++;gAnswered=false;renderGender();}
+
+// ── BROWSE ────────────────────────────────────────────
+function renderBrowse(){
+  let c=document.getElementById('content');
+  let html=statsHTML()+catGridHTML();
+  for(let cat of selectedCats){
+    let ws=DATA[cat]||[],p=catProg(cat);
+    html+=`<div class="list-sec"><div class="list-cat-hdr">${cat}<span class="list-prog">${p.k}/${p.t}</span></div>`;
+    for(let item of ws){
+      let k=known.has(item.de),due=SM2.isDue(item.de),sm=SM2.get(item.de);
+      let artStr=item.art?`<span class="lw-art">${item.art}</span>`:'';
+      let badge=k?(due?`<span class="lw-due">due</span>`:`<span class="lw-known">✓ known</span>`):'';
+      let nextInfo=sm.next&&!due?`next: ${SM2.daysUntil(item.de)}d`:'';
+      let phHtml=item.phrases.map(p=>`<div class="list-phrase"><div><div class="lp-de">${boldWord(p[0],item.de)}</div><div class="lp-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)" style="flex-shrink:0;margin-left:8px">🔊</button></div>`).join('');
+      html+=`<div class="list-word">
+        <div class="list-hdr" onclick="this.nextElementSibling.classList.toggle('open')">
+          <div class="lw-left"><button class="psb" onclick="event.stopPropagation();speak('${item.de.replace(/'/g,"\\'")}',this)">🔊</button>${artStr}<span class="lw-de">${item.de}</span><span class="lw-en">— ${item.en}</span></div>
+          <div style="display:flex;align-items:center;gap:6px">${badge}<span style="font-size:11px;color:var(--txt3)">${nextInfo}</span><span style="color:var(--txt3);font-size:16px">›</span></div>
+        </div>
+        <div class="list-body">
+          ${phHtml}
+          <div class="mark-row"><button class="mark-btn${k?' known':''}" onclick="setKnown('${item.de}',${!k})">${k?'Mark as learning':'Mark as known ✓'}</button></div>
+        </div>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  c.innerHTML=html;
+}
+function setKnown(de,val){if(val)known.add(de);else known.delete(de);save();renderBrowse();}
+
+// ── PLAN ──────────────────────────────────────────────
+function renderPlan(){
+  let c=document.getElementById('content');
+  let done=completedDays.size;
+  let todayDay=Math.max(1,Math.min(11,Math.floor((new Date()-new Date('2026-05-16'))/86400000)+1));
+  let html=`<div style="margin-bottom:12px"><div style="font-size:16px;font-weight:600;margin-bottom:10px">11-day plan · May 16–26</div>
+  <div class="plan-stats">
+    <div class="stat"><div class="stat-n">50</div><div class="stat-l">words</div></div>
+    <div class="stat"><div class="stat-n">40</div><div class="stat-l">min/day</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">days done</div></div>
+    <div class="stat"><div class="stat-n">${Streak.get()}</div><div class="stat-l">🔥 streak</div></div>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" style="width:${Math.round(done/11*100)}%"></div></div></div>`;
+
+  for(let d of PLAN){
+    let isDone=completedDays.has(d.day),isToday=d.day===todayDay,isRev=d.type==='review'||d.type==='final';
+    let dotCls=isDone?'d':isToday?'t':isRev?'r':'';
+    let badge=isDone?'<span class="badge badge-g">✓ Done</span>':isToday?'<span class="badge badge-today">Today</span>':isRev?'<span class="badge badge-b">Review</span>':'';
+    let sub=d.newWords.length>0?`${d.newWords.length} new words`:d.type==='review'?'Full review':d.type==='final'?'Final test':'';
+    if(d.reviewCats.length>0&&d.newWords.length>0)sub+=' · +review';
+    let phasesHtml=d.phases.map(p=>`<div class="phase-row"><div class="ph-min">${p.min}m</div><div class="ph-mode">${p.mode}</div><div class="ph-desc">${p.desc}</div></div>`).join('');
+    let newChips=d.newWords.length?`<div class="sec-lbl">New words</div><div class="chips">${d.newWords.map(w=>`<span class="chip">${w}</span>`).join('')}</div>`:'';
+    let revChips=d.reviewCats.length&&d.reviewCats[0]!=='All 10'?`<div class="sec-lbl">Reviewing</div><div class="chips">${d.reviewCats.map(w=>`<span class="chip r">${w}</span>`).join('')}</div>`:'';
+    let mnHtml=d.mnemonics.length?`<div class="sec-lbl">Mnemonics</div><div class="sci-box">${d.mnemonics.map(m=>`<div class="mnem-item">${m}</div>`).join('')}</div>`:'';
+    let sciHtml=`<div class="sec-lbl">Science note</div><div class="sci-box">${d.science}</div>`;
+    html+=`<div class="day-card${isToday?' today':''}">
+      <div class="day-hdr" onclick="toggleDayBody(${d.day})">
+        <div class="day-num ${dotCls}">${isDone?'✓':d.day}</div>
+        <div class="day-meta"><div class="day-title">${d.date} — ${d.newCat||'Review'}</div><div class="day-sub">${sub}</div></div>
+        <div class="day-right">${badge}<div class="day-min">${d.totalMin}m</div><div class="day-chev" id="dc-${d.day}">›</div></div>
+      </div>
+      <div class="day-body${isToday?' open':''}" id="db-${d.day}">
+        <div class="sec-lbl">Session plan</div>${phasesHtml}
+        ${newChips}${revChips}${mnHtml}${sciHtml}
+        <button class="${isDone?'undone-btn':'done-btn'}" onclick="togglePlanDay(${d.day})">${isDone?'Mark as not done':'Mark as done ✓'}</button>
+      </div>
+    </div>`;
+  }
+  c.innerHTML=html;
+}
+function toggleDayBody(day){
+  let b=document.getElementById('db-'+day),ch=document.getElementById('dc-'+day);
+  let o=b.classList.toggle('open');ch.textContent=o?'‹':'›';
+}
+function togglePlanDay(day){
+  if(completedDays.has(day))completedDays.delete(day);else completedDays.add(day);
+  save();renderPlan();
+}
+
+// ── INIT ──────────────────────────────────────────────
+speechSynthesis.onvoiceschanged=()=>{};
+load();
+updateNavStreak();
+updateDuePill();
+buildSM2Queue();
+setTab('flash');
+</script>
+</body>
+</html>
