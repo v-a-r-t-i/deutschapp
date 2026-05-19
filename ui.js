@@ -80,7 +80,7 @@ function setTab(t){
   updAll();
   if(t==='flash'){buildQ();rFlash();}
   else if(t==='listen'){buildListenQ();rListen();}
-  else if(t==='quiz'){quizSt=null;rQuiz();}
+  else if(t==='quiz'){buildQuizQ();quizSt=null;rQuiz();}
   else if(t==='fill'){blankSt=null;rFill();}
   else if(t==='gender'){buildGQ();rGender();}
   else if(t==='browse')rBrowse();
@@ -183,9 +183,11 @@ function ansListen(chosen,correct,de){
 }
 
 // ── QUIZ ──────────────────────────────────────────────
+function buildQuizQ(){let all=aw();shuf(all);let due=all.filter(w=>s2due(w.de)),nd=all.filter(w=>!s2due(w.de));quizQueue=[...due,...nd];quizQIdx=0;}
 function rQuiz(){
   let c=document.getElementById('content'),ws=aw();
   if(ws.length<4){c.innerHTML=statsH()+catH()+'<div class="end-card"><div class="end-title">Select more categories</div></div>';return;}
+  if(!quizSt&&quizQIdx>=quizQueue.length){c.innerHTML=statsH()+catH()+modeToggle()+'<div class="end-card"><div class="end-emoji">✅</div><div class="end-title">All done!</div><div class="end-sub">Come back tomorrow for your next cards.</div><button class="btn-next" onclick="buildQuizQ();quizSt=null;rQuiz()">Review again ↺</button></div>';return;}
   if(!quizSt)genQ(ws);let q=quizSt;
   if(answerMode==='type'){
     let rev=q.ans?`<div style="margin-top:10px;text-align:center;font-size:16px;font-weight:500;color:${q.correct_ans?'var(--green)':'#D85A30'}">${q.correct_ans?'✓ Correct!':'✗ '+q.item.de}</div>${phFull(q.item)}`:'';
@@ -210,7 +212,7 @@ function rQuiz(){
   </div>
   <div class="quiz-grid">${opts}</div>${rev}${q.ans?`<button class="btn-next" onclick="nQ()">Next →</button>`:''}`;
 }
-function genQ(ws){let i=Math.floor(Math.random()*ws.length),item=ws[i];let oth=ws.filter((_,j)=>j!==i);shuf(oth);let opts=[item.en,oth[0].en,oth[1].en,oth[2].en];shuf(opts);quizSt={item,cor:item.en,opts,ans:false,ch:null,typed:'',correct_ans:false};}
+function genQ(ws){let item=quizQueue[quizQIdx++];if(!item)return;let oth=ws.filter(w=>w.de!==item.de);shuf(oth);let opts=[item.en,oth[0].en,oth[1].en,oth[2].en];shuf(opts);quizSt={item,cor:item.en,opts,ans:false,ch:null,typed:'',correct_ans:false};}
 function ansQ(o){quizSt.ans=true;quizSt.ch=o;sessionReviewed++;if(o===quizSt.cor){known.add(quizSt.item.de);sessionCorrect++;addXP(XP_RATES.quiz_correct,'quiz');s2r(quizSt.item.de,4);}else{mistakes=[...new Set([...mistakes,quizSt.item.de])].slice(-20);}updAll();rQuiz();}
 function submitType(){
   let inp=document.getElementById('type-ans');if(!inp||quizSt.ans)return;
@@ -343,12 +345,20 @@ function togDone(day){if(doneDays.has(day))doneDays.delete(day);else doneDays.ad
 // ── RANKS ────────────────────────────────────────────
 function rRanks(){
   let c=document.getElementById('content');
+  let tabs=['global','friends','race'];
+  let labels=['🏆 Ranks','👥 Friends','⚡ Race'];
+  let html=statsH()+`<div style="display:flex;gap:6px;margin-bottom:16px">${tabs.map((t,i)=>`<button class="mode-btn${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rRanks()">${labels[i]}</button>`).join('')}</div>`;
+  if(ranksSubTab==='global'){html+=rRanksGlobal();}
+  else if(ranksSubTab==='friends'){html+=rFriendsUI();}
+  else{html+=rRaceUI();}
+  c.innerHTML=html;
+  if(ranksSubTab==='friends')loadFriends();
+  if(ranksSubTab==='race')loadRaceRoom();
+}
+
+function rRanksGlobal(){
   let lvl=getLevelInfo(xpTotal);
-  let html=statsH()+`
-  <div style="margin-bottom:12px">
-    <div style="font-size:16px;font-weight:600;margin-bottom:4px">⭐ Rank Ladder</div>
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:16px">Earn XP by studying to level up</div>
-  </div>`;
+  let html=`<div style="margin-bottom:12px"><div style="font-size:16px;font-weight:600;margin-bottom:4px">⭐ Rank Ladder</div><div style="font-size:13px;color:var(--txt2);margin-bottom:16px">Earn XP by studying to level up</div></div>`;
   for(let l of LEVELS){
     let isCurrent=l.lvl===lvl.lvl;
     let isDone=xpTotal>=l.max&&l.lvl<LEVELS.length;
@@ -385,10 +395,204 @@ function rRanks(){
       ${[['🎴 Flash Easy','10 XP'],['🎴 Flash Good','5 XP'],['🎴 Flash Hard','2 XP'],['❓ Quiz correct','8 XP'],['⌨️ Type correct','10 XP'],['📝 Fill-in correct','8 XP'],['🔤 Gender correct','5 XP'],['👂 Listen correct','10 XP']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 8px;background:var(--bg);border-radius:var(--rs)"><span style="color:var(--txt2)">${k}</span><span style="color:var(--green);font-weight:500">${v}</span></div>`).join('')}
     </div>
   </div>`;
-  c.innerHTML=html;
+  return html;
+}
+
+// ── FRIENDS ───────────────────────────────────────────
+function rFriendsUI(){
+  return `<div id="friends-wrap">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">👥 Friends</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:14px">Add friends to compare progress</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input id="friend-search" class="type-input" placeholder="Search by name..." style="flex:1;margin:0" oninput="searchFriends(this.value)">
+    </div>
+    <div id="friend-search-results"></div>
+    <div id="friend-requests-section"></div>
+    <div id="friends-list"><div style="text-align:center;color:var(--txt2);font-size:13px;padding:20px">Loading...</div></div>
+  </div>`;
+}
+
+async function loadFriends(){
+  if(!CU)return;
+  let [fsRes,profRes]=await Promise.all([
+    sbFetch('friendships','?or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')'),
+    sbFetch('profiles','?select=id,display_name,email&eq.role=student')
+  ]);
+  let fs=fsRes||[],allProfs=profRes||[];
+  // Pending incoming
+  let incoming=fs.filter(f=>f.friend_id===CU.id&&f.status==='pending');
+  let reqHtml='';
+  if(incoming.length){
+    reqHtml=`<div style="font-size:13px;font-weight:600;margin-bottom:8px">Pending requests (${incoming.length})</div>`;
+    for(let r of incoming){
+      let p=allProfs.find(x=>x.id===r.user_id);
+      let name=p?.display_name||r.user_id.slice(0,8);
+      reqHtml+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px">
+        <span style="font-size:14px;font-weight:500">${name} wants to be friends</span>
+        <button class="btn-sm-green" onclick="acceptFriend('${r.id}')">Accept</button>
+      </div>`;
+    }
+    reqHtml+=`<div style="margin-bottom:14px"></div>`;
+  }
+  let reqEl=document.getElementById('friend-requests-section');
+  if(reqEl)reqEl.innerHTML=reqHtml;
+  // Accepted friends
+  let accepted=fs.filter(f=>f.status==='accepted');
+  let friendIds=accepted.map(f=>f.user_id===CU.id?f.friend_id:f.user_id);
+  let listEl=document.getElementById('friends-list');
+  if(!listEl)return;
+  if(!friendIds.length){listEl.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:20px">No friends yet — search for someone above!</div>';return;}
+  let wpRes=await sbFetch('word_progress','?user_id=in.('+friendIds.join(',')+')&select=user_id,known');
+  let skRes=await sbFetch('streaks','?user_id=in.('+friendIds.join(',')+')&select=user_id,xp_total,streak_count');
+  let wp=wpRes||[],sk=skRes||[];
+  let html='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Your friends</div>';
+  for(let fid of friendIds){
+    let p=allProfs.find(x=>x.id===fid);
+    let name=p?.display_name||fid.slice(0,8);
+    let known=(wp.filter(x=>x.user_id===fid&&x.known)).length;
+    let skd=sk.find(x=>x.user_id===fid);
+    let xp=skd?.xp_total||0,streak=skd?.streak_count||0;
+    let lvl=getLevelInfo(xp);
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px">
+      <div>
+        <div style="font-size:14px;font-weight:600">${name}</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:2px">Lvl ${lvl.lvl} ${lvl.name} · ❄️ ${streak}d streak</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:700;color:var(--green)">${known} words</div>
+        <div style="font-size:12px;color:var(--txt2)">${xp} XP</div>
+      </div>
+    </div>`;
+  }
+  listEl.innerHTML=html;
+}
+
+async function searchFriends(q){
+  let el=document.getElementById('friend-search-results');
+  if(!el)return;
+  if(q.length<2){el.innerHTML='';return;}
+  let res=await sbFetch('profiles','?display_name=ilike.*'+encodeURIComponent(q)+'*&select=id,display_name&neq.id='+CU.id);
+  if(!res?.length){el.innerHTML='<div style="font-size:13px;color:var(--txt2);margin-bottom:10px">No users found.</div>';return;}
+  // Get existing friendship ids
+  let fsRes=await sbFetch('friendships','?or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')');
+  let fs=fsRes||[];
+  let html='';
+  for(let p of res.slice(0,5)){
+    let existing=fs.find(f=>(f.user_id===p.id||f.friend_id===p.id));
+    let btn=existing
+      ?`<span style="font-size:12px;color:var(--txt2)">${existing.status==='pending'?'Pending':'Friends ✓'}</span>`
+      :`<button class="btn-sm-green" onclick="sendFriendReq('${p.id}','${p.display_name}',this)">Add</button>`;
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px">
+      <span style="font-size:14px;font-weight:500">${p.display_name}</span>${btn}</div>`;
+  }
+  el.innerHTML=html+'<div style="margin-bottom:12px"></div>';
+}
+
+async function sendFriendReq(friendId,name,btn){
+  btn.disabled=true;btn.textContent='Sending...';
+  await sbUpsert('friendships',{user_id:CU.id,friend_id:friendId,status:'pending'});
+  btn.textContent='Sent ✓';
+}
+
+async function acceptFriend(fsId){
+  await fetch(SURL+'/rest/v1/friendships?id=eq.'+fsId,{method:'PATCH',headers:{'apikey':SKEY,'Authorization':'Bearer '+(authToken||SKEY),'Content-Type':'application/json'},body:JSON.stringify({status:'accepted'})});
+  loadFriends();
+}
+
+// ── RACE ───────────────────────────────────────────────
+function rRaceUI(){
+  if(raceSt&&!raceSt.done)return rRaceActive();
+  if(raceSt&&raceSt.done)return rRaceResults();
+  return `<div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Race a friend — same words, who scores higher?</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto">
+      <button class="btn-next" onclick="createRace()">⚡ Create Race Room</button>
+      <div style="text-align:center;font-size:12px;color:var(--txt2)">— or join a friend's room —</div>
+      <input id="race-code-input" class="type-input" placeholder="Enter 4-letter code..." maxlength="4" style="text-align:center;font-size:20px;letter-spacing:6px;text-transform:uppercase;margin:0">
+      <button class="btn-next" style="background:var(--bg3);color:var(--txt)" onclick="joinRace()">Join Room</button>
+    </div>
+    <div id="race-status" style="text-align:center;margin-top:16px;font-size:14px;color:var(--txt2)"></div>
+  </div>`;
+}
+
+function loadRaceRoom(){} // placeholder so rRanks doesn't error
+
+async function createRace(){
+  let statusEl=document.getElementById('race-status');
+  if(statusEl)statusEl.textContent='Creating room...';
+  let words=aw();shuf(words);words=words.slice(0,10);
+  let code=Math.random().toString(36).slice(2,6).toUpperCase();
+  let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
+  let res=await sbUpsert('race_rooms',room);
+  if(!res){if(statusEl)statusEl.textContent='Error creating room. Try again.';return;}
+  raceSt={room:res[0]||room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
+  rRanks();
+}
+
+async function joinRace(){
+  let code=document.getElementById('race-code-input')?.value.trim().toUpperCase();
+  if(code.length!==4){let s=document.getElementById('race-status');if(s)s.textContent='Enter a 4-letter code.';return;}
+  let res=await sbFetch('race_rooms','?code=eq.'+code+'&limit=1');
+  if(!res?.length){let s=document.getElementById('race-status');if(s)s.textContent='Room not found.';return;}
+  let room=res[0];
+  let words=JSON.parse(room.words);
+  raceSt={room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:false};
+  rRanks();
+}
+
+function rRaceActive(){
+  let r=raceSt;
+  if(r.idx>=r.words.length){finishRace();return rRaceResults();}
+  let item=r.words[r.idx];
+  let ws=aw();
+  let oth=ws.filter(w=>w.de!==item.de);shuf(oth);
+  let opts=[item.en,...oth.slice(0,3).map(w=>w.en)];shuf(opts);
+  return `<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--txt2)">⚡ Race · ${r.idx+1}/${r.words.length}</span>
+      <span style="font-size:13px;font-weight:600;color:var(--green)">Score: ${r.score}</span>
+    </div>
+    <div class="card" style="text-align:center">
+      ${item.art?`<div class="art-s">${item.art}</div>`:''}
+      <div class="de-word">${item.de}</div>
+      <div style="font-size:13px;color:var(--txt2);margin-top:6px">What does this mean?</div>
+    </div>
+    <div class="quiz-grid" style="margin-top:12px">
+      ${opts.map(o=>`<button class="q-opt" onclick="ansRace('${o.replace(/'/g,"\\'")}','${item.en.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}
+    </div>
+    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);margin-top:8px;font-size:12px" onclick="raceSt=null;rRanks()">✕ Quit race</button>
+  </div>`;
+}
+
+function ansRace(chosen,correct,btn){
+  let btns=btn.closest('.quiz-grid').querySelectorAll('.q-opt');
+  btns.forEach(b=>{b.disabled=true;if(b.textContent.trim()===correct)b.className='q-opt correct';else if(b===btn&&chosen!==correct)b.className='q-opt wrong';});
+  if(chosen===correct)raceSt.score++;
+  setTimeout(()=>{raceSt.idx++;rRanks();},600);
+}
+
+async function finishRace(){
+  if(raceSt.done)return;
+  raceSt.done=true;
+  let timeMs=Date.now()-raceSt.startTime;
+  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:raceSt.words.length,time_ms:timeMs});
+}
+
+function rRaceResults(){
+  let r=raceSt;
+  let pct=Math.round(r.score/r.words.length*100);
+  let emoji=pct===100?'🏆':pct>=70?'🎉':pct>=40?'👍':'💪';
+  return `<div style="text-align:center;padding:20px 0">
+    <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
+    <div style="font-size:22px;font-weight:700;margin-bottom:4px">${r.score} / ${r.words.length}</div>
+    <div style="font-size:14px;color:var(--txt2);margin-bottom:20px">${pct}% correct</div>
+    <button class="btn-next" onclick="raceSt=null;rRanks()">Back to Race</button>
+  </div>`;
 }
 
 // ── TEACHER ───────────────────────────────────────────
+
 async function loadTeacher(){
   let tc=document.getElementById('teacher-content');
   let{data:profiles}=await sb.from('profiles').select('*').eq('role','student');

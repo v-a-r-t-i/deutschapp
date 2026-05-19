@@ -43,6 +43,9 @@ let mistakes=[];
 let tab='flash',flashMode='de',answerMode='choice',selCats=new Set(),queue=[],qIdx=0,revealed=false,confSel=3;
 let quizSt=null,blankSt=null,gQ=[],gIdx=0,gAns=false,gScore={ok:0,tot:0};
 let listenSt=null;
+let quizQueue=[],quizQIdx=0;
+let ranksSubTab='global';
+let raceSt=null;
 let catSessionCount={};
 let aiPhraseCache={};
 
