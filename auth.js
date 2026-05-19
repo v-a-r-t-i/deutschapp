@@ -1,0 +1,129 @@
+function switchAuth(t){
+  ['login','signup'].forEach(x=>{document.getElementById(x+'-form').style.display=x===t?'block':'none';document.getElementById('tab-'+x).className='auth-tab'+(x===t?' active':'');});
+  document.getElementById('auth-err').textContent='';
+}
+async function doLogin(){
+  let e=document.getElementById('li-email').value.trim(),p=document.getElementById('li-pass').value;
+  if(!e||!p){document.getElementById('auth-err').textContent='Please fill in all fields.';return;}
+  let btn=document.getElementById('li-btn');btn.disabled=true;btn.textContent='Signing in...';
+  let{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error){document.getElementById('auth-err').textContent=error.message;return;}
+  // Show logging in message
+  document.getElementById('auth-err').style.color='var(--green)';
+  document.getElementById('auth-err').textContent='✓ Logging in...';
+  if(data?.session)handleSession(data.session);
+}
+async function doSignup(){
+  let name=document.getElementById('su-name').value.trim(),e=document.getElementById('su-email').value.trim(),p=document.getElementById('su-pass').value,role=document.getElementById('su-role').value;
+  if(!name||!e||!p){document.getElementById('auth-err').textContent='Please fill in all fields.';return;}
+  if(p.length<6){document.getElementById('auth-err').textContent='Password must be at least 6 characters.';return;}
+  let btn=document.getElementById('su-btn');btn.disabled=true;btn.textContent='Creating account...';
+  let{data,error}=await sb.auth.signUp({email:e,password:p});
+  if(error){btn.disabled=false;btn.textContent='Create account';document.getElementById('auth-err').textContent=error.message;return;}
+  if(data.user)await sb.from('profiles').upsert({id:data.user.id,email:e,display_name:name,role});
+  btn.disabled=false;btn.textContent='Create account';
+  document.getElementById('auth-err').textContent='Account created! Sign in now.';
+  switchAuth('login');
+}
+async function doSignout(){
+  await sb.auth.signOut();
+  known=new Set();sm2Cache={};streakN=0;lastStudy=null;xpTotal=0;sessionXP=0;CU=null;CP=null;
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('teacher-app').style.display='none';
+}
+
+async function handleSession(session){
+  try{
+    if(session?.user){
+      CU=session.user;
+      authToken=session.access_token||null;
+      if(selCats.size===0)selCats=new Set(Object.keys(DATA));
+      // Fetch profile with timeout so it never hangs forever
+      let p=null;
+      try{
+        let profilePromise=sb.from('profiles').select('*').eq('id',CU.id).limit(1).then(({data,error})=>({data:data?.[0],error}));
+        let timeoutPromise=new Promise(r=>setTimeout(()=>r({data:null}),3000));
+        let{data}=await Promise.race([profilePromise,timeoutPromise]);
+        p=data;
+      }catch(e){console.warn('Profile fetch failed:',e);}
+      CP=p;
+      if(p?.role==='teacher'){
+        document.getElementById('loading-screen').style.display='none';
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('main-app').style.display='none';
+        document.getElementById('teacher-app').style.display='block';
+        loadTeacher();
+      }else{
+        document.getElementById('loading-screen').style.display='none';
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('main-app').style.display='block';
+        document.getElementById('teacher-app').style.display='none';
+        let ub=document.getElementById('user-btn');if(ub)ub.textContent=CP?.display_name||CU.email;
+        loadProg();
+      }
+    }else{
+      document.getElementById('loading-screen').style.display='none';
+      document.getElementById('auth-screen').style.display='flex';
+      document.getElementById('main-app').style.display='none';
+      document.getElementById('teacher-app').style.display='none';
+    }
+  }catch(err){
+    console.error('Auth error:',err);
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('main-app').style.display='none';
+    document.getElementById('teacher-app').style.display='none';
+  }
+}
+
+// Use getSession first (instant, from cache), then listen for changes
+// Add timeout fallback in case getSession hangs
+// Initial session check with fallback timeout
+let initialCheckDone=false;
+setTimeout(()=>{
+  if(!initialCheckDone){
+    initialCheckDone=true;
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+  }
+},3000);
+
+// Always handle auth state changes (login, logout, token refresh)
+sb.auth.onAuthStateChange((_ev,session)=>{
+  initialCheckDone=true;
+  handleSession(session);
+});
+
+// Also check immediately on load
+sb.auth.getSession().then(({data:{session}})=>{
+  initialCheckDone=true;
+  handleSession(session);
+}).catch(()=>{
+  initialCheckDone=true;
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+});
+
+// ── DAILY SUMMARY ─────────────────────────────────────
+let summaryShown=false;
+function maybeShowSummary(){
+  if(summaryShown||sessionReviewed<5)return;
+  summaryShown=true;
+  let pct=sessionReviewed?Math.round(sessionCorrect/sessionReviewed*100):0;
+  let lvl=getLevelInfo(xpTotal);
+  document.getElementById('sum-emoji').textContent=pct>=80?'🎉':pct>=60?'👍':'💪';
+  document.getElementById('sum-title').textContent='Session Summary';
+  document.getElementById('sum-sub').textContent='Nice work! Here\'s what you achieved:';
+  document.getElementById('sum-stats').innerHTML=`
+    <div class="sum-stat"><div class="sum-stat-n">${sessionReviewed}</div><div class="sum-stat-l">reviewed</div></div>
+    <div class="sum-stat"><div class="sum-stat-n">${pct}%</div><div class="sum-stat-l">accuracy</div></div>
+    <div class="sum-stat"><div class="sum-stat-n">+${sessionXP}</div><div class="sum-stat-l">XP earned</div></div>
+    <div class="sum-stat"><div class="sum-stat-n">${streakN}🔥</div><div class="sum-stat-l">day streak</div></div>
+  `;
+  document.getElementById('summary-overlay').style.display='flex';
+}
+function closeSummary(){document.getElementById('summary-overlay').style.display='none';summaryShown=false;}
+
+// ── HELPERS ───────────────────────────────────────────
