@@ -33,8 +33,12 @@ async function loadWords(){
     if(Array.isArray(words)&&words.length){
       // Rebuild DATA from Supabase
       let newData={};
+      let seen={};
       words.forEach(w=>{
         if(!newData[w.category])newData[w.category]=[];
+        let key=w.category+'|'+w.de;
+        if(seen[key])return; // skip duplicates
+        seen[key]=true;
         newData[w.category].push({
           de:w.de,
           art:w.art,
