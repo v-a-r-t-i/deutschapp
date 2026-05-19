@@ -353,7 +353,8 @@ function rRanks(){
   else{html+=rRaceUI();}
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
-  if(ranksSubTab==='race')loadRaceRoom();
+  if(ranksSubTab==='race'&&raceSt&&!raceSt.done)setTimeout(startRaceTimer,50);
+  if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
 
 function rRanksGlobal(){
@@ -501,11 +502,11 @@ async function acceptFriend(fsId){
 
 // ── RACE ───────────────────────────────────────────────
 function rRaceUI(){
-  if(raceSt&&!raceSt.done)return rRaceActive();
+  if(raceSt&&!raceSt.done&&!raceSt.waiting)return rRaceActive();
   if(raceSt&&raceSt.done)return rRaceResults();
   return `<div>
     <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race</div>
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Race a friend — same words, who scores higher?</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Race a friend — same words, faster = more points!</div>
     <div style="display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto">
       <button class="btn-next" onclick="createRace()">⚡ Create Race Room</button>
       <div style="text-align:center;font-size:12px;color:var(--txt2)">— or join a friend's room —</div>
@@ -527,7 +528,20 @@ async function createRace(){
   let res=await sbUpsert('race_rooms',room);
   if(!res){if(statusEl)statusEl.textContent='Error creating room. Try again.';return;}
   let savedRoom=Array.isArray(res)?res[0]:room;
-  raceSt={room:savedRoom,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
+  raceSt={room:savedRoom,words,idx:0,score:0,startTime:null,done:false,isCreator:true,waiting:true};
+  // Show code screen
+  let c=document.getElementById('content');
+  let subTabs=document.querySelector('#content').previousElementSibling;
+  c.innerHTML=(c.innerHTML.split('<div id')[0]||'')+`<div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race Room Created!</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Share this code with your friend</div>
+    <div style="text-align:center;margin:20px 0">
+      <div style="font-size:48px;font-weight:800;letter-spacing:12px;color:var(--green)">${savedRoom.code||room.code}</div>
+      <div style="font-size:12px;color:var(--txt2);margin-top:8px">They enter this code to join</div>
+    </div>
+    <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="raceSt.waiting=false;raceSt.startTime=Date.now();rRanks()">▶ Start Race</button>
+    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
+  </div>`;words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
   rRanks();
 }
 
@@ -538,7 +552,7 @@ async function joinRace(){
   if(!res?.length){let s=document.getElementById('race-status');if(s)s.textContent='Room not found.';return;}
   let room=res[0];
   let words=JSON.parse(room.words);
-  raceSt={room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:false};
+  raceSt={room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:false,waiting:false};
   rRanks();
 }
 
@@ -546,13 +560,18 @@ function rRaceActive(){
   let r=raceSt;
   if(r.idx>=r.words.length){finishRace();return rRaceResults();}
   let item=r.words[r.idx];
-  let ws=aw();
+  let ws=aw();if(ws.length<4)ws=Object.values(DATA).flat();
   let oth=ws.filter(w=>w.de!==item.de);shuf(oth);
   let opts=[item.en,...oth.slice(0,3).map(w=>w.en)];shuf(opts);
+  r.questionStart=Date.now();
+  r.answered=false;
   return `<div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:13px;color:var(--txt2)">⚡ Race · ${r.idx+1}/${r.words.length}</span>
-      <span style="font-size:13px;font-weight:600;color:var(--green)">Score: ${r.score}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--txt2)">⚡ ${r.idx+1} / ${r.words.length}</span>
+      <span style="font-size:14px;font-weight:700;color:var(--green)">⭐ ${r.score} pts</span>
+    </div>
+    <div style="height:6px;background:var(--bg3);border-radius:3px;margin-bottom:14px;overflow:hidden">
+      <div id="race-timer-bar" style="height:100%;width:100%;background:var(--green);border-radius:3px;transition:width 10s linear"></div>
     </div>
     <div class="card" style="text-align:center">
       ${item.art?`<div class="art-s">${item.art}</div>`:''}
@@ -562,33 +581,62 @@ function rRaceActive(){
     <div class="quiz-grid" style="margin-top:12px">
       ${opts.map(o=>`<button class="q-opt" onclick="ansRace('${o.replace(/'/g,"\\'")}','${item.en.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}
     </div>
-    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);margin-top:8px;font-size:12px" onclick="raceSt=null;rRanks()">✕ Quit race</button>
+    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);margin-top:8px;font-size:12px" onclick="clearTimeout(raceSt&&raceSt.timerOut);raceSt=null;rRanks()">✕ Quit</button>
   </div>`;
 }
 
+function startRaceTimer(){
+  if(!raceSt||raceSt.answered)return;
+  let bar=document.getElementById('race-timer-bar');
+  if(bar)requestAnimationFrame(()=>{bar.style.width='0%';});
+  raceSt.timerOut=setTimeout(()=>{
+    if(!raceSt||raceSt.answered)return;
+    raceSt.answered=true;
+    document.querySelectorAll('.q-opt').forEach(b=>{
+      b.disabled=true;
+      if(b.textContent.trim()===raceSt.words[raceSt.idx].en)b.className='q-opt correct';
+    });
+    setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;rRanks();}},800);
+  },10000);
+}
+
 function ansRace(chosen,correct,btn){
+  if(!raceSt||raceSt.answered)return;
+  raceSt.answered=true;
+  clearTimeout(raceSt.timerOut);
+  let elapsed=(Date.now()-raceSt.questionStart)/1000;
+  let pts=chosen===correct?Math.max(1,Math.round(10-elapsed)):0;
   let btns=btn.closest('.quiz-grid').querySelectorAll('.q-opt');
   btns.forEach(b=>{b.disabled=true;if(b.textContent.trim()===correct)b.className='q-opt correct';else if(b===btn&&chosen!==correct)b.className='q-opt wrong';});
-  if(chosen===correct)raceSt.score++;
-  setTimeout(()=>{raceSt.idx++;rRanks();},600);
+  if(chosen===correct){
+    raceSt.score+=pts;
+    let badge=document.createElement('div');
+    badge.textContent='+'+pts+' pts';
+    badge.style.cssText='position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;color:var(--green);pointer-events:none;animation:fadeUp 0.8s forwards';
+    document.body.appendChild(badge);
+    setTimeout(()=>badge.remove(),800);
+  }
+  setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;rRanks();}},800);
 }
 
 async function finishRace(){
   if(raceSt.done)return;
   raceSt.done=true;
   let timeMs=Date.now()-raceSt.startTime;
-  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:raceSt.words.length,time_ms:timeMs});
+  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:raceSt.words.length*10,time_ms:timeMs});
 }
 
 function rRaceResults(){
   let r=raceSt;
-  let pct=Math.round(r.score/r.words.length*100);
-  let emoji=pct===100?'🏆':pct>=70?'🎉':pct>=40?'👍':'💪';
+  let maxScore=r.words.length*10;
+  let pct=Math.round(r.score/maxScore*100);
+  let emoji=pct>=90?'🏆':pct>=60?'🎉':pct>=30?'👍':'💪';
   return `<div style="text-align:center;padding:20px 0">
     <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
-    <div style="font-size:22px;font-weight:700;margin-bottom:4px">${r.score} / ${r.words.length}</div>
-    <div style="font-size:14px;color:var(--txt2);margin-bottom:20px">${pct}% correct</div>
-    <button class="btn-next" onclick="raceSt=null;rRanks()">Back to Race</button>
+    <div style="font-size:28px;font-weight:700;margin-bottom:4px">${r.score} <span style="font-size:16px;color:var(--txt2)">/ ${maxScore} pts</span></div>
+    <div style="font-size:14px;color:var(--txt2);margin-bottom:6px">${pct}% efficiency · ${r.words.length} words</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:20px">Faster answers = more points (max 10 per word)</div>
+    <button class="btn-next" onclick="raceSt=null;rRanks()">Race Again</button>
   </div>`;
 }
 
