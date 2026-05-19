@@ -63,7 +63,8 @@ async function flush(){
 // Raw fetch helper - bypasses broken Supabase JS client
 async function sbFetch(table, params=''){
   let token=authToken||SKEY;
-  let r=await fetch(SURL+'/rest/v1/'+table+'?'+params,{
+  let url=SURL+'/rest/v1/'+table+(params?'?'+params:'');
+  let r=await fetch(url,{
     headers:{
       'apikey':SKEY,
       'Authorization':'Bearer '+token,
@@ -81,9 +82,10 @@ async function sbUpsert(table, body){
       'apikey':SKEY,
       'Authorization':'Bearer '+token,
       'Content-Type':'application/json',
-      'Prefer':'resolution=merge-duplicates,return=minimal'
+      'Prefer':'resolution=merge-duplicates,return=representation'
     },
     body:JSON.stringify(body)
   });
-  return r.ok;
+  if(!r.ok)return null;
+  return r.json();
 }

@@ -415,8 +415,8 @@ function rFriendsUI(){
 async function loadFriends(){
   if(!CU)return;
   let [fsRes,profRes]=await Promise.all([
-    sbFetch('friendships','?or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')'),
-    sbFetch('profiles','?select=id,display_name,email&eq.role=student')
+    sbFetch('friendships','or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')'),
+    sbFetch('profiles','select=id,display_name&role=eq.student')
   ]);
   let fs=fsRes||[],allProfs=profRes||[];
   // Pending incoming
@@ -471,10 +471,10 @@ async function searchFriends(q){
   let el=document.getElementById('friend-search-results');
   if(!el)return;
   if(q.length<2){el.innerHTML='';return;}
-  let res=await sbFetch('profiles','?display_name=ilike.*'+encodeURIComponent(q)+'*&select=id,display_name&neq.id='+CU.id);
+  let res=await sbFetch('profiles','display_name=ilike.*'+encodeURIComponent(q)+'*&select=id,display_name&id=neq.'+CU.id);
   if(!res?.length){el.innerHTML='<div style="font-size:13px;color:var(--txt2);margin-bottom:10px">No users found.</div>';return;}
   // Get existing friendship ids
-  let fsRes=await sbFetch('friendships','?or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')');
+  let fsRes=await sbFetch('friendships','or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')');
   let fs=fsRes||[];
   let html='';
   for(let p of res.slice(0,5)){
@@ -526,14 +526,15 @@ async function createRace(){
   let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
   let res=await sbUpsert('race_rooms',room);
   if(!res){if(statusEl)statusEl.textContent='Error creating room. Try again.';return;}
-  raceSt={room:res[0]||room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
+  let savedRoom=Array.isArray(res)?res[0]:room;
+  raceSt={room:savedRoom,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
   rRanks();
 }
 
 async function joinRace(){
   let code=document.getElementById('race-code-input')?.value.trim().toUpperCase();
   if(code.length!==4){let s=document.getElementById('race-status');if(s)s.textContent='Enter a 4-letter code.';return;}
-  let res=await sbFetch('race_rooms','?code=eq.'+code+'&limit=1');
+  let res=await sbFetch('race_rooms','code=eq.'+code+'&limit=1');
   if(!res?.length){let s=document.getElementById('race-status');if(s)s.textContent='Room not found.';return;}
   let room=res[0];
   let words=JSON.parse(room.words);
