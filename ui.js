@@ -452,29 +452,62 @@ async function loadFriends(){
   let listEl=document.getElementById('friends-list');
   if(!listEl)return;
   if(!friendIds.length){listEl.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:20px">No friends yet — search for someone above!</div>';return;}
-  let wpRes=await sbFetch('word_progress','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,known');
-  let skRes=await sbFetch('streaks','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,xp_total,streak_count');
+  let [wpRes,skRes]=await Promise.all([
+    sbFetch('word_progress','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,known'),
+    sbFetch('streaks','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,xp_total,streak_count,last_study_date,updated_at')
+  ]);
   let wp=wpRes||[],sk=skRes||[];
-  let html='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Your friends</div>';
+  let today=new Date().toISOString().split('T')[0];
+  let myStudiedToday=lastStudy===today;
+  let html='<div style="font-size:13px;font-weight:600;margin-bottom:10px">Your friends</div>';
   for(let fid of friendIds){
     let p=allProfs.find(x=>x.id===fid);
     let name=p?.display_name||fid.slice(0,8);
-    let known=(wp.filter(x=>x.user_id===fid&&x.known)).length;
+    let knownCount=(wp.filter(x=>x.user_id===fid&&x.known)).length;
     let skd=sk.find(x=>x.user_id===fid);
     let xp=skd?.xp_total||0,streak=skd?.streak_count||0;
+    let lastDate=skd?.last_study_date||skd?.updated_at?.split('T')[0];
     let lvl=getLevelInfo(xp);
-    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px">
-      <div>
-        <div style="font-size:14px;font-weight:600">${name}</div>
-        <div style="font-size:12px;color:var(--txt2);margin-top:2px">Lvl ${lvl.lvl} ${lvl.name} · ❄️ ${streak}d streak</div>
+    // Last active label
+    let lastActive='Never';
+    if(lastDate){
+      let diff=Math.floor((new Date(today)-new Date(lastDate))/(86400000));
+      lastActive=diff===0?'Today':diff===1?'Yesterday':diff+'d ago';
+    }
+    // Mutual streak
+    let friendStudiedToday=lastDate===today;
+    let mutualBadge=(myStudiedToday&&friendStudiedToday)?'<span style="font-size:11px;background:var(--yl);color:var(--yd);padding:2px 8px;border-radius:10px;font-weight:600;margin-left:6px">🔥 Mutual streak</span>':'';
+    let lastActiveDot=friendStudiedToday?'<span style="width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:4px"></span>':'';
+    html+=`<div style="background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700">${name}${mutualBadge}</div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:2px">Lvl ${lvl.lvl} ${lvl.name} · ❄️ ${streak}d · ${lastActiveDot}${lastActive}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:700;color:var(--green)">${knownCount} words</div>
+          <div style="font-size:11px;color:var(--txt2)">${xp} XP</div>
+        </div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:15px;font-weight:700;color:var(--green)">${known} words</div>
-        <div style="font-size:12px;color:var(--txt2)">${xp} XP</div>
-      </div>
+      <button class="btn-sm-green" style="width:100%;padding:8px" onclick="challengeFriend('${fid}','${name}')">⚡ Challenge to a Race</button>
     </div>`;
   }
   listEl.innerHTML=html;
+}
+
+async function challengeFriend(friendId,friendName){
+  let btn=event.target;
+  btn.disabled=true;btn.textContent='Creating room...';
+  let words=aw();if(words.length<4)words=Object.values(DATA).flat();
+  shuf(words);words=words.slice(0,10);
+  let code=Math.random().toString(36).slice(2,6).toUpperCase();
+  let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
+  let res=await sbUpsert('race_rooms',room);
+  if(!res){btn.disabled=false;btn.textContent='⚡ Challenge to a Race';return;}
+  let savedRoom=(Array.isArray(res)&&res[0])||{...room};
+  raceSt={room:savedRoom,words,idx:0,score:0,startTime:null,done:false,isCreator:true,waiting:true};
+  ranksSubTab='race';
+  rSocial();
 }
 
 async function searchFriends(q){
