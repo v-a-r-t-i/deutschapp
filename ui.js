@@ -751,6 +751,8 @@ function showXPInfo(){
 
 
 speechSynthesis.onvoiceschanged=()=>{};
+// Signal that all scripts are loaded and UI functions are ready
+if(typeof appReadyResolve==='function')appReadyResolve();
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────
 document.addEventListener('keydown',e=>{

@@ -69,6 +69,7 @@ async function doSignout(){
 }
 
 async function handleSession(session){
+  await appReady; // wait for all scripts to finish loading
   let dbg=document.getElementById('auth-err');
   try{
     if(session?.user){
