@@ -15,7 +15,9 @@ if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
 }
-document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v'+APP_VERSION);
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v'+APP_VERSION);
+});
 </script>
 </head>
 <body>

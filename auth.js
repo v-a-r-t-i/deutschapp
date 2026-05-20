@@ -1,8 +1,13 @@
 function switchAuth(t){
   ['login','signup','forgot'].forEach(x=>{
     let f=document.getElementById(x+'-form');
-    let tab=document.getElementById('tab-'+x);
     if(f)f.style.display=x===t?'block':'none';
+  });
+  // Auth tabs only visible on login/signup, not forgot
+  let tabsEl=document.querySelector('.auth-tabs');
+  if(tabsEl)tabsEl.style.display=t==='forgot'?'none':'flex';
+  ['login','signup'].forEach(x=>{
+    let tab=document.getElementById('tab-'+x);
     if(tab)tab.className='auth-tab'+(x===t?' active':'');
   });
   document.getElementById('auth-err').textContent='';
@@ -47,7 +52,7 @@ async function doSignup(){
   let btn=document.getElementById('su-btn');btn.disabled=true;btn.textContent='Creating account...';
   let{data,error}=await sb.auth.signUp({email:e,password:p});
   if(error){btn.disabled=false;btn.textContent='Create account';document.getElementById('auth-err').textContent=error.message;return;}
-  if(data.user)await sb.from('profiles').upsert({id:data.user.id,email:e,display_name:name,role});
+  if(data.user)await sbUpsert('profiles',{id:data.user.id,email:e,display_name:name,role});
   btn.disabled=false;btn.textContent='Create account';
   document.getElementById('auth-err').textContent='Account created! Sign in now.';
   switchAuth('login');
@@ -69,10 +74,10 @@ async function handleSession(session){
       // Fetch profile with timeout so it never hangs forever
       let p=null;
       try{
-        let profilePromise=sb.from('profiles').select('*').eq('id',CU.id).limit(1).then(({data,error})=>({data:data?.[0],error}));
-        let timeoutPromise=new Promise(r=>setTimeout(()=>r({data:null}),3000));
-        let{data}=await Promise.race([profilePromise,timeoutPromise]);
-        p=data;
+        let profilePromise=sbFetch('profiles','id=eq.'+CU.id+'&limit=1');
+        let timeoutPromise=new Promise(r=>setTimeout(()=>r(null),2000));
+        let res=await Promise.race([profilePromise,timeoutPromise]);
+        p=Array.isArray(res)?res[0]:null;
       }catch(e){console.warn('Profile fetch failed:',e);}
       CP=p;
       if(p?.role==='teacher'){
