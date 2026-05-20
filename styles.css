@@ -248,3 +248,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-g{background:var(--gl);color:var(--gd);}
 .badge-b{background:var(--bl);color:var(--bd);}
 .ai-result{font-size:13px;line-height:1.6;color:var(--txt2);}
+
+/* LISTEN */
+.listen-card{background:var(--bg2);border-radius:var(--r);padding:28px 20px;text-align:center;margin-bottom:14px;}
+.listen-btn{font-size:48px;background:none;border:2px solid var(--bor2);border-radius:50%;width:80px;height:80px;cursor:pointer;margin:12px auto;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,background 0.15s;}
+.listen-btn:hover{background:var(--bg3);transform:scale(1.05);}
+
+/* FILL-IN */
+.blank-phrase{font-size:18px;line-height:1.6;margin:12px 0 16px;font-weight:500;}
+.blank{display:inline-block;width:80px;height:3px;background:var(--green);border-radius:2px;vertical-align:middle;margin:0 4px;}
+.type-input.correct{border-color:var(--green);background:var(--gl);}
+.type-input.wrong{border-color:var(--rd);background:var(--rl);}
+
+/* GENDER */
+.gender-score{display:flex;gap:10px;margin-bottom:14px;}
+.gscore{flex:1;background:var(--bg2);border-radius:var(--rs);padding:12px;text-align:center;}
+.gscore-n{font-size:24px;font-weight:700;}
+.gscore-l{font-size:11px;color:var(--txt2);margin-top:2px;font-weight:500;}
+.gender-card{background:var(--bg);border:0.5px solid var(--bor);border-radius:var(--r);padding:24px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
+.gender-word{font-size:36px;font-weight:700;text-align:center;margin:16px 0 6px;letter-spacing:-0.5px;}
+.gender-hint{font-size:13px;color:var(--txt2);text-align:center;margin-bottom:18px;}
+.gender-btns{display:flex;gap:10px;justify-content:center;}
+.g-btn{flex:1;max-width:100px;padding:12px 8px;border-radius:var(--rs);border:1.5px solid var(--bor2);background:var(--bg2);font-size:16px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.g-btn:hover:not(:disabled){background:var(--bg3);border-color:var(--green);}
+.g-btn.correct{background:var(--gl);border-color:var(--green);color:var(--gd);}
+.g-btn.wrong{background:var(--rl);border-color:var(--rd);color:var(--rd);}
+.gender-result{text-align:center;font-size:15px;font-weight:700;margin-top:14px;padding:10px;border-radius:var(--rs);}
+.gender-result.ok{color:var(--gd);background:var(--gl);}
+.gender-result.no{color:var(--rd);background:var(--rl);}
