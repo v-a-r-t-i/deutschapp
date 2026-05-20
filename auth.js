@@ -1,52 +1,17 @@
 function switchAuth(t){
-  ['login','signup','forgot'].forEach(x=>{
-    let f=document.getElementById(x+'-form');
-    if(f)f.style.display=x===t?'block':'none';
-  });
-  // Auth tabs only visible on login/signup, not forgot
-  let tabsEl=document.querySelector('.auth-tabs');
-  if(tabsEl)tabsEl.style.display=t==='forgot'?'none':'flex';
-  ['login','signup'].forEach(x=>{
-    let tab=document.getElementById('tab-'+x);
-    if(tab)tab.className='auth-tab'+(x===t?' active':'');
-  });
+  ['login','signup'].forEach(x=>{document.getElementById(x+'-form').style.display=x===t?'block':'none';document.getElementById('tab-'+x).className='auth-tab'+(x===t?' active':'');});
   document.getElementById('auth-err').textContent='';
-  document.getElementById('auth-err').style.color='';
-}
-function togglePass(id,btn){
-  let inp=document.getElementById(id);
-  let show=inp.type==='password';
-  inp.type=show?'text':'password';
-  btn.textContent=show?'🙈':'👁';
-}
-async function doForgotPassword(){
-  let e=document.getElementById('fp-email').value.trim();
-  if(!e){document.getElementById('auth-err').textContent='Enter your email.';return;}
-  let btn=document.getElementById('fp-btn');btn.disabled=true;btn.textContent='Sending...';
-  let{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.href});
-  btn.disabled=false;btn.textContent='Send reset link';
-  if(error){document.getElementById('auth-err').textContent=error.message;return;}
-  document.getElementById('auth-err').style.color='var(--green)';
-  document.getElementById('auth-err').textContent='✓ Reset link sent! Check your email.';
-}
-async function doGoogleSignIn(){
-  let{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
-  if(error){document.getElementById('auth-err').textContent=error.message;}
 }
 async function doLogin(){
   let e=document.getElementById('li-email').value.trim(),p=document.getElementById('li-pass').value;
   if(!e||!p){document.getElementById('auth-err').textContent='Please fill in all fields.';return;}
   let btn=document.getElementById('li-btn');btn.disabled=true;btn.textContent='Signing in...';
+  let{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  btn.disabled=false;btn.textContent='Sign in';
+  if(error){document.getElementById('auth-err').textContent=error.message;return;}
+  // Show logging in message
   document.getElementById('auth-err').style.color='var(--green)';
   document.getElementById('auth-err').textContent='✓ Logging in...';
-  let{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  if(error){
-    btn.disabled=false;btn.textContent='Sign in';
-    document.getElementById('auth-err').style.color='';
-    document.getElementById('auth-err').textContent=error.message;
-    return;
-  }
-  // handleSession called by onAuthStateChange (registered in ui.js after all scripts load)
   if(data?.session)handleSession(data.session);
 }
 async function doSignup(){
@@ -56,7 +21,7 @@ async function doSignup(){
   let btn=document.getElementById('su-btn');btn.disabled=true;btn.textContent='Creating account...';
   let{data,error}=await sb.auth.signUp({email:e,password:p});
   if(error){btn.disabled=false;btn.textContent='Create account';document.getElementById('auth-err').textContent=error.message;return;}
-  if(data.user)await sbUpsert('profiles',{id:data.user.id,email:e,display_name:name,role});
+  if(data.user)await sb.from('profiles').upsert({id:data.user.id,email:e,display_name:name,role});
   btn.disabled=false;btn.textContent='Create account';
   document.getElementById('auth-err').textContent='Account created! Sign in now.';
   switchAuth('login');
@@ -70,33 +35,34 @@ async function doSignout(){
 }
 
 async function handleSession(session){
-  let dbg=document.getElementById('auth-err');
   try{
     if(session?.user){
-      if(dbg){dbg.style.color='var(--green)';dbg.textContent='Step 1: got session...';}
       CU=session.user;
       authToken=session.access_token||null;
       if(selCats.size===0)selCats=new Set(Object.keys(DATA));
-      if(dbg)dbg.textContent='Step 2: loading profile...';
+      // Fetch profile with timeout so it never hangs forever
       let p=null;
       try{
-        let res=await Promise.race([
-          sbFetch('profiles','id=eq.'+CU.id+'&limit=1'),
-          new Promise(r=>setTimeout(()=>r(null),2000))
-        ]);
-        p=Array.isArray(res)?res[0]:null;
+        let profilePromise=sb.from('profiles').select('*').eq('id',CU.id).limit(1).then(({data,error})=>({data:data?.[0],error}));
+        let timeoutPromise=new Promise(r=>setTimeout(()=>r({data:null}),3000));
+        let{data}=await Promise.race([profilePromise,timeoutPromise]);
+        p=data;
       }catch(e){console.warn('Profile fetch failed:',e);}
       CP=p;
-      if(dbg)dbg.textContent='Step 3: showing app...';
-      let isTeacher=p?.role==='teacher';
-      document.getElementById('loading-screen').style.display='none';
-      document.getElementById('auth-screen').style.display='none';
-      document.getElementById('main-app').style.display=isTeacher?'none':'block';
-      document.getElementById('teacher-app').style.display=isTeacher?'block':'none';
-      if(!isTeacher){
+      if(p?.role==='teacher'){
+        document.getElementById('loading-screen').style.display='none';
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('main-app').style.display='none';
+        document.getElementById('teacher-app').style.display='block';
+        loadTeacher();
+      }else{
+        document.getElementById('loading-screen').style.display='none';
+        document.getElementById('auth-screen').style.display='none';
+        document.getElementById('main-app').style.display='block';
+        document.getElementById('teacher-app').style.display='none';
         let ub=document.getElementById('user-btn');if(ub)ub.textContent=CP?.display_name||CU.email;
         loadProg();
-      }else{loadTeacher();}
+      }
     }else{
       document.getElementById('loading-screen').style.display='none';
       document.getElementById('auth-screen').style.display='flex';
@@ -105,7 +71,6 @@ async function handleSession(session){
     }
   }catch(err){
     console.error('Auth error:',err);
-    if(dbg){dbg.style.color='red';dbg.textContent='Error: '+err.message;}
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('main-app').style.display='none';
@@ -113,44 +78,33 @@ async function handleSession(session){
   }
 }
 
-// ── PASSWORD RESET HANDLER ────────────────────────────
-// Supabase redirects back with #access_token=...&type=recovery
-(function checkResetToken(){
-  let hash=window.location.hash;
-  if(hash.includes('type=recovery')){
-    // Show reset password form instead of normal login
-    document.addEventListener('DOMContentLoaded',()=>{
-      let authCard=document.querySelector('.auth-card');
-      if(!authCard)return;
-      authCard.innerHTML=`
-        <div class="auth-logo">🇩🇪</div>
-        <div class="auth-title">Set New Password</div>
-        <div class="auth-sub">Choose a new password for your account</div>
-        <div class="field" style="margin-top:20px">
-          <label>New Password (min 6 chars)</label>
-          <div class="pass-wrap"><input type="password" id="np-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('np-pass',this)" tabindex="-1">👁</button></div>
-        </div>
-        <button class="auth-btn" id="np-btn" onclick="doSetNewPassword()">Set New Password</button>
-        <div class="auth-err" id="auth-err"></div>
-      `;
-      document.getElementById('auth-screen').style.display='flex';
-      document.getElementById('loading-screen').style.display='none';
-    });
+// Use getSession first (instant, from cache), then listen for changes
+// Add timeout fallback in case getSession hangs
+// Initial session check with fallback timeout
+let initialCheckDone=false;
+setTimeout(()=>{
+  if(!initialCheckDone){
+    initialCheckDone=true;
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
   }
-})();
+},3000);
 
-async function doSetNewPassword(){
-  let p=document.getElementById('np-pass').value;
-  if(!p||p.length<6){document.getElementById('auth-err').textContent='Password must be at least 6 characters.';return;}
-  let btn=document.getElementById('np-btn');btn.disabled=true;btn.textContent='Saving...';
-  let{error}=await sb.auth.updateUser({password:p});
-  if(error){btn.disabled=false;btn.textContent='Set New Password';document.getElementById('auth-err').textContent=error.message;return;}
-  document.getElementById('auth-err').style.color='var(--green)';
-  document.getElementById('auth-err').textContent='✓ Password updated! Signing you in...';
-  // Clear hash and let onAuthStateChange log them in
-  window.history.replaceState(null,'',window.location.pathname);
-}
-// Auth is initialized in ui.js after all scripts load
+// Always handle auth state changes (login, logout, token refresh)
+sb.auth.onAuthStateChange((_ev,session)=>{
+  initialCheckDone=true;
+  handleSession(session);
+});
+
+// Also check immediately on load
+sb.auth.getSession().then(({data:{session}})=>{
+  initialCheckDone=true;
+  handleSession(session);
+}).catch(()=>{
+  initialCheckDone=true;
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+});
 
 // ── DAILY SUMMARY ─────────────────────────────────────
 let summaryShown=false;

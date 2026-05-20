@@ -71,12 +71,12 @@ function togCat(cat){
 }
 function phFull(item){return item.phrases.map(p=>`<div class="phrase-block"><div class="phrase-row"><div><div class="phrase-de">${bw(p[0],item.de)}</div><div class="phrase-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join('');}
 function phDE(item){return item.phrases.map(p=>`<div class="phrase-block"><div class="phrase-row"><div class="phrase-de">${bw(p[0],item.de)}</div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join('');}
-function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answerMode==='choice'?' active':''}" onclick="answerMode='choice';setTab(tab)">4 Options</button><button class="mode-btn${answerMode==='type'?' active':''}" onclick="answerMode='type';setTab(tab)">Type it</button><button class="mode-btn${answerMode==='mistakes'?' active':''}" onclick="answerMode='mistakes';buildQ();rFlash()">⚠️ Hard Words</button></div>`;}
+function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answerMode==='choice'?' active':''}" onclick="answerMode='choice';setTab(tab)">4 Options</button><button class="mode-btn${answerMode==='type'?' active':''}" onclick="answerMode='type';setTab(tab)">Type it</button><button class="mode-btn${answerMode==='mistakes'?' active':''}" onclick="answerMode='mistakes';buildQ();rFlash()">Mistakes only</button></div>`;}
 
 // ── TABS ─────────────────────────────────────────────
 function setTab(t){
   tab=t;
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','listen','quiz','fill','gender','browse','plan','social'][i]===t));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','listen','quiz','fill','gender','browse','plan'][i]===t));
   updAll();
   if(t==='flash'){buildQ();rFlash();}
   else if(t==='listen'){buildListenQ();rListen();}
@@ -84,7 +84,7 @@ function setTab(t){
   else if(t==='fill'){blankSt=null;rFill();}
   else if(t==='gender'){buildGQ();rGender();}
   else if(t==='browse')rBrowse();
-  else if(t==='social')rSocial();
+  else if(t==='ranks')rRanks();
   else rPlan();
 }
 
@@ -138,17 +138,7 @@ function rFlash(){
     <div class="sm2-note" id="sm2n"></div>
   </div>`;
 }
-function revCard(){
-  if(revealed)return;
-  revealed=true;
-  let card=document.querySelector('.card');
-  if(card){card.classList.add('flipping');setTimeout(()=>card.classList.remove('flipping'),150);}
-  document.getElementById('fc-f').style.display='none';
-  document.getElementById('fc-b').style.display='block';
-  document.getElementById('fc-h').style.display='none';
-  document.getElementById('fc-btns').style.display='block';
-  document.getElementById('ai-area').style.display='none';
-}
+function revCard(){if(revealed)return;revealed=true;document.getElementById('fc-f').style.display='none';document.getElementById('fc-b').style.display='block';document.getElementById('fc-h').style.display='none';document.getElementById('fc-btns').style.display='block';document.getElementById('ai-area').style.display='none';}
 function rate(q){
   let item=queue[qIdx],r=s2r(item.de,q);
   sessionReviewed++;
@@ -353,21 +343,19 @@ function togDay(day){let b=document.getElementById('db'+day),ch=document.getElem
 function togDone(day){if(doneDays.has(day))doneDays.delete(day);else doneDays.add(day);rPlan();}
 
 // ── RANKS ────────────────────────────────────────────
-// ── SOCIAL (Leaderboard + Friends + Race) ─────────────
-function rSocial(){
+function rRanks(){
   let c=document.getElementById('content');
-  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race']];
-  let html=statsH()+`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
-  if(ranksSubTab==='leaderboard')html+=rRanksGlobal();
-  else if(ranksSubTab==='friends')html+=rFriendsUI();
-  else html+=rRaceUI();
+  let tabs=['global','friends','race'];
+  let labels=['🏆 Ranks','👥 Friends','⚡ Race'];
+  let html=statsH()+`<div style="display:flex;gap:6px;margin-bottom:16px">${tabs.map((t,i)=>`<button class="mode-btn${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rRanks()">${labels[i]}</button>`).join('')}</div>`;
+  if(ranksSubTab==='global'){html+=rRanksGlobal();}
+  else if(ranksSubTab==='friends'){html+=rFriendsUI();}
+  else{html+=rRaceUI();}
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
   if(ranksSubTab==='race'&&raceSt&&!raceSt.done)setTimeout(startRaceTimer,50);
   if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
-// Keep rRanks as alias so teacher dashboard still works
-function rRanks(){ranksSubTab='leaderboard';rSocial();}
 
 function rRanksGlobal(){
   let lvl=getLevelInfo(xpTotal);
@@ -751,58 +739,3 @@ function showXPInfo(){
 
 
 speechSynthesis.onvoiceschanged=()=>{};
-if(typeof appReadyResolve==='function')appReadyResolve();
-
-// ── AUTH INIT (runs after all scripts loaded) ─────────
-let initialCheckDone=false;
-setTimeout(()=>{
-  if(!initialCheckDone){
-    initialCheckDone=true;
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('auth-screen').style.display='flex';
-  }
-},4000);
-
-sb.auth.onAuthStateChange((_ev,session)=>{
-  initialCheckDone=true;
-  handleSession(session);
-});
-
-sb.auth.getSession().then(({data:{session}})=>{
-  initialCheckDone=true;
-  handleSession(session);
-}).catch(()=>{
-  initialCheckDone=true;
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-});
-
-// ── KEYBOARD SHORTCUTS ────────────────────────────────
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
-  if(tab==='flash'){
-    if(e.code==='Space'){e.preventDefault();if(!revealed)revCard();else rate(4);}
-    if(e.key==='1')rate(1);
-    if(e.key==='2')rate(3);
-    if(e.key==='3')rate(4);
-    if(e.key==='4')rate(5);
-  }
-  if(tab==='quiz'||tab==='listen'){
-    let opts=document.querySelectorAll('.q-opt');
-    if(opts.length){
-      let idx=parseInt(e.key)-1;
-      if(idx>=0&&idx<opts.length&&!opts[idx].disabled)opts[idx].click();
-    }
-  }
-});
-
-// ── CONFETTI ──────────────────────────────────────────
-function confetti(){
-  let colors=['#1D9E75','#7C3AED','#F0A020','#D85A30','#0C447C'];
-  for(let i=0;i<60;i++){
-    let el=document.createElement('div');
-    el.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}vw;width:8px;height:8px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};pointer-events:none;z-index:9999;animation:confettiFall ${1.5+Math.random()}s linear forwards;animation-delay:${Math.random()*0.5}s`;
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),2500);
-  }
-}

@@ -92,9 +92,7 @@ async function markStudied(){
   updAll();
 }
 function addXP(amt,type){
-  let prevLvl=getLevelInfo(xpTotal).lvl;
   xpTotal+=amt;sessionXP+=amt;
-  if(getLevelInfo(xpTotal).lvl>prevLvl&&typeof confetti==='function')confetti();
   markStudied();
   // Always save xpTotal immediately on every gain
   if(CU){
@@ -119,8 +117,9 @@ function addXP(amt,type){
   document.head.appendChild(style);
   setTimeout(()=>pop.remove(),1500);
   // Level up check
+  let prevLvl=getLevelInfo(xpTotal-amt);
   let newLvl=getLevelInfo(xpTotal);
-  if(newLvl.lvl>prevLvl){
+  if(newLvl.lvl>prevLvl.lvl){
     let lp=document.createElement('div');
     lp.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--xp);color:#fff;padding:20px 32px;border-radius:var(--r);font-size:18px;font-weight:700;z-index:300;text-align:center;';
     lp.innerHTML='⭐ Level Up!<br><span style="font-size:14px;font-weight:400">'+newLvl.name+'</span>';
