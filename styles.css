@@ -182,3 +182,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-sm-green:disabled{opacity:0.5;cursor:default;}
 @keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
 @keyframes fadeUp{0%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-40px)}}
+
+/* BROWSE */
+.list-sec{margin-bottom:24px;}
+.list-cat-hdr{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:0.8px;padding:8px 0;border-bottom:0.5px solid var(--bor);margin-bottom:4px;}
+.list-word{border-bottom:0.5px solid var(--bor);}
+.list-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 0;cursor:pointer;}
+.list-body{display:none;padding-bottom:12px;}
+.list-body.open{display:block;}
+.lw-left{display:flex;align-items:center;gap:8px;}
+.lw-art{font-size:13px;color:var(--txt2);font-style:italic;}
+.lw-de{font-size:15px;font-weight:700;}
+.lw-en{font-size:13px;color:var(--txt2);}
+.lw-known{color:var(--green);font-weight:700;font-size:13px;}
+.lp-de{font-size:13px;font-weight:500;margin-bottom:2px;}
+.lp-en{font-size:12px;color:var(--txt2);}
+.mark-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--bor2);background:var(--bg2);color:var(--txt2);cursor:pointer;margin-top:6px;}
+.mark-btn.known{background:var(--gl);color:var(--gd);border-color:var(--green);}
+.refresh-phrase{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--bor2);background:var(--bg2);color:var(--txt2);cursor:pointer;}
+
+/* PLAN */
+.plan-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+
+/* SIDEBAR CATEGORIES */
+.sw-cat{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:7px 0;border-bottom:0.5px solid var(--bor);}
+.sw-cat-name{color:var(--txt2);}
+.sw-cat-pct{font-weight:600;color:var(--green);}
