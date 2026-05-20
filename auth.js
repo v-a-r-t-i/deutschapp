@@ -37,13 +37,16 @@ async function doLogin(){
   let e=document.getElementById('li-email').value.trim(),p=document.getElementById('li-pass').value;
   if(!e||!p){document.getElementById('auth-err').textContent='Please fill in all fields.';return;}
   let btn=document.getElementById('li-btn');btn.disabled=true;btn.textContent='Signing in...';
-  let{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
-  btn.disabled=false;btn.textContent='Sign in';
-  if(error){document.getElementById('auth-err').textContent=error.message;return;}
-  // Show logging in message
   document.getElementById('auth-err').style.color='var(--green)';
   document.getElementById('auth-err').textContent='✓ Logging in...';
-  if(data?.session)handleSession(data.session);
+  let{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  if(error){
+    btn.disabled=false;btn.textContent='Sign in';
+    document.getElementById('auth-err').style.color='';
+    document.getElementById('auth-err').textContent=error.message;
+    return;
+  }
+  // Don't call handleSession here — onAuthStateChange will fire and handle it
 }
 async function doSignup(){
   let name=document.getElementById('su-name').value.trim(),e=document.getElementById('su-email').value.trim(),p=document.getElementById('su-pass').value,role=document.getElementById('su-role').value;
@@ -109,7 +112,43 @@ async function handleSession(session){
   }
 }
 
-// Use getSession first (instant, from cache), then listen for changes
+// ── PASSWORD RESET HANDLER ────────────────────────────
+// Supabase redirects back with #access_token=...&type=recovery
+(function checkResetToken(){
+  let hash=window.location.hash;
+  if(hash.includes('type=recovery')){
+    // Show reset password form instead of normal login
+    document.addEventListener('DOMContentLoaded',()=>{
+      let authCard=document.querySelector('.auth-card');
+      if(!authCard)return;
+      authCard.innerHTML=`
+        <div class="auth-logo">🇩🇪</div>
+        <div class="auth-title">Set New Password</div>
+        <div class="auth-sub">Choose a new password for your account</div>
+        <div class="field" style="margin-top:20px">
+          <label>New Password (min 6 chars)</label>
+          <div class="pass-wrap"><input type="password" id="np-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('np-pass',this)" tabindex="-1">👁</button></div>
+        </div>
+        <button class="auth-btn" id="np-btn" onclick="doSetNewPassword()">Set New Password</button>
+        <div class="auth-err" id="auth-err"></div>
+      `;
+      document.getElementById('auth-screen').style.display='flex';
+      document.getElementById('loading-screen').style.display='none';
+    });
+  }
+})();
+
+async function doSetNewPassword(){
+  let p=document.getElementById('np-pass').value;
+  if(!p||p.length<6){document.getElementById('auth-err').textContent='Password must be at least 6 characters.';return;}
+  let btn=document.getElementById('np-btn');btn.disabled=true;btn.textContent='Saving...';
+  let{error}=await sb.auth.updateUser({password:p});
+  if(error){btn.disabled=false;btn.textContent='Set New Password';document.getElementById('auth-err').textContent=error.message;return;}
+  document.getElementById('auth-err').style.color='var(--green)';
+  document.getElementById('auth-err').textContent='✓ Password updated! Signing you in...';
+  // Clear hash and let onAuthStateChange log them in
+  window.history.replaceState(null,'',window.location.pathname);
+}
 // Add timeout fallback in case getSession hangs
 // Initial session check with fallback timeout
 let initialCheckDone=false;
