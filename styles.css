@@ -276,3 +276,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .gender-result{text-align:center;font-size:15px;font-weight:700;margin-top:14px;padding:10px;border-radius:var(--rs);}
 .gender-result.ok{color:var(--gd);background:var(--gl);}
 .gender-result.no{color:var(--rd);background:var(--rl);}
+
+/* Highlighted word in phrases */
+.hw{color:var(--green);font-weight:700;}
