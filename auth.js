@@ -5,8 +5,60 @@ function togglePass(id,btn){
   btn.textContent=show?'🙈':'👁';
 }
 function switchAuth(t){
-  ['login','signup'].forEach(x=>{document.getElementById(x+'-form').style.display=x===t?'block':'none';document.getElementById('tab-'+x).className='auth-tab'+(x===t?' active':'');});
+  ['login','signup','forgot'].forEach(x=>{
+    let f=document.getElementById(x+'-form');
+    if(f)f.style.display=x===t?'block':'none';
+  });
+  let tabsEl=document.querySelector('.auth-tabs');
+  if(tabsEl)tabsEl.style.display=t==='forgot'?'none':'flex';
+  ['login','signup'].forEach(x=>{
+    let tab=document.getElementById('tab-'+x);
+    if(tab)tab.className='auth-tab'+(x===t?' active':'');
+  });
   document.getElementById('auth-err').textContent='';
+  document.getElementById('auth-err').style.color='';
+}
+
+async function doForgotPassword(){
+  let e=document.getElementById('fp-email').value.trim();
+  if(!e){document.getElementById('auth-err').textContent='Please enter your email.';return;}
+  let btn=document.getElementById('fp-btn');btn.disabled=true;btn.textContent='Sending...';
+  let{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.href});
+  btn.disabled=false;btn.textContent='Send reset link';
+  if(error){document.getElementById('auth-err').textContent=error.message;return;}
+  document.getElementById('auth-err').style.color='var(--green)';
+  document.getElementById('auth-err').textContent='✓ Reset link sent! Check your inbox.';
+}
+
+// Handle password reset redirect (Supabase adds #access_token to URL)
+if(window.location.hash.includes('type=recovery')){
+  document.addEventListener('DOMContentLoaded',()=>{
+    let card=document.querySelector('.auth-card');
+    if(!card)return;
+    card.innerHTML=`
+      <div class="auth-logo">🇩🇪</div>
+      <div class="auth-title">Set New Password</div>
+      <div class="auth-sub">Choose a new password for your account</div>
+      <div class="field" style="margin-top:20px">
+        <label>New Password (min 6 chars)</label>
+        <div class="pass-wrap"><input type="password" id="np-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('np-pass',this)" tabindex="-1">👁</button></div>
+      </div>
+      <button class="auth-btn" id="np-btn" onclick="doSetNewPassword()">Set New Password</button>
+      <div class="auth-err" id="auth-err"></div>`;
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('loading-screen').style.display='none';
+  });
+}
+
+async function doSetNewPassword(){
+  let p=document.getElementById('np-pass').value;
+  if(!p||p.length<6){document.getElementById('auth-err').textContent='Min 6 characters.';return;}
+  let btn=document.getElementById('np-btn');btn.disabled=true;btn.textContent='Saving...';
+  let{error}=await sb.auth.updateUser({password:p});
+  if(error){btn.disabled=false;btn.textContent='Set New Password';document.getElementById('auth-err').textContent=error.message;return;}
+  document.getElementById('auth-err').style.color='var(--green)';
+  document.getElementById('auth-err').textContent='✓ Password updated! Signing you in...';
+  window.history.replaceState(null,'',window.location.pathname);
 }
 async function doLogin(){
   let e=document.getElementById('li-email').value.trim(),p=document.getElementById('li-pass').value;

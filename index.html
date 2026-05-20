@@ -38,9 +38,16 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
       <div class="auth-tab" id="tab-signup" onclick="switchAuth('signup')">Sign up</div>
     </div>
     <div id="login-form">
-      <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><div class="pass-wrap"><input type="password" id="li-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('li-pass',this)" tabindex="-1">👁</button></div></div>
+      <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field"><label>Password</label><div class="pass-wrap"><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePass('li-pass',this)" tabindex="-1">👁</button></div></div>
       <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign in</button>
+      <div style="text-align:center;margin-top:12px"><button class="link-btn" onclick="switchAuth('forgot')">Forgot password?</button></div>
+    </div>
+    <div id="forgot-form" style="display:none">
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:16px;text-align:center">Enter your email and we'll send a reset link.</div>
+      <div class="field"><label>Email</label><input type="email" id="fp-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgotPassword()"></div>
+      <button class="auth-btn" id="fp-btn" onclick="doForgotPassword()">Send reset link</button>
+      <div style="text-align:center;margin-top:12px"><button class="link-btn" onclick="switchAuth('login')">← Back to sign in</button></div>
     </div>
     <div id="signup-form" style="display:none">
       <div class="field"><label>Your name (shown to teacher)</label><input type="text" id="su-name" placeholder="e.g. Ana"></div>
