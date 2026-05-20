@@ -361,10 +361,11 @@ function rSocial(){
   else html+=rRaceUI();
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
-  if(ranksSubTab==='race'&&raceSt&&!raceSt.done)setTimeout(startRaceTimer,50);
+  if(ranksSubTab==='race'&&raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
   if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
 function rRanks(){ranksSubTab='leaderboard';rSocial();}
+function raceNav(){ranksSubTab='race';rSocial();}
 
 function rRanksGlobal(){
   let lvl=getLevelInfo(xpTotal);
@@ -591,7 +592,7 @@ async function startRaceAsHost(){
   });
   raceSt.waiting=false;
   raceSt.startTime=Date.now();
-  rRanks();
+  raceNav();
 }
 
 function loadRaceRoom(){}
@@ -607,7 +608,7 @@ async function createRace(){
   if(!res){if(statusEl){statusEl.textContent='Error creating room. Try again.';statusEl.style.color='red';}return;}
   let savedRoom=(Array.isArray(res)&&res[0])||{...room,id:code};
   raceSt={room:savedRoom,words,idx:0,score:0,startTime:null,done:false,isCreator:true,waiting:true};
-  rRanks();
+  raceNav();
 }
 
 async function joinRace(){
@@ -620,7 +621,7 @@ async function joinRace(){
   let words=JSON.parse(room.words);
   raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:true};
   // Show waiting screen, poll for host to start
-  rRanks();
+  raceNav();
   pollRaceStart(room.id||room.code, code);
 }
 
@@ -630,7 +631,7 @@ async function pollRaceStart(roomId, code){
   if(res?.[0]?.status==='active'){
     raceSt.waiting=false;
     raceSt.startTime=Date.now();
-    rRanks();
+    raceNav();
     return;
   }
   raceSt.pollTimer=setTimeout(()=>pollRaceStart(roomId,code),2000);
@@ -696,7 +697,7 @@ function ansRace(chosen,correct,btn){
     document.body.appendChild(badge);
     setTimeout(()=>badge.remove(),800);
   }
-  setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;rRanks();}},800);
+  setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;raceNav();}},800);
 }
 
 async function finishRace(){
@@ -720,7 +721,7 @@ function rRaceResults(){
       <div style="font-size:13px;color:var(--txt2)">${pct}% efficiency · ${r.words.length} words</div>
     </div>
     <div id="race-comparison"><div style="text-align:center;color:var(--txt2);font-size:13px">Loading opponent results...</div></div>
-    <button class="btn-next" style="margin-top:16px" onclick="raceSt=null;rRanks()">Race Again</button>
+    <button class="btn-next" style="margin-top:16px" onclick="raceSt=null;raceNav()">Race Again</button>
   </div>`;
   setTimeout(async()=>{
     let res=await sbFetch('race_results','room_id=eq.'+roomId+'&order=score.desc');
