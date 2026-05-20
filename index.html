@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '4.5';
+const APP_VERSION = '5.0';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -33,21 +33,39 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
     <div class="auth-title">Deutsch Lernen</div>
     <div class="auth-sub">Sign in to save your progress across all devices</div>
     <div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:-16px;margin-bottom:16px" id="ver-display">v4.4</div>
+    <button class="google-btn" onclick="doGoogleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div class="auth-divider"><span>or</span></div>
     <div class="auth-tabs">
       <div class="auth-tab active" id="tab-login" onclick="switchAuth('login')">Sign in</div>
       <div class="auth-tab" id="tab-signup" onclick="switchAuth('signup')">Sign up</div>
     </div>
     <div id="login-form">
-      <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="••••••••"></div>
+      <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field">
+        <label>Password</label>
+        <div class="pass-wrap"><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"><button class="eye-btn" onclick="togglePass('li-pass',this)" tabindex="-1">👁</button></div>
+      </div>
       <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign in</button>
+      <div style="text-align:center;margin-top:12px"><button class="link-btn" onclick="switchAuth('forgot')">Forgot password?</button></div>
     </div>
     <div id="signup-form" style="display:none">
       <div class="field"><label>Your name (shown to teacher)</label><input type="text" id="su-name" placeholder="e.g. Ana"></div>
       <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password (min 6 chars)</label><input type="password" id="su-pass" placeholder="••••••••"></div>
+      <div class="field">
+        <label>Password (min 6 chars)</label>
+        <div class="pass-wrap"><input type="password" id="su-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('su-pass',this)" tabindex="-1">👁</button></div>
+      </div>
       <div class="field"><label>I am a...</label><select id="su-role"><option value="student">Student</option><option value="teacher">Teacher</option></select></div>
       <button class="auth-btn" id="su-btn" onclick="doSignup()">Create account</button>
+    </div>
+    <div id="forgot-form" style="display:none">
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;text-align:center">Enter your email and we'll send a reset link.</div>
+      <div class="field"><label>Email</label><input type="email" id="fp-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgotPassword()"></div>
+      <button class="auth-btn" id="fp-btn" onclick="doForgotPassword()">Send reset link</button>
+      <div style="text-align:center;margin-top:12px"><button class="link-btn" onclick="switchAuth('login')">← Back to sign in</button></div>
     </div>
     <div class="auth-err" id="auth-err"></div>
   </div>
@@ -103,7 +121,7 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
         <div class="tab" onclick="setTab('gender')">Gender</div>
         <div class="tab" onclick="setTab('browse')">Browse</div>
         <div class="tab" onclick="setTab('plan')">Plan</div>
-        <div class="tab" onclick="setTab('ranks')">Ranks</div>
+        <div class="tab" onclick="setTab('social')">Social</div>
       </div>
       <div class="content" id="content"><div style="text-align:center;padding:60px;color:var(--txt2)">Loading...</div></div>
     </div>

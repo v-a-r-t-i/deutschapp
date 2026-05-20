@@ -92,7 +92,9 @@ async function markStudied(){
   updAll();
 }
 function addXP(amt,type){
+  let prevLvl=getLevelInfo(xpTotal).lvl;
   xpTotal+=amt;sessionXP+=amt;
+  if(getLevelInfo(xpTotal).lvl>prevLvl&&typeof confetti==='function')confetti();
   markStudied();
   // Always save xpTotal immediately on every gain
   if(CU){

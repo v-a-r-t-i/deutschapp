@@ -1,6 +1,32 @@
 function switchAuth(t){
-  ['login','signup'].forEach(x=>{document.getElementById(x+'-form').style.display=x===t?'block':'none';document.getElementById('tab-'+x).className='auth-tab'+(x===t?' active':'');});
+  ['login','signup','forgot'].forEach(x=>{
+    let f=document.getElementById(x+'-form');
+    let tab=document.getElementById('tab-'+x);
+    if(f)f.style.display=x===t?'block':'none';
+    if(tab)tab.className='auth-tab'+(x===t?' active':'');
+  });
   document.getElementById('auth-err').textContent='';
+  document.getElementById('auth-err').style.color='';
+}
+function togglePass(id,btn){
+  let inp=document.getElementById(id);
+  let show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.textContent=show?'🙈':'👁';
+}
+async function doForgotPassword(){
+  let e=document.getElementById('fp-email').value.trim();
+  if(!e){document.getElementById('auth-err').textContent='Enter your email.';return;}
+  let btn=document.getElementById('fp-btn');btn.disabled=true;btn.textContent='Sending...';
+  let{error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:window.location.href});
+  btn.disabled=false;btn.textContent='Send reset link';
+  if(error){document.getElementById('auth-err').textContent=error.message;return;}
+  document.getElementById('auth-err').style.color='var(--green)';
+  document.getElementById('auth-err').textContent='✓ Reset link sent! Check your email.';
+}
+async function doGoogleSignIn(){
+  let{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+  if(error){document.getElementById('auth-err').textContent=error.message;}
 }
 async function doLogin(){
   let e=document.getElementById('li-email').value.trim(),p=document.getElementById('li-pass').value;
