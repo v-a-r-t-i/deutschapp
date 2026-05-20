@@ -541,7 +541,7 @@ async function createRace(){
     </div>
     <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="raceSt.waiting=false;raceSt.startTime=Date.now();rRanks()">▶ Start Race</button>
     <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
-  </div>`;words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:true};
+  </div>`;
   rRanks();
 }
 
