@@ -96,14 +96,17 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
         </div>
       </div>
       <div class="tabs">
-        <div class="tab active" onclick="setTab('flash')">Flash</div>
-        <div class="tab" onclick="setTab('listen')">Listen</div>
-        <div class="tab" onclick="setTab('quiz')">Quiz</div>
-        <div class="tab" onclick="setTab('fill')">Fill-in</div>
-        <div class="tab" onclick="setTab('gender')">Gender</div>
+        <div class="tab active" onclick="setTab(lastStudyTab||'flash')">Study</div>
         <div class="tab" onclick="setTab('browse')">Browse</div>
         <div class="tab" onclick="setTab('plan')">Plan</div>
         <div class="tab" onclick="setTab('social')">Social</div>
+      </div>
+      <div class="study-modes" id="study-modes" style="display:none">
+        <div class="mode-pill active" id="pill-flash" onclick="setStudyTab('flash')">Flash</div>
+        <div class="mode-pill" id="pill-listen" onclick="setStudyTab('listen')">Listen</div>
+        <div class="mode-pill" id="pill-quiz" onclick="setStudyTab('quiz')">Quiz</div>
+        <div class="mode-pill" id="pill-fill" onclick="setStudyTab('fill')">Fill-in</div>
+        <div class="mode-pill" id="pill-gender" onclick="setStudyTab('gender')">Gender</div>
       </div>
       <div class="content" id="content"><div style="text-align:center;padding:60px;color:var(--txt2)">Loading...</div></div>
     </div>

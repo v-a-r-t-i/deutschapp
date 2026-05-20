@@ -74,9 +74,24 @@ function phDE(item){return item.phrases.map(p=>`<div class="phrase-block"><div c
 function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answerMode==='choice'?' active':''}" onclick="answerMode='choice';setTab(tab)">4 Options</button><button class="mode-btn${answerMode==='type'?' active':''}" onclick="answerMode='type';setTab(tab)">Type it</button><button class="mode-btn${answerMode==='mistakes'?' active':''}" onclick="answerMode='mistakes';buildQ();rFlash()">⚠️ Hard Words</button></div>`;}
 
 // ── TABS ─────────────────────────────────────────────
+let lastStudyTab='flash';
+const studyTabs=['flash','listen','quiz','fill','gender'];
 function setTab(t){
   tab=t;
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','listen','quiz','fill','gender','browse','plan','social'][i]===t));
+  let isStudy=studyTabs.includes(t);
+  if(isStudy)lastStudyTab=t;
+  // Update main tabs
+  document.querySelectorAll('.tab').forEach((b,i)=>{
+    let names=['study','browse','plan','social'];
+    b.classList.toggle('active',names[i]===(isStudy?'study':t));
+  });
+  // Show/hide study mode pills
+  let sm=document.getElementById('study-modes');
+  if(sm)sm.style.display=isStudy?'flex':'none';
+  // Update active pill
+  if(isStudy){
+    document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.id==='pill-'+t));
+  }
   updAll();
   if(t==='flash'){buildQ();rFlash();}
   else if(t==='listen'){buildListenQ();rListen();}
@@ -87,6 +102,7 @@ function setTab(t){
   else if(t==='social')rSocial();
   else rPlan();
 }
+function setStudyTab(t){setTab(t);}
 
 // ── FLASH ─────────────────────────────────────────────
 function buildQ(){
