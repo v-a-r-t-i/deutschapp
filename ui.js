@@ -76,7 +76,7 @@ function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answ
 // ── TABS ─────────────────────────────────────────────
 function setTab(t){
   tab=t;
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','listen','quiz','fill','gender','browse','plan'][i]===t));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['flash','listen','quiz','fill','gender','browse','plan','social'][i]===t));
   updAll();
   if(t==='flash'){buildQ();rFlash();}
   else if(t==='listen'){buildListenQ();rListen();}
@@ -84,7 +84,7 @@ function setTab(t){
   else if(t==='fill'){blankSt=null;rFill();}
   else if(t==='gender'){buildGQ();rGender();}
   else if(t==='browse')rBrowse();
-  else if(t==='ranks')rRanks();
+  else if(t==='social')rSocial();
   else rPlan();
 }
 
@@ -343,19 +343,20 @@ function togDay(day){let b=document.getElementById('db'+day),ch=document.getElem
 function togDone(day){if(doneDays.has(day))doneDays.delete(day);else doneDays.add(day);rPlan();}
 
 // ── RANKS ────────────────────────────────────────────
-function rRanks(){
+// ── SOCIAL ────────────────────────────────────────────
+function rSocial(){
   let c=document.getElementById('content');
-  let tabs=['global','friends','race'];
-  let labels=['🏆 Ranks','👥 Friends','⚡ Race'];
-  let html=statsH()+`<div style="display:flex;gap:6px;margin-bottom:16px">${tabs.map((t,i)=>`<button class="mode-btn${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rRanks()">${labels[i]}</button>`).join('')}</div>`;
-  if(ranksSubTab==='global'){html+=rRanksGlobal();}
-  else if(ranksSubTab==='friends'){html+=rFriendsUI();}
-  else{html+=rRaceUI();}
+  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race']];
+  let html=statsH()+`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
+  if(ranksSubTab==='leaderboard')html+=rRanksGlobal();
+  else if(ranksSubTab==='friends')html+=rFriendsUI();
+  else html+=rRaceUI();
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
   if(ranksSubTab==='race'&&raceSt&&!raceSt.done)setTimeout(startRaceTimer,50);
   if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
+function rRanks(){ranksSubTab='leaderboard';rSocial();}
 
 function rRanksGlobal(){
   let lvl=getLevelInfo(xpTotal);
