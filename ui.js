@@ -417,7 +417,7 @@ async function loadFriends(){
   if(!CU)return;
   let [fsRes,profRes]=await Promise.all([
     sbFetch('friendships','or=(user_id.eq.'+CU.id+',friend_id.eq.'+CU.id+')'),
-    sbFetch('profiles','select=id,display_name&role=eq.student')
+    sbFetch('profiles','select=id,display_name')
   ]);
   let fs=fsRes||[],allProfs=profRes||[];
   // Pending incoming
@@ -502,8 +502,21 @@ async function acceptFriend(fsId){
 
 // ── RACE ───────────────────────────────────────────────
 function rRaceUI(){
-  if(raceSt&&!raceSt.done&&!raceSt.waiting)return rRaceActive();
   if(raceSt&&raceSt.done)return rRaceResults();
+  if(raceSt&&raceSt.waiting){
+    let code=raceSt.room.code||'????';
+    return `<div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race Room Created!</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Share this code with your friend, then start when ready</div>
+      <div style="text-align:center;margin:24px 0">
+        <div style="font-size:52px;font-weight:800;letter-spacing:14px;color:var(--green)">${code}</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:10px">They enter this code to join</div>
+      </div>
+      <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="raceSt.waiting=false;raceSt.startTime=Date.now();rRanks()">▶ Start Race</button>
+      <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
+    </div>`;
+  }
+  if(raceSt&&!raceSt.done)return rRaceActive();
   return `<div>
     <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race</div>
     <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Race a friend — same words, faster = more points!</div>
@@ -517,31 +530,19 @@ function rRaceUI(){
   </div>`;
 }
 
-function loadRaceRoom(){} // placeholder so rRanks doesn't error
+function loadRaceRoom(){}
 
 async function createRace(){
   let statusEl=document.getElementById('race-status');
-  if(statusEl)statusEl.textContent='Creating room...';
-  let words=aw();shuf(words);words=words.slice(0,10);
+  if(statusEl){statusEl.textContent='Creating room...';statusEl.style.color='var(--txt2)';}
+  let words=aw();if(words.length<4)words=Object.values(DATA).flat();
+  shuf(words);words=words.slice(0,10);
   let code=Math.random().toString(36).slice(2,6).toUpperCase();
   let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
   let res=await sbUpsert('race_rooms',room);
-  if(!res){if(statusEl)statusEl.textContent='Error creating room. Try again.';return;}
-  let savedRoom=Array.isArray(res)?res[0]:room;
+  if(!res){if(statusEl){statusEl.textContent='Error creating room. Try again.';statusEl.style.color='red';}return;}
+  let savedRoom=(Array.isArray(res)&&res[0])||{...room,id:code};
   raceSt={room:savedRoom,words,idx:0,score:0,startTime:null,done:false,isCreator:true,waiting:true};
-  // Show code screen
-  let c=document.getElementById('content');
-  let subTabs=document.querySelector('#content').previousElementSibling;
-  c.innerHTML=(c.innerHTML.split('<div id')[0]||'')+`<div>
-    <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race Room Created!</div>
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Share this code with your friend</div>
-    <div style="text-align:center;margin:20px 0">
-      <div style="font-size:48px;font-weight:800;letter-spacing:12px;color:var(--green)">${savedRoom.code||room.code}</div>
-      <div style="font-size:12px;color:var(--txt2);margin-top:8px">They enter this code to join</div>
-    </div>
-    <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="raceSt.waiting=false;raceSt.startTime=Date.now();rRanks()">▶ Start Race</button>
-    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
-  </div>`;
   rRanks();
 }
 
