@@ -341,9 +341,14 @@ function rPlan(){
     <div class="ai-plan-field"><label>Minutes per day</label><input type="number" id="plan-time" placeholder="20" min="5" max="120"></div>
     <div class="ai-plan-field"><label>Categories to focus on (optional)</label><input type="text" id="plan-words" placeholder="e.g. Essen/Trinken, Reisen"></div>
     <button class="ai-gen-btn" id="ai-plan-btn" onclick="genAIPlan()">Generate my plan ✨</button>
-    <div class="ai-result" id="ai-plan-result" style="margin-top:14px"></div>
-  </div>`;
+  </div>
+  <div id="ai-plan-result" style="margin-top:4px"></div>`;
   c.innerHTML=html;
+  // Load saved plan if exists
+  let saved=localStorage.getItem('saved_plan');
+  if(saved){
+    try{renderPlanCards(JSON.parse(saved),document.getElementById('ai-plan-result'));}catch(e){}
+  }
 }
 // ── RANKS ────────────────────────────────────────────
 // ── SOCIAL ────────────────────────────────────────────

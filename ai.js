@@ -35,46 +35,87 @@ async function refreshPhrases(de,blockEl){
 // ── AI PLAN ───────────────────────────────────────────
 async function genAIPlan(){
   let goal=document.getElementById('plan-goal').value.trim();
-  let days=document.getElementById('plan-days').value.trim();
-  let time=document.getElementById('plan-time').value.trim();
-  let words=document.getElementById('plan-words').value.trim();
-  if(!goal){alert('Please describe your goal!');return;}
+  let days=parseInt(document.getElementById('plan-days').value)||7;
+  let time=parseInt(document.getElementById('plan-time').value)||20;
+  let focus=document.getElementById('plan-words').value.trim();
+  if(!goal){alert('Please describe your goal first!');return;}
   let btn=document.getElementById('ai-plan-btn');
   btn.disabled=true;btn.textContent='Generating...';
   let resultEl=document.getElementById('ai-plan-result');
-  resultEl.style.display='block';resultEl.innerHTML='<span class="spinner"></span> Thinking...';
-  let knownCount=known.size;
-  let prompt=`You are a German A1 language learning expert. Create a study plan.
-Student info: knows ${knownCount}/50 words, current streak: ${streakN} days, XP level: ${getLevelInfo(xpTotal).name}
+  resultEl.style.display='block';resultEl.innerHTML='<span class="spinner"></span> Building your plan...';
+  let cats=Object.keys(DATA).join(', ');
+  let today=new Date();
+  let prompt=`You are a German A1 study planner. Return ONLY valid JSON, no markdown, no explanation.
+Student: knows ${known.size} words, streak ${streakN} days, level ${getLevelInfo(xpTotal).name}
 Goal: ${goal}
-Available days: ${days||'7'}
-Study time per day: ${time||'20'} minutes
-Specific words to focus on: ${words||'all categories'}
+Days: ${days}, Minutes/day: ${time}
+Available categories: ${cats}
+Focus: ${focus||'all categories'}
+Today: ${today.toDateString()}
 
-Create a day-by-day plan using these modes: Flash DE, Flash EN, Quiz, Fill-in, Gender, Listen.
-Apply spaced repetition principles. Be specific about which categories to study each day.
-Format as a clear day-by-day plan with time splits. Keep it concise.`;
+Return this exact JSON structure:
+{"title":"${days}-day plan","days":[{"day":1,"date":"${today.toLocaleDateString('en-GB',{weekday:'short',month:'short',day:'numeric'})}","category":"CategoryName","type":"new","totalMin":${time},"newWords":["word1","word2"],"phases":[{"min":10,"mode":"Flash DE","desc":"short description"}],"tip":"one helpful tip"}]}
+
+Rules:
+- "type" is one of: new, review, final
+- "mode" is one of: Flash DE, Flash EN, Quiz, Fill-in, Gender, Listen
+- phases must sum to totalMin
+- newWords should be real German words from the categories
+- generate exactly ${days} day objects
+- date should increment from today
+- tip should be a brief spaced-repetition or memory tip`;
   try{
     let resp=await fetch('https://yngsuxuamhzefkkjsgus.supabase.co/functions/v1/ai-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,messages:[{role:'user',content:prompt}]})
     });
     let data=await resp.json();
-    let txt=data.content?.[0]?.text||'Could not generate plan.';
-    // Render markdown-like formatting
-    let html=txt
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-      .replace(/^#{1,3}\s+(.+)$/gm,'<div style="font-size:14px;font-weight:700;color:var(--txt);margin:14px 0 6px">$1</div>')
-      .replace(/^---+$/gm,'<hr style="border:none;border-top:0.5px solid var(--bor);margin:10px 0">')
-      .replace(/^- (.+)$/gm,'<div style="padding:3px 0 3px 12px;border-left:2px solid var(--green);margin:4px 0;font-size:13px">$1</div>')
-      .replace(/\n/g,'<br>');
-    resultEl.innerHTML=`<div style="background:var(--bg2);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.7;color:var(--txt2)">${html}</div>`;
+    let txt=data.content?.[0]?.text||'{}';
+    let clean=txt.replace(/```json|```/g,'').trim();
+    let plan=JSON.parse(clean);
+    localStorage.setItem('saved_plan',JSON.stringify(plan));
+    renderPlanCards(plan,resultEl);
   }catch(e){
-    resultEl.innerHTML='Error generating plan. Please try again.';
+    resultEl.innerHTML='<div style="color:var(--rd);font-size:13px">Error generating plan. Please try again.</div>';
   }
   btn.disabled=false;btn.textContent='Generate my plan ✨';
+}
+
+function renderPlanCards(plan,container){
+  if(!plan||!plan.days||!plan.days.length){
+    if(container)container.innerHTML='<div style="color:var(--rd);font-size:13px">Could not parse plan. Please try again.</div>';
+    return;
+  }
+  let doneDays=JSON.parse(localStorage.getItem('plan_done')||'[]');
+  let html=`<div style="font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:12px">${plan.title||''}</div>`;
+  plan.days.forEach(d=>{
+    let isDone=doneDays.includes(d.day);
+    let phases=d.phases.map(p=>`<div class="phase-row"><div class="ph-min">${p.min}m</div><div class="ph-mode">${p.mode}</div><div class="ph-desc">${p.desc}</div></div>`).join('');
+    let words=d.newWords?.length?`<div class="sec-lbl">Words to learn</div><div class="chips">${d.newWords.map(w=>`<span class="chip">${w}</span>`).join('')}</div>`:'';
+    let tip=d.tip?`<div class="sec-lbl">Tip</div><div class="sci-box">${d.tip}</div>`:'';
+    let badge=isDone?'<span class="badge badge-g">✓ Done</span>':d.type==='review'?'<span class="badge badge-b">Review</span>':d.type==='final'?'<span class="badge badge-b">Final</span>':'';
+    let dc=isDone?'d':d.type==='review'||d.type==='final'?'r':'';
+    html+=`<div class="day-card"><div class="day-hdr" onclick="this.nextElementSibling.classList.toggle('open');let a=this.querySelector('.day-arr');if(a)a.textContent=this.nextElementSibling.classList.contains('open')?'‹':'›'">
+      <div class="day-num ${dc}">${isDone?'✓':d.day}</div>
+      <div class="day-meta"><div class="day-title">${d.date} — ${d.category||'Review'}</div><div class="day-sub">${d.newWords?.length?d.newWords.length+' words':d.type==='review'?'Full review':'Final test'}</div></div>
+      <div class="day-right">${badge}<div class="day-min">${d.totalMin}m</div><span class="day-arr">›</span></div>
+    </div>
+    <div class="day-body">
+      <div class="sec-lbl">Session plan</div>${phases}${words}${tip}
+      <button class="${isDone?'undone-btn':'done-btn'}" onclick="togglePlanDay(${d.day},this)">${isDone?'Mark as not done':'Mark as done ✓'}</button>
+    </div></div>`;
+  });
+  if(container)container.innerHTML=html;
+}
+
+function togglePlanDay(day,btn){
+  let done=JSON.parse(localStorage.getItem('plan_done')||'[]');
+  let idx=done.indexOf(day);
+  if(idx>=0)done.splice(idx,1);else done.push(day);
+  localStorage.setItem('plan_done',JSON.stringify(done));
+  let plan=JSON.parse(localStorage.getItem('saved_plan')||'null');
+  if(plan)renderPlanCards(plan,document.getElementById('ai-plan-result'));
 }
 
 // ── AUTH ─────────────────────────────────────────────
