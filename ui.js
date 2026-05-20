@@ -739,3 +739,22 @@ function showXPInfo(){
 
 
 speechSynthesis.onvoiceschanged=()=>{};
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if(tab==='flash'){
+    if(e.code==='Space'){e.preventDefault();if(!revealed)revCard();else rate(4);}
+    if(e.key==='1')rate(1);
+    if(e.key==='2')rate(3);
+    if(e.key==='3')rate(4);
+    if(e.key==='4')rate(5);
+  }
+  if(tab==='quiz'||tab==='listen'){
+    let opts=document.querySelectorAll('.q-opt');
+    if(opts.length){
+      let idx=parseInt(e.key)-1;
+      if(idx>=0&&idx<opts.length&&!opts[idx].disabled)opts[idx].click();
+    }
+  }
+});
