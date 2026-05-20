@@ -443,8 +443,8 @@ async function loadFriends(){
   let listEl=document.getElementById('friends-list');
   if(!listEl)return;
   if(!friendIds.length){listEl.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:20px">No friends yet — search for someone above!</div>';return;}
-  let wpRes=await sbFetch('word_progress','?user_id=in.('+friendIds.join(',')+')&select=user_id,known');
-  let skRes=await sbFetch('streaks','?user_id=in.('+friendIds.join(',')+')&select=user_id,xp_total,streak_count');
+  let wpRes=await sbFetch('word_progress','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,known');
+  let skRes=await sbFetch('streaks','user_id=in.('+friendIds.join(',')+')'+'&select=user_id,xp_total,streak_count');
   let wp=wpRes||[],sk=skRes||[];
   let html='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Your friends</div>';
   for(let fid of friendIds){
@@ -505,16 +505,25 @@ function rRaceUI(){
   if(raceSt&&raceSt.done)return rRaceResults();
   if(raceSt&&raceSt.waiting){
     let code=raceSt.room.code||'????';
-    return `<div>
-      <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race Room Created!</div>
-      <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Share this code with your friend, then start when ready</div>
-      <div style="text-align:center;margin:24px 0">
-        <div style="font-size:52px;font-weight:800;letter-spacing:14px;color:var(--green)">${code}</div>
-        <div style="font-size:12px;color:var(--txt2);margin-top:10px">They enter this code to join</div>
-      </div>
-      <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="raceSt.waiting=false;raceSt.startTime=Date.now();rRanks()">▶ Start Race</button>
-      <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
-    </div>`;
+    if(raceSt.isCreator){
+      return `<div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:4px">⚡ Race Room Created!</div>
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:18px">Share this code with your friend, then click Start when they're ready</div>
+        <div style="text-align:center;margin:24px 0">
+          <div style="font-size:52px;font-weight:800;letter-spacing:14px;color:var(--green)">${code}</div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:10px">Friend enters this code to join</div>
+        </div>
+        <button class="btn-next" style="max-width:320px;margin:0 auto;display:block" onclick="startRaceAsHost()">▶ Start Race for Everyone</button>
+        <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:320px;margin:8px auto 0;display:block" onclick="raceSt=null;rRanks()">Cancel</button>
+      </div>`;
+    } else {
+      return `<div style="text-align:center;padding:30px 0">
+        <div style="font-size:36px;margin-bottom:12px">⏳</div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:8px">Waiting for host to start...</div>
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:24px">Room code: <strong style="color:var(--green);letter-spacing:4px">${code}</strong></div>
+        <button class="btn-next" style="background:var(--bg3);color:var(--txt2);max-width:200px;margin:0 auto;display:block" onclick="clearTimeout(raceSt.pollTimer);raceSt=null;rRanks()">Leave Room</button>
+      </div>`;
+    }
   }
   if(raceSt&&!raceSt.done)return rRaceActive();
   return `<div>
@@ -528,6 +537,19 @@ function rRaceUI(){
     </div>
     <div id="race-status" style="text-align:center;margin-top:16px;font-size:14px;color:var(--txt2)"></div>
   </div>`;
+}
+
+async function startRaceAsHost(){
+  // Mark room as active in Supabase so joiner's poll picks it up
+  let roomId=raceSt.room.id||raceSt.room.code;
+  await fetch(SURL+'/rest/v1/race_rooms?code=eq.'+raceSt.room.code,{
+    method:'PATCH',
+    headers:{'apikey':SKEY,'Authorization':'Bearer '+(authToken||SKEY),'Content-Type':'application/json'},
+    body:JSON.stringify({status:'active'})
+  });
+  raceSt.waiting=false;
+  raceSt.startTime=Date.now();
+  rRanks();
 }
 
 function loadRaceRoom(){}
@@ -548,13 +570,28 @@ async function createRace(){
 
 async function joinRace(){
   let code=document.getElementById('race-code-input')?.value.trim().toUpperCase();
-  if(code.length!==4){let s=document.getElementById('race-status');if(s)s.textContent='Enter a 4-letter code.';return;}
+  if(!code||code.length!==4){let s=document.getElementById('race-status');if(s)s.textContent='Enter a 4-letter code.';return;}
+  let s=document.getElementById('race-status');if(s)s.textContent='Looking for room...';
   let res=await sbFetch('race_rooms','code=eq.'+code+'&limit=1');
-  if(!res?.length){let s=document.getElementById('race-status');if(s)s.textContent='Room not found.';return;}
+  if(!res?.length){if(s)s.textContent='Room not found. Check the code.';return;}
   let room=res[0];
   let words=JSON.parse(room.words);
-  raceSt={room,words,idx:0,score:0,startTime:Date.now(),done:false,isCreator:false,waiting:false};
+  raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:true};
+  // Show waiting screen, poll for host to start
   rRanks();
+  pollRaceStart(room.id||room.code, code);
+}
+
+async function pollRaceStart(roomId, code){
+  if(!raceSt||!raceSt.waiting)return;
+  let res=await sbFetch('race_rooms','code=eq.'+code+'&select=status&limit=1');
+  if(res?.[0]?.status==='active'){
+    raceSt.waiting=false;
+    raceSt.startTime=Date.now();
+    rRanks();
+    return;
+  }
+  raceSt.pollTimer=setTimeout(()=>pollRaceStart(roomId,code),2000);
 }
 
 function rRaceActive(){
@@ -632,13 +669,37 @@ function rRaceResults(){
   let maxScore=r.words.length*10;
   let pct=Math.round(r.score/maxScore*100);
   let emoji=pct>=90?'🏆':pct>=60?'🎉':pct>=30?'👍':'💪';
-  return `<div style="text-align:center;padding:20px 0">
-    <div style="font-size:48px;margin-bottom:8px">${emoji}</div>
-    <div style="font-size:28px;font-weight:700;margin-bottom:4px">${r.score} <span style="font-size:16px;color:var(--txt2)">/ ${maxScore} pts</span></div>
-    <div style="font-size:14px;color:var(--txt2);margin-bottom:6px">${pct}% efficiency · ${r.words.length} words</div>
-    <div style="font-size:12px;color:var(--txt2);margin-bottom:20px">Faster answers = more points (max 10 per word)</div>
-    <button class="btn-next" onclick="raceSt=null;rRanks()">Race Again</button>
+  // Fetch opponent results and show side-by-side
+  let roomId=r.room.id||r.room.code;
+  let html=`<div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px">${emoji}</div>
+      <div style="font-size:22px;font-weight:700;margin:6px 0">${r.score} / ${maxScore} pts</div>
+      <div style="font-size:13px;color:var(--txt2)">${pct}% efficiency · ${r.words.length} words</div>
+    </div>
+    <div id="race-comparison"><div style="text-align:center;color:var(--txt2);font-size:13px">Loading opponent results...</div></div>
+    <button class="btn-next" style="margin-top:16px" onclick="raceSt=null;rRanks()">Race Again</button>
   </div>`;
+  setTimeout(async()=>{
+    let res=await sbFetch('race_results','room_id=eq.'+roomId+'&order=score.desc');
+    let el=document.getElementById('race-comparison');
+    if(!el)return;
+    if(!res?.length){el.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px">No opponent results yet.</div>';return;}
+    let cards=res.map((p,i)=>{
+      let isMe=p.user_id===CU.id;
+      let pPct=Math.round(p.score/(p.total||maxScore)*100);
+      let medal=i===0?'🥇':i===1?'🥈':'🥉';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${isMe?'var(--green-soft, rgba(72,199,142,0.12))':'var(--bg2)'};border-radius:var(--r);margin-bottom:8px;border:${isMe?'1.5px solid var(--green)':'1px solid var(--bor)'}">
+        <div>
+          <div style="font-size:14px;font-weight:600">${medal} ${p.display_name||'Player'}${isMe?' (you)':''}</div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:2px">${pPct}% efficiency</div>
+        </div>
+        <div style="font-size:20px;font-weight:800;color:${i===0?'var(--green)':'var(--txt)'}">${p.score} pts</div>
+      </div>`;
+    }).join('');
+    el.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Results</div>'+cards;
+  },300);
+  return html;
 }
 
 // ── TEACHER ───────────────────────────────────────────
