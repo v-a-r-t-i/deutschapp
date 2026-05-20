@@ -1,3 +1,9 @@
+function togglePass(id,btn){
+  let inp=document.getElementById(id);
+  let show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.textContent=show?'🙈':'👁';
+}
 function switchAuth(t){
   ['login','signup'].forEach(x=>{document.getElementById(x+'-form').style.display=x===t?'block':'none';document.getElementById('tab-'+x).className='auth-tab'+(x===t?' active':'');});
   document.getElementById('auth-err').textContent='';

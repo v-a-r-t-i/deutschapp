@@ -39,13 +39,13 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
     </div>
     <div id="login-form">
       <div class="field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="••••••••"></div>
+      <div class="field"><label>Password</label><div class="pass-wrap"><input type="password" id="li-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('li-pass',this)" tabindex="-1">👁</button></div></div>
       <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign in</button>
     </div>
     <div id="signup-form" style="display:none">
       <div class="field"><label>Your name (shown to teacher)</label><input type="text" id="su-name" placeholder="e.g. Ana"></div>
       <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password (min 6 chars)</label><input type="password" id="su-pass" placeholder="••••••••"></div>
+      <div class="field"><label>Password (min 6 chars)</label><div class="pass-wrap"><input type="password" id="su-pass" placeholder="••••••••"><button class="eye-btn" onclick="togglePass('su-pass',this)" tabindex="-1">👁</button></div></div>
       <div class="field"><label>I am a...</label><select id="su-role"><option value="student">Student</option><option value="teacher">Teacher</option></select></div>
       <button class="auth-btn" id="su-btn" onclick="doSignup()">Create account</button>
     </div>
