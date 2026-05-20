@@ -69,34 +69,33 @@ async function doSignout(){
 }
 
 async function handleSession(session){
+  let dbg=document.getElementById('auth-err');
   try{
     if(session?.user){
+      if(dbg){dbg.style.color='var(--green)';dbg.textContent='Step 1: got session...';}
       CU=session.user;
       authToken=session.access_token||null;
       if(selCats.size===0)selCats=new Set(Object.keys(DATA));
-      // Fetch profile with timeout so it never hangs forever
+      if(dbg)dbg.textContent='Step 2: loading profile...';
       let p=null;
       try{
-        let profilePromise=sbFetch('profiles','id=eq.'+CU.id+'&limit=1');
-        let timeoutPromise=new Promise(r=>setTimeout(()=>r(null),2000));
-        let res=await Promise.race([profilePromise,timeoutPromise]);
+        let res=await Promise.race([
+          sbFetch('profiles','id=eq.'+CU.id+'&limit=1'),
+          new Promise(r=>setTimeout(()=>r(null),2000))
+        ]);
         p=Array.isArray(res)?res[0]:null;
       }catch(e){console.warn('Profile fetch failed:',e);}
       CP=p;
-      if(p?.role==='teacher'){
-        document.getElementById('loading-screen').style.display='none';
-        document.getElementById('auth-screen').style.display='none';
-        document.getElementById('main-app').style.display='none';
-        document.getElementById('teacher-app').style.display='block';
-        loadTeacher();
-      }else{
-        document.getElementById('loading-screen').style.display='none';
-        document.getElementById('auth-screen').style.display='none';
-        document.getElementById('main-app').style.display='block';
-        document.getElementById('teacher-app').style.display='none';
+      if(dbg)dbg.textContent='Step 3: showing app...';
+      let isTeacher=p?.role==='teacher';
+      document.getElementById('loading-screen').style.display='none';
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('main-app').style.display=isTeacher?'none':'block';
+      document.getElementById('teacher-app').style.display=isTeacher?'block':'none';
+      if(!isTeacher){
         let ub=document.getElementById('user-btn');if(ub)ub.textContent=CP?.display_name||CU.email;
         loadProg();
-      }
+      }else{loadTeacher();}
     }else{
       document.getElementById('loading-screen').style.display='none';
       document.getElementById('auth-screen').style.display='flex';
@@ -105,6 +104,7 @@ async function handleSession(session){
     }
   }catch(err){
     console.error('Auth error:',err);
+    if(dbg){dbg.style.color='red';dbg.textContent='Error: '+err.message;}
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('main-app').style.display='none';
