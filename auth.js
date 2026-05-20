@@ -46,7 +46,8 @@ async function doLogin(){
     document.getElementById('auth-err').textContent=error.message;
     return;
   }
-  // Don't call handleSession here — onAuthStateChange will fire and handle it
+  // handleSession called by onAuthStateChange (registered in ui.js after all scripts load)
+  if(data?.session)handleSession(data.session);
 }
 async function doSignup(){
   let name=document.getElementById('su-name').value.trim(),e=document.getElementById('su-email').value.trim(),p=document.getElementById('su-pass').value,role=document.getElementById('su-role').value;
@@ -69,7 +70,6 @@ async function doSignout(){
 }
 
 async function handleSession(session){
-  await appReady; // wait for all scripts to finish loading
   let dbg=document.getElementById('auth-err');
   try{
     if(session?.user){
@@ -150,32 +150,7 @@ async function doSetNewPassword(){
   // Clear hash and let onAuthStateChange log them in
   window.history.replaceState(null,'',window.location.pathname);
 }
-// Add timeout fallback in case getSession hangs
-// Initial session check with fallback timeout
-let initialCheckDone=false;
-setTimeout(()=>{
-  if(!initialCheckDone){
-    initialCheckDone=true;
-    document.getElementById('loading-screen').style.display='none';
-    document.getElementById('auth-screen').style.display='flex';
-  }
-},3000);
-
-// Always handle auth state changes (login, logout, token refresh)
-sb.auth.onAuthStateChange((_ev,session)=>{
-  initialCheckDone=true;
-  handleSession(session);
-});
-
-// Also check immediately on load
-sb.auth.getSession().then(({data:{session}})=>{
-  initialCheckDone=true;
-  handleSession(session);
-}).catch(()=>{
-  initialCheckDone=true;
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-});
+// Auth is initialized in ui.js after all scripts load
 
 // ── DAILY SUMMARY ─────────────────────────────────────
 let summaryShown=false;

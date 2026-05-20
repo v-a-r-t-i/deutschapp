@@ -751,8 +751,31 @@ function showXPInfo(){
 
 
 speechSynthesis.onvoiceschanged=()=>{};
-// Signal that all scripts are loaded and UI functions are ready
 if(typeof appReadyResolve==='function')appReadyResolve();
+
+// ── AUTH INIT (runs after all scripts loaded) ─────────
+let initialCheckDone=false;
+setTimeout(()=>{
+  if(!initialCheckDone){
+    initialCheckDone=true;
+    document.getElementById('loading-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
+  }
+},4000);
+
+sb.auth.onAuthStateChange((_ev,session)=>{
+  initialCheckDone=true;
+  handleSession(session);
+});
+
+sb.auth.getSession().then(({data:{session}})=>{
+  initialCheckDone=true;
+  handleSession(session);
+}).catch(()=>{
+  initialCheckDone=true;
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('auth-screen').style.display='flex';
+});
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────
 document.addEventListener('keydown',e=>{
