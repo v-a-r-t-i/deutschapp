@@ -751,6 +751,11 @@ document.addEventListener('keydown',e=>{
     if(e.key==='4')rate(5);
   }
   if(tab==='quiz'||tab==='listen'){
+    if(e.code==='Space'){
+      e.preventDefault();
+      let nextBtn=document.querySelector('.btn-next');
+      if(nextBtn)nextBtn.click();return;
+    }
     let opts=document.querySelectorAll('.q-opt');
     if(opts.length){
       let idx=parseInt(e.key)-1;
