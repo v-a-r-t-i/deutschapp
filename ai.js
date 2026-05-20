@@ -43,44 +43,6 @@ async function refreshPhrases(de,blockEl){
   }
 }
 
-// ── PHRASE EVOLUTION ─────────────────────────────────
-// Called silently after every 5 reps — phrases get more complex as the learner progresses
-async function evolvePhrasesFor(item){
-  let reps=s2g(item.de).reps;
-  // Level 1 (reps 5-9): simple A1 sentences
-  // Level 2 (reps 10-14): slightly richer A2 sentences
-  // Level 3 (reps 15+): natural B1 sentences
-  let lvlLabel=reps>=15?'B1 natural':reps>=10?'A2 slightly richer':'A1 simple';
-  let maxWords=reps>=15?12:reps>=10?10:8;
-  try{
-    let resp=await fetch(SURL+'/functions/v1/ai-proxy',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(authToken||SKEY)},
-      body:JSON.stringify({
-        model:'claude-haiku-4-5-20251001',
-        max_tokens:150,
-        messages:[{role:'user',content:`Write 2 German sentences (max ${maxWords} words each) using "${item.de}" (${item.en}) at ${lvlLabel} level. The word must appear in each sentence. Return JSON only: {"phrases":[["German","English"],["German","English"]]}`}]
-      })
-    });
-    let data=await resp.json();
-    let txt=data.content?.[0]?.text||'{}';
-    let parsed=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    if(!parsed.phrases)return;
-    // Save to Supabase
-    await fetch(SURL+'/rest/v1/words?de=eq.'+encodeURIComponent(item.de)+'&language=eq.de',{
-      method:'PATCH',
-      headers:{'apikey':SKEY,'Authorization':'Bearer '+(authToken||SKEY),'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({phrases:parsed.phrases})
-    });
-    // Update local cache
-    for(let cat of Object.keys(DATA)){
-      let w=DATA[cat].find(x=>x.de===item.de);
-      if(w){w.phrases=parsed.phrases;break;}
-    }
-    console.log(`Phrases evolved for "${item.de}" (${reps} reps → ${lvlLabel})`);
-  }catch(e){/* silent fail */}
-}
-
 // ── AI PLAN ───────────────────────────────────────────
 async function genAIPlan(){
   let goal=document.getElementById('plan-goal').value.trim();

@@ -157,9 +157,6 @@ function rFlash(){
 function revCard(){if(revealed)return;revealed=true;document.getElementById('fc-f').style.display='none';document.getElementById('fc-b').style.display='block';document.getElementById('fc-h').style.display='none';document.getElementById('fc-btns').style.display='block';document.getElementById('ai-area').style.display='none';}
 function rate(q){
   let item=queue[qIdx],r=s2r(item.de,q);
-  // Silently evolve phrases every 5 reps
-  let reps=s2g(item.de).reps;
-  if(reps>0&&reps%5===0)evolvePhrasesFor(item);
   sessionReviewed++;
   if(q>=3){known.add(item.de);sessionCorrect++;addXP(q===5?XP_RATES.flash_easy:q===3?XP_RATES.flash_hard:XP_RATES.flash_good,'flash');}
   else{mistakes=[...new Set([...mistakes,item.de])].slice(-20);}
