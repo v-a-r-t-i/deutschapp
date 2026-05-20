@@ -327,37 +327,24 @@ async function toggleKnown(de,val){
 // ── PLAN ─────────────────────────────────────────────
 function rPlan(){
   let c=document.getElementById('content');
-  let done=doneDays.size,todayDay=Math.max(1,Math.min(11,Math.floor((new Date()-new Date('2026-05-16'))/86400000)+1));
-  let html=`<div style="margin-bottom:12px"><div style="font-size:16px;font-weight:600;margin-bottom:10px">11-day plan · May 16–26</div>
-  <div class="plan-stats"><div class="stat"><div class="stat-n">50</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n">40</div><div class="stat-l">min/day</div></div><div class="stat"><div class="stat-n">${done}</div><div class="stat-l">days done</div></div><div class="stat"><div class="stat-n">${streakN}</div><div class="stat-l">🔥 streak</div></div></div>
-  <div class="prog-bar"><div class="prog-fill" style="width:${Math.round(done/11*100)}%"></div></div></div>
-
-  <!-- AI PLAN GENERATOR -->
+  let html=`<div style="margin-bottom:20px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-0.3px">✨ AI Study Planner</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:16px">Describe your goal and get a personalised day-by-day plan</div>
+    <div class="plan-stats">
+      <div class="stat"><div class="stat-n">${known.size}</div><div class="stat-l">words known</div></div>
+      <div class="stat"><div class="stat-n">${streakN}🔥</div><div class="stat-l">day streak</div></div>
+    </div>
+  </div>
   <div class="ai-plan-wrap">
-    <div class="ai-plan-title">✨ AI Personal Plan Generator</div>
-    <div class="ai-plan-field"><label>Your goal (e.g. "Pass my A1 exam on June 5th")</label><input type="text" id="plan-goal" placeholder="What do you want to achieve?"></div>
+    <div class="ai-plan-field"><label>Your goal</label><input type="text" id="plan-goal" placeholder='e.g. "Pass my A1 exam on June 5th"'></div>
     <div class="ai-plan-field"><label>Available days</label><input type="number" id="plan-days" placeholder="7" min="1" max="30"></div>
     <div class="ai-plan-field"><label>Minutes per day</label><input type="number" id="plan-time" placeholder="20" min="5" max="120"></div>
-    <div class="ai-plan-field"><label>Specific words/categories to focus on (optional)</label><input type="text" id="plan-words" placeholder="e.g. Essen/Trinken, Reisen"></div>
+    <div class="ai-plan-field"><label>Categories to focus on (optional)</label><input type="text" id="plan-words" placeholder="e.g. Essen/Trinken, Reisen"></div>
     <button class="ai-gen-btn" id="ai-plan-btn" onclick="genAIPlan()">Generate my plan ✨</button>
-    <div class="ai-result" id="ai-plan-result" style="margin-top:10px;min-height:20px"></div>
+    <div class="ai-result" id="ai-plan-result" style="margin-top:14px"></div>
   </div>`;
-
-  for(let d of PLAN){
-    let isDone=doneDays.has(d.day),isT=d.day===todayDay,isR=d.type==='review'||d.type==='final';
-    let dc=isDone?'d':isT?'t':isR?'r':'',badge=isDone?'<span class="badge badge-g">✓ Done</span>':isT?'<span class="badge badge-g">Today</span>':isR?'<span class="badge badge-b">Review</span>':'';
-    let sub=d.newWords.length?`${d.newWords.length} new words`:d.type==='review'?'Full review':d.type==='final'?'Final test':'';
-    let phH=d.phases.map(p=>`<div class="phase-row"><div class="ph-min">${p.min}m</div><div class="ph-mode">${p.mode}</div><div class="ph-desc">${p.desc}</div></div>`).join('');
-    let nwH=d.newWords.length?`<div class="sec-lbl">New words</div><div class="chips">${d.newWords.map(w=>`<span class="chip">${w}</span>`).join('')}</div>`:'';
-    let mnH=d.mnemonics.length?`<div class="sec-lbl">Mnemonics</div><div class="sci-box">${d.mnemonics.map(m=>`<div class="mnem-item">${m}</div>`).join('')}</div>`:'';
-    html+=`<div class="day-card${isT?' today':''}"><div class="day-hdr" onclick="togDay(${d.day})"><div class="day-num ${dc}">${isDone?'✓':d.day}</div><div class="day-meta"><div class="day-title">${d.date} — ${d.newCat||'Review'}</div><div class="day-sub">${sub}</div></div><div class="day-right">${badge}<div class="day-min">${d.totalMin}m</div><div id="dc${d.day}">›</div></div></div><div class="day-body${isT?' open':''}" id="db${d.day}"><div class="sec-lbl">Session plan</div>${phH}${nwH}${mnH}<div class="sec-lbl">Science note</div><div class="sci-box">${d.science}</div><button class="${isDone?'undone-btn':'done-btn'}" onclick="togDone(${d.day})">${isDone?'Mark as not done':'Mark as done ✓'}</button></div></div>`;
-  }
   c.innerHTML=html;
-  document.getElementById('ai-plan-result').style.display='none';
 }
-function togDay(day){let b=document.getElementById('db'+day),ch=document.getElementById('dc'+day);let o=b.classList.toggle('open');if(ch)ch.textContent=o?'‹':'›';}
-function togDone(day){if(doneDays.has(day))doneDays.delete(day);else doneDays.add(day);rPlan();}
-
 // ── RANKS ────────────────────────────────────────────
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){

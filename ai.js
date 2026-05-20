@@ -62,7 +62,15 @@ Format as a clear day-by-day plan with time splits. Keep it concise.`;
     });
     let data=await resp.json();
     let txt=data.content?.[0]?.text||'Could not generate plan.';
-    resultEl.innerHTML=txt;
+    // Render markdown-like formatting
+    let html=txt
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^#{1,3}\s+(.+)$/gm,'<div style="font-size:14px;font-weight:700;color:var(--txt);margin:14px 0 6px">$1</div>')
+      .replace(/^---+$/gm,'<hr style="border:none;border-top:0.5px solid var(--bor);margin:10px 0">')
+      .replace(/^- (.+)$/gm,'<div style="padding:3px 0 3px 12px;border-left:2px solid var(--green);margin:4px 0;font-size:13px">$1</div>')
+      .replace(/\n/g,'<br>');
+    resultEl.innerHTML=`<div style="background:var(--bg2);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.7;color:var(--txt2)">${html}</div>`;
   }catch(e){
     resultEl.innerHTML='Error generating plan. Please try again.';
   }
