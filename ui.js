@@ -741,6 +741,16 @@ function showXPInfo(){
 
 speechSynthesis.onvoiceschanged=()=>{};
 
+function confetti(){
+  let colors=['#1D9E75','#7C3AED','#F0A020','#D85A30','#0C447C'];
+  for(let i=0;i<60;i++){
+    let el=document.createElement('div');
+    el.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}vw;width:8px;height:8px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};pointer-events:none;z-index:9999;animation:confettiFall ${1.5+Math.random()}s linear forwards;animation-delay:${Math.random()*0.5}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2500);
+  }
+}
+
 // ── KEYBOARD SHORTCUTS ────────────────────────────────
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;

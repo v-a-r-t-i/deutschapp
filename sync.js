@@ -119,8 +119,8 @@ function addXP(amt,type){
   // Level up check
   let prevLvl=getLevelInfo(xpTotal-amt);
   let newLvl=getLevelInfo(xpTotal);
+  if(newLvl.lvl>prevLvl.lvl&&typeof confetti==='function')confetti();
   if(newLvl.lvl>prevLvl.lvl){
-    let lp=document.createElement('div');
     lp.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--xp);color:#fff;padding:20px 32px;border-radius:var(--r);font-size:18px;font-weight:700;z-index:300;text-align:center;';
     lp.innerHTML='⭐ Level Up!<br><span style="font-size:14px;font-weight:400">'+newLvl.name+'</span>';
     document.body.appendChild(lp);
