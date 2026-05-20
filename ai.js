@@ -7,7 +7,7 @@ async function genAIPhrases(word,level=1){
       body:JSON.stringify({
         model:'claude-haiku-4-5-20251001',
         max_tokens:200,
-        messages:[{role:'user',content:'Generate 2 short German sentences using the word "'+word+'" at A1 level. The word must appear in each sentence. Vary them from common examples. Return JSON only, no markdown: {"phrases":[["German sentence","English translation"],["German sentence 2","English translation 2"]]}'}]
+        messages:[{role:'user',content:'Generate 2 very short German sentences (max 8 words each) using the word "'+word+'" at A1 beginner level. Simple vocabulary only. The word must appear in each sentence. Return JSON only, no markdown: {"phrases":[["German sentence","English translation"],["German sentence 2","English translation 2"]]}'}]
       })
     });
     let data=await resp.json();
@@ -26,6 +26,17 @@ async function refreshPhrases(de,blockEl){
   let lvl=getLevelInfo(xpTotal).lvl;
   let phrases=await genAIPhrases(de,lvl);
   if(phrases){
+    // Save back to Supabase so they persist
+    await fetch(SURL+'/rest/v1/words?de=eq.'+encodeURIComponent(de)+'&language=eq.de',{
+      method:'PATCH',
+      headers:{'apikey':SKEY,'Authorization':'Bearer '+(authToken||SKEY),'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({phrases})
+    });
+    // Update local DATA cache too
+    for(let cat of Object.keys(DATA)){
+      let w=DATA[cat].find(x=>x.de===de);
+      if(w){w.phrases=phrases;break;}
+    }
     blockEl.innerHTML=phrases.map(p=>`<div class="phrase-block"><div class="ai-badge">AI ✨</div><div class="phrase-row"><div><div class="phrase-de">${bw(p[0],de)}</div><div class="phrase-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)">🔊</button></div></div>`).join('');
   }else{
     blockEl.innerHTML='<div style="font-size:12px;color:var(--rd);padding:8px">Could not generate phrases. Using defaults.</div>';
