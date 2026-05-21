@@ -16,6 +16,13 @@ if(localStorage.getItem('app_version') !== APP_VERSION) {
   localStorage.setItem('app_version', APP_VERSION);
 }
 document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v'+APP_VERSION);
+// Apply saved language to nav on load
+(function(){
+  let l=localStorage.getItem('app_lang')||'de';
+  let logo=document.getElementById('nav-logo');
+  if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400" id="nav-ver">v'+APP_VERSION+'</span>';
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.id==='lang-'+l));
+})();
 </script>
 </head>
 <body>

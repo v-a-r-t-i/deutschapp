@@ -799,43 +799,8 @@ function confetti(){
 // ── LANGUAGE SWITCHER ────────────────────────────────
 function switchLang(l){
   if(lang===l)return;
-  lang=l;
   localStorage.setItem('app_lang',l);
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.id==='lang-'+l));
-  let logo=document.getElementById('nav-logo');
-  if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400" id="nav-ver">v'+APP_VERSION+'</span>';
-  let c=document.getElementById('content');
-  if(c)c.innerHTML='<div style="text-align:center;padding:60px;color:var(--txt2)"><span class="spinner"></span> Loading '+(l==='de'?'German':'Korean')+' words...</div>';
-  // Fetch words directly — bypass loadProg entirely
-  DATA={};
-  let token=authToken||SKEY;
-  fetch(SURL+'/rest/v1/words?select=*&language=eq.'+l+'&order=category',{
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'}
-  }).then(r=>r.json()).then(words=>{
-    let newData={};
-    let seen={};
-    if(!Array.isArray(words)||words.length===0){
-      DATA=newData;
-      selCats=new Set();
-      if(c)c.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">No '+( l==='de'?'German':'Korean')+' words found.<br><span style="font-size:12px">Make sure the words are added to Supabase.</span></div>';
-      updSidebar();
-      return;
-    }
-    words.forEach(w=>{
-      if(!newData[w.category])newData[w.category]=[];
-      let key=w.category+'|'+w.de;
-      if(seen[key])return;
-      seen[key]=true;
-      newData[w.category].push({de:w.de,art:w.art,en:w.en,phrases:Array.isArray(w.phrases)?w.phrases:[]});
-    });
-    DATA=newData;
-    selCats=new Set(Object.keys(DATA));
-    queue=[];qIdx=0;
-    updSidebar();
-    setTab('flash');
-  }).catch(e=>{
-    if(c)c.innerHTML='<div style="text-align:center;padding:40px;color:var(--rd)">Failed to load words. Please try again.</div>';
-  });
+  window.location.reload();
 }
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────
