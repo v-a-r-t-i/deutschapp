@@ -43,6 +43,44 @@ async function refreshPhrases(de,blockEl){
   }
 }
 
+async function regenAllPhrases(){
+  let btn=document.getElementById('regen-all-btn');
+  let bar=document.getElementById('regen-progress');
+  if(!btn||!bar)return;
+  // Collect all words across all categories
+  let allWords=[];
+  for(let cat of Object.keys(DATA))(DATA[cat]||[]).forEach(w=>allWords.push({...w,cat}));
+  if(!allWords.length)return;
+  btn.disabled=true;
+  let done=0,errors=0;
+  bar.style.display='';
+  bar.innerHTML=`<div class="regen-bar-wrap"><div class="regen-bar-fill" id="regen-fill" style="width:0%"></div></div><div class="regen-status" id="regen-status">Starting…</div>`;
+  for(let item of allWords){
+    document.getElementById('regen-status').textContent=`${done}/${allWords.length} — regenerating "${item.de}"…`;
+    document.getElementById('regen-fill').style.width=Math.round(done/allWords.length*100)+'%';
+    // Clear cache so we always get fresh phrases
+    delete aiPhraseCache[item.de+1];
+    let phrases=await genAIPhrases(item.de,1);
+    if(phrases){
+      // Save to Supabase
+      await fetch(SURL+'/rest/v1/words?de=eq.'+encodeURIComponent(item.de)+'&language=eq.'+lang,{
+        method:'PATCH',
+        headers:{'apikey':SKEY,'Authorization':'Bearer '+(authToken||SKEY),'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({phrases})
+      });
+      // Update local DATA
+      let w=DATA[item.cat]&&DATA[item.cat].find(x=>x.de===item.de);
+      if(w)w.phrases=phrases;
+    }else{errors++;}
+    done++;
+    // Small delay to avoid hammering the AI proxy
+    await new Promise(r=>setTimeout(r,400));
+  }
+  document.getElementById('regen-fill').style.width='100%';
+  document.getElementById('regen-status').textContent=`✅ Done! ${done-errors} updated${errors?`, ${errors} failed`:''}. Refresh Browse to see changes.`;
+  btn.disabled=false;
+}
+
 // ── AI PLAN ───────────────────────────────────────────
 async function genAIPlan(){
   let goal=document.getElementById('plan-goal').value.trim();

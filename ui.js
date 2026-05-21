@@ -310,6 +310,11 @@ function nG(){gIdx++;gAns=false;rGender();}
 // ── BROWSE ────────────────────────────────────────────
 function rBrowse(){
   let c=document.getElementById('content'),html=statsH()+catH();
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:13px;color:var(--txt2)">${Object.values(DATA).flat().length} words across ${Object.keys(DATA).length} categories</div>
+    <button id="regen-all-btn" class="refresh-phrase" onclick="regenAllPhrases()" style="font-size:12px;padding:6px 12px">✨ Regenerate all phrases</button>
+  </div>
+  <div id="regen-progress" style="display:none;margin-bottom:16px"></div>`;
   for(let cat of selCats){
     let ws=DATA[cat]||[],p=cp(cat);
     html+=`<div class="list-sec"><div class="list-cat-hdr">${cat}<span style="font-size:12px;color:var(--txt2);font-weight:400">${p.k}/${p.t}</span></div>`;
