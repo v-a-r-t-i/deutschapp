@@ -309,3 +309,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fc-arr{font-size:14px;transition:transform 0.2s;}
 .fc-actions{margin-top:6px;padding-top:6px;border-top:0.5px solid var(--bor);}
 .btn-sm{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--bor2);background:var(--bg2);color:var(--txt2);cursor:pointer;}
+
+/* COMPACT FRIEND CARDS */
+.fc-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;cursor:pointer;transition:background 0.15s;user-select:none;}
+.fc-row:hover,.fc-row-open{background:var(--bg3);}
+.fc-av{width:36px;height:36px;min-width:36px;border-radius:50%;background:var(--green);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.fc-av-active{background:var(--gd);box-shadow:0 0 0 2px var(--gl);}
+.fc-info{flex:1;min-width:0;}
+.fc-row-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-row-meta{font-size:11px;color:var(--txt2);margin-top:1px;}
+.fc-row-right{text-align:right;min-width:52px;}
+.fc-row-xp{font-size:12px;font-weight:600;color:var(--green);}
+.fc-row-words{font-size:11px;color:var(--txt2);}
+.fc-fire{font-size:12px;margin-left:4px;}
+.fc-detail{background:var(--bg3);border-radius:var(--rs);padding:8px;margin-top:-2px;margin-bottom:6px;}
+.fc-battle-btn{width:100%;padding:7px;border-radius:var(--rs);border:1px solid #d4a017;background:#fff8e1;color:#8a6200;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:4px;}
+.fc-battle-btn:hover{background:#fff0b0;}

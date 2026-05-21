@@ -364,15 +364,17 @@ function rPlan(){
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){
   let c=document.getElementById('content');
-  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race'],['river','🚤 River']];
+  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race'],['river','🚤 River'],['battle','⚔️ Battle']];
   let html=statsH()+`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
   if(ranksSubTab==='leaderboard')html+=rRanksGlobal();
   else if(ranksSubTab==='friends')html+=rFriendsUI();
   else if(ranksSubTab==='river')html+=rRiverUI();
+  else if(ranksSubTab==='battle')html+=rBattleUI();
   else html+=rRaceUI();
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
   if(ranksSubTab==='river')loadRiver();
+  if(ranksSubTab==='battle')loadBattle();
   if(ranksSubTab==='race'&&raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
   if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
@@ -421,6 +423,90 @@ function rRanksGlobal(){
   return html;
 }
 
+// ── BATTLE ────────────────────────────────────────────
+function getBP(xp){ return Math.floor((xp||0)/10); }
+function getWeeklyBP(){
+  let key='wbp_'+tday().slice(0,7); // e.g. "wbp_2026-05"
+  // Use Monday-reset week key
+  let d=new Date();let day=d.getDay();let diff=d.getDate()-(day===0?6:day-1);
+  let monday=new Date(d.setDate(diff)).toISOString().split('T')[0];
+  let stored=JSON.parse(localStorage.getItem('weekly_bp')||'{}');
+  if(stored.week!==monday){stored={week:monday,xpStart:xpTotal,gained:0};localStorage.setItem('weekly_bp',JSON.stringify(stored));}
+  return{week:monday,gained:Math.max(0,xpTotal-(stored.xpStart||xpTotal))+stored.gained,bp:getBP(Math.max(0,xpTotal-(stored.xpStart||xpTotal))+stored.gained)};
+}
+function rBattleUI(){
+  let bp=getBP(xpTotal);
+  let w=getWeeklyBP();
+  let daysLeft=7-((new Date().getDay()+6)%7);
+  return `<div id="battle-wrap">
+    <div style="margin-bottom:16px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:2px">⚔️ Battle Arena</div>
+      <div style="font-size:13px;color:var(--txt2)">Challenge others — win to steal their Battle Points</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--bg2);border-radius:var(--r);padding:14px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--green)">${bp}</div>
+        <div style="font-size:12px;color:var(--txt2)">Total BP</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px">10 XP = 1 BP</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--r);padding:14px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:var(--bd)">${w.bp}</div>
+        <div style="font-size:12px;color:var(--txt2)">Weekly BP</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px">Resets in ${daysLeft}d</div>
+      </div>
+    </div>
+    <div style="background:var(--yl);border-left:3px solid var(--yd);border-radius:var(--rs);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--yd)">
+      ⚔️ Win a battle to steal <b>5 BP</b> from your opponent. Lose and they take 5 BP from you. Only users within 2 levels can battle.
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Opponents near your level</div>
+    <div id="battle-opponents"><div style="text-align:center;padding:16px;color:var(--txt3);font-size:13px"><span class="spinner"></span> Matching opponents…</div></div>
+  </div>`;
+}
+async function loadBattle(){
+  let wrap=document.getElementById('battle-opponents');
+  if(!wrap)return;
+  try{
+    let myLvl=getLevelInfo(xpTotal).lvl;
+    let [profiles,streaksData]=await Promise.all([
+      sbFetch('profiles','select=id,display_name&limit=100'),
+      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
+    ]);
+    let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
+    let opponents=(streaksData||[])
+      .filter(s=>s.user_id!==CU?.id)
+      .map(s=>({id:s.user_id,name:pMap[s.user_id]||'Learner',xp:s.xp_total||0,lvl:getLevelInfo(s.xp_total||0).lvl}))
+      .filter(u=>Math.abs(u.lvl-myLvl)<=2);
+    // Shuffle and pick up to 8
+    for(let i=opponents.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opponents[i],opponents[j]]=[opponents[j],opponents[i]];}
+    opponents=opponents.slice(0,8);
+    if(!opponents.length){wrap.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:16px">No opponents near your level yet. Invite friends!</div>';return;}
+    let myBP=getBP(xpTotal);
+    wrap.innerHTML=opponents.map(u=>{
+      let bp=getBP(u.xp);
+      let lvl=getLevelInfo(u.xp);
+      let diff=bp-myBP;
+      let diffStr=diff>0?'<span style="color:var(--rd);font-size:11px">+'+diff+' BP if you win</span>':'<span style="color:var(--green);font-size:11px">'+Math.abs(diff)+' BP at stake</span>';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:600">${u.name}</div>
+          <div style="font-size:12px;color:var(--txt2)">Lvl ${lvl.lvl} ${lvl.name} · ${bp} BP</div>
+          <div style="margin-top:2px">${diffStr}</div>
+        </div>
+        <button class="btn-sm-green" style="padding:7px 14px" onclick="startBattle('${u.id}','${u.name}',${u.xp})">⚔️ Battle</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px">Could not load opponents.</div>';
+  }
+}
+function startBattle(fid,fname,fxp){
+  // For now, battle = race. BP transfer will be tracked once backend supports it.
+  let myBP=getBP(xpTotal),theirBP=getBP(fxp),stake=5;
+  if(confirm('⚔️ Battle '+fname+'?\n\nWinner takes '+stake+' BP from loser.\n(Currently launches a Race — BP tracking coming soon)')){
+    challengeFriend(fid,fname);
+  }
+}
+
 // ── RIVER ─────────────────────────────────────────────
 function rRiverUI(){
   return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
@@ -450,12 +536,15 @@ async function loadRiver(){
 function renderRiver(users,wrap,compact=false){
   const MAX_XP=2500;
   const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl})).filter(l=>l.xp>0);
-  const pos=xp=>Math.min(95,Math.max(3,Math.round(xp/MAX_XP*92)+3));
+  // Square-root scale: spreads low-XP users more evenly
+  const pos=xp=>Math.min(94,Math.max(4,Math.round(Math.sqrt(Math.max(0,xp)/MAX_XP)*88)+4));
+  // 7 columns spread across river width for x positioning
   function stableX(id,idx){
     let h=0;for(let c of (id||''))h=(h*31+c.charCodeAt(0))&0xffff;
-    let slots=[8,22,38,54,70,84];
+    let slots=[6,17,29,41,53,65,77];
     return slots[(h+idx)%slots.length];
   }
+
   let myUser=users.find(u=>u.isMe);
   let myPos=pos(myUser?.xp||0);
   let rank=users.findIndex(u=>u.isMe)+1||'?';
@@ -546,22 +635,24 @@ async function loadFriends(){
     let friendStudiedToday=lastDate===today;
     let mutualBadge=(myStudiedToday&&friendStudiedToday)?'<span style="font-size:11px;background:var(--yl);color:var(--yd);padding:2px 8px;border-radius:10px;font-weight:600;margin-left:6px">🔥 Mutual streak</span>':'';
     let lastActiveDot=friendStudiedToday?'<span style="width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:4px"></span>':'';
-    html+=`<div style="background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div>
-          <div style="font-size:14px;font-weight:700">${name}${mutualBadge}</div>
-          <div style="font-size:12px;color:var(--txt2);margin-top:2px">Lvl ${lvl.lvl} ${lvl.name} · ❄️ ${streak}d · ${lastActiveDot}${lastActive}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:16px;font-weight:700;color:var(--green)">${knownCount} words</div>
-          <div style="font-size:11px;color:var(--txt2)">${xp} XP</div>
-        </div>
+    let initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    let activeCls=friendStudiedToday?'fc-av-active':'';
+    html+=`<div class="fc-row" onclick="toggleFriendActions('${fid}',this)">
+      <div class="fc-av ${activeCls}">${initials}</div>
+      <div class="fc-info">
+        <div class="fc-row-name">${name}${mutualBadge?'<span class="fc-fire">🔥</span>':''}</div>
+        <div class="fc-row-meta">Lvl ${lvl.lvl} · ${lastActiveDot}${lastActive} · ${streak}🔥</div>
       </div>
-      <div class="fc-actions" id="fc-${fid}" style="display:none">
-        <button class="btn-sm-green" style="width:100%;padding:8px;margin-bottom:6px" onclick="challengeFriend('${fid}','${name}')">⚡ Race Challenge</button>
-        <button class="btn-sm" style="width:100%;padding:8px;background:var(--bg3);color:var(--txt)" onclick="removeFriend('${fid}')">Remove friend</button>
+      <div class="fc-row-right">
+        <div class="fc-row-xp">${xp} XP</div>
+        <div class="fc-row-words">${knownCount}w</div>
       </div>
-      <button class="fc-toggle" onclick="toggleFriendActions('${fid}',this)"><span>Actions</span><span class="fc-arr">›</span></button>
+      <span class="fc-arr">›</span>
+    </div>
+    <div class="fc-detail" id="fc-${fid}" style="display:none">
+      <button class="btn-sm-green" style="width:100%;padding:7px;margin-bottom:5px" onclick="event.stopPropagation();challengeFriend('${fid}','${name}')">⚡ Race Challenge</button>
+      <button class="fc-battle-btn" onclick="event.stopPropagation();startBattle('${fid}','${name}',${xp})">⚔️ Battle (stake BP)</button>
+      <button class="btn-sm" style="width:100%;padding:6px;margin-top:4px" onclick="event.stopPropagation();removeFriend('${fid}')">Remove friend</button>
     </div>`;
   }
   listEl.innerHTML=html;
@@ -578,13 +669,14 @@ async function loadFriends(){
     renderRiver(riverUsers,riverWrap,true);
   }
 }
-function toggleFriendActions(fid,btn){
+function toggleFriendActions(fid,row){
   let el=document.getElementById('fc-'+fid);
   if(!el)return;
   let open=el.style.display==='block';
   el.style.display=open?'none':'block';
-  let arr=btn.querySelector('.fc-arr');
+  let arr=row.querySelector('.fc-arr');
   if(arr)arr.textContent=open?'›':'‹';
+  row.classList.toggle('fc-row-open',!open);
 }
 async function removeFriend(fid){
   if(!confirm('Remove this friend?'))return;
