@@ -803,12 +803,15 @@ function switchLang(l){
   localStorage.setItem('app_lang',l);
   document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.id==='lang-'+l));
   let logo=document.getElementById('nav-logo');
-  if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400">v'+APP_VERSION+'</span>';
+  if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400" id="nav-ver">v'+APP_VERSION+'</span>';
   let c=document.getElementById('content');
   if(c)c.innerHTML='<div style="text-align:center;padding:60px;color:var(--txt2)"><span class="spinner"></span> Loading '+(l==='de'?'German':'Korean')+' words...</div>';
   // Fetch words directly — bypass loadProg entirely
   DATA={};
-  sbFetch('words','select=*&language=eq.'+l+'&order=category').then(words=>{
+  let token=authToken||SKEY;
+  fetch(SURL+'/rest/v1/words?select=*&language=eq.'+l+'&order=category',{
+    headers:{'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'}
+  }).then(r=>r.json()).then(words=>{
     let newData={};
     let seen={};
     if(!Array.isArray(words)||words.length===0){
