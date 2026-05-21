@@ -86,7 +86,8 @@ async function doSignup(){
 }
 async function doSignout(){
   await sb.auth.signOut();
-  known=new Set();sm2Cache={};streakN=0;lastStudy=null;xpTotal=0;sessionXP=0;CU=null;CP=null;
+  known=new Set();sm2Cache={};streakN=0;lastStudy=null;xpTotal=0;sessionXP=0;sessionReviewed=0;sessionCorrect=0;CU=null;CP=null;summaryShown=false;
+  unsubscribeFromChallenges();
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('main-app').style.display='none';
   document.getElementById('teacher-app').style.display='none';

@@ -138,56 +138,68 @@ function addXP(amt,type){
 }
 
 // ── AI PHRASES ────────────────────────────────────────
-// ── CHALLENGE NOTIFICATIONS (Realtime) ───────────────
+// ── CHALLENGE NOTIFICATIONS ──────────────────────────
 let _realtimeChannel=null;
+let _pollChallengeTimer=null;
+let _seenRooms=new Set();
+
 function subscribeToChalllenges(){
-  if(!CU||_realtimeChannel)return;
-  _realtimeChannel=sb.channel('challenges_'+CU.id)
-    .on('postgres_changes',{
-      event:'INSERT',schema:'public',table:'race_rooms',
-      filter:'invited_id=eq.'+CU.id
-    },payload=>{
-      let room=payload.new;
-      if(!room||room.status!=='waiting')return;
-      showChallengeNotif(room);
-    })
-    .subscribe();
+  if(!CU)return;
+  // Realtime (needs invited_id column + Realtime enabled on race_rooms in Supabase dashboard)
+  try{
+    _realtimeChannel=sb.channel('challenges_'+CU.id)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'race_rooms',
+        filter:'invited_id=eq.'+CU.id},
+        payload=>{if(payload.new?.status==='waiting')showChallengeNotif(payload.new);})
+      .subscribe();
+  }catch(e){}
+  // Polling fallback — checks every 8s regardless of Realtime
+  _pollChallengeTimer=setInterval(pollForChallenges, 8000);
 }
+
 function unsubscribeFromChallenges(){
-  if(_realtimeChannel){sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
+  if(_realtimeChannel){try{sb.removeChannel(_realtimeChannel);}catch(e){}  _realtimeChannel=null;}
+  clearInterval(_pollChallengeTimer);_pollChallengeTimer=null;
+  _seenRooms.clear();
 }
+
+async function pollForChallenges(){
+  if(!CU)return;
+  // Look for rooms from the last 5 minutes targeting this user
+  let since=new Date(Date.now()-5*60*1000).toISOString();
+  let rows=await sbFetch('race_rooms',
+    'invited_id=eq.'+CU.id+'&status=eq.waiting&created_at=gte.'+since+'&order=created_at.desc&limit=5',true);
+  if(!Array.isArray(rows))return;
+  for(let room of rows){
+    let id=room.id||room.code;
+    if(!_seenRooms.has(id)){_seenRooms.add(id);showChallengeNotif(room);}
+  }
+}
+
 function showChallengeNotif(room){
-  // Fetch challenger name from profiles
   sbFetch('profiles','select=display_name&id=eq.'+room.creator_id,true).then(rows=>{
     let name=(rows&&rows[0]?.display_name)||'Someone';
+    document.getElementById('challenge-notif')?.remove();
     let n=document.createElement('div');
     n.id='challenge-notif';
-    n.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
-      <span style="font-size:20px">⚔️</span>
-      <div style="flex:1"><b>${name}</b> challenged you to a battle!</div>
-      <button onclick="acceptChallenge('${room.code}');this.closest('#challenge-notif').remove()" style="background:var(--green);color:#fff;border:none;border-radius:var(--rs);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Accept</button>
-      <button onclick="this.closest('#challenge-notif').remove()" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--txt2)">×</button>
-    </div>`;
-    n.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg);border:1.5px solid var(--green);border-radius:var(--r);padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:400;min-width:300px;max-width:420px;animation:slideup 0.3s ease';
+    let code=room.code;
+    n.innerHTML='<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">⚔️</span><div style="flex:1"><b>'+name+'</b> challenged you!</div>'
+      +'<button id="accept-challenge-btn" style="background:var(--green);color:#fff;border:none;border-radius:var(--rs);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Accept</button>'
+      +'<button id="dismiss-challenge-btn" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--txt2);line-height:1">×</button></div>';
+    setTimeout(()=>{
+      let ab=document.getElementById('accept-challenge-btn');
+      if(ab)ab.onclick=()=>{acceptChallenge(code);document.getElementById('challenge-notif')?.remove();};
+      let db=document.getElementById('dismiss-challenge-btn');
+      if(db)db.onclick=()=>document.getElementById('challenge-notif')?.remove();
+    },0);
+    n.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg);border:1.5px solid var(--green);border-radius:var(--r);padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.18);z-index:400;min-width:300px;max-width:420px;';
     let style=document.createElement('style');
-    style.textContent='@keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+    style.textContent='@keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
     document.head.appendChild(style);
-    // Remove old notif if any
-    document.getElementById('challenge-notif')?.remove();
+    n.style.animation='slideup 0.25s ease';
     document.body.appendChild(n);
-    // Auto-dismiss after 30s
     setTimeout(()=>n.remove(),30000);
   });
 }
-function acceptChallenge(code){
-  // Find the room and join it
-  sbFetch('race_rooms','code=eq.'+code+'&status=eq.waiting').then(rows=>{
-    if(!rows?.length)return;
-    let room=rows[0];
-    let words=JSON.parse(room.words||'[]');
-    raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:false};
-    ranksSubTab='race';
-    if(typeof rSocial==='function')rSocial();
-    else setTab('social');
-  });
-}
+
+

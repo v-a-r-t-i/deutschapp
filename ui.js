@@ -28,15 +28,7 @@ function showModal({title,body,confirm='Confirm',cancel='Cancel',onConfirm,onCan
   if(existing)existing.remove();
   let m=document.createElement('div');
   m.id='app-modal';
-  m.innerHTML=`<div class="modal-backdrop" onclick="closeModal()"></div>
-    <div class="modal-box">
-      <div class="modal-title">${title||''}</div>
-      <div class="modal-body">${body||''}</div>
-      <div class="modal-btns">
-        <button class="modal-btn-cancel" onclick="closeModal()">${cancel}</button>
-        <button class="modal-btn-confirm" id="modal-confirm-btn">${confirm}</button>
-      </div>
-    </div>`;
+  m.innerHTML='<div class="modal-backdrop" onclick="closeModal()"></div><div class="modal-box"><div class="modal-title">'+(title||'')+'</div><div class="modal-body">'+(body||'')+'</div><div class="modal-btns">'+(cancel!==null?'<button class="modal-btn-cancel" onclick="closeModal()">'+cancel+'</button>':'')+'<button class="modal-btn-confirm" id="modal-confirm-btn">'+confirm+'</button></div></div>';
   document.body.appendChild(m);
   document.getElementById('modal-confirm-btn').onclick=()=>{if(onConfirm)onConfirm();closeModal();};
 }
@@ -967,6 +959,13 @@ async function finishRace(){
       await syncBPFromSupabase();
       raceSt.battle.resolved=true;
       raceSt.battle.won=won;
+      // Inject BP banner into already-rendered results screen
+      let banner=document.getElementById('bp-battle-banner');
+      if(banner){
+        let stake=raceSt.battle.stake||5;
+        let col=won?'var(--green)':'var(--rd)',bg=won?'var(--gl)':'var(--rl)';
+        banner.outerHTML='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:'+bg+';border-left:3px solid '+col+'"><div style="font-size:15px;font-weight:700;color:'+col+'">'+(won?'⚔️ Battle Won! +'+stake+' BP':'⚔️ Battle Lost… -'+stake+' BP')+'</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(won?'You stole BP from '+raceSt.battle.opponentName:raceSt.battle.opponentName+' stole your BP')+'</div></div>';
+      }
     },2500);
   }
 }
@@ -978,7 +977,8 @@ function rRaceResults(){
   let emoji=pct>=90?'🏆':pct>=60?'🎉':pct>=30?'👍':'💪';
   let roomId=r.room.id||r.room.code;
   // BP battle banner — shown after finishRace resolves (2.5s delay)
-  let bpBanner='';
+  // BP banner injected after result resolves (2.5s delay in finishRace)
+  let bpBanner='<div id="bp-battle-banner"></div>';
   if(r.battle&&r.battle.resolved){
     let won=r.battle.won,stake=r.battle.stake||5;
     let col=won?'var(--green)':'var(--rd)',bg=won?'var(--gl)':'var(--rl)';
