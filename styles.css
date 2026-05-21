@@ -2075,3 +2075,35 @@ font-family:inherit;
 .type-hint{font-size:12px;color:var(--txt3);text-align:center;margin-top:6px;}
 .mode-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
 .ring-svg{display:inline-block;vertical-align:middle;margin-right:4px;}
+
+/* ===== MOBILE NAV FIX ===== */
+@media(max-width:600px){
+  .nav{padding:10px 14px;gap:8px;flex-wrap:nowrap;}
+  .nav-logo{font-size:14px;}
+  .nav-right{gap:6px;flex-wrap:nowrap;}
+  .streak,.xp-pill,.due-pill,.user-btn{padding:6px 10px;font-size:11px;}
+  /* Hide streak count label on very small screens, keep icon */
+  .page-wrap{padding:12px 10px;gap:12px;}
+  .tabs{padding:10px 12px;margin:12px 0 14px;gap:6px;}
+  .tab{padding:10px 6px;font-size:12px;}
+  .card{padding:22px 18px;border-radius:24px;}
+  .de-word{font-size:36px;}
+  .quiz-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .q-opt{padding:12px;font-size:14px;}
+  .content{padding:4px;}
+}
+@media(max-width:380px){
+  /* Collapse XP + streak into tighter pills */
+  .streak,.xp-pill{padding:5px 8px;font-size:10px;}
+  .due-pill{display:none;}
+}
+
+@media(max-width:600px){
+  .de-word{font-size:clamp(28px,8vw,46px);}
+  .listen-btn{width:80px;height:80px;font-size:44px;}
+  .social-tabs{gap:6px;}
+  .social-tab{padding:10px 8px;font-size:12px;border-radius:14px;}
+  .rv-river{min-height:400px!important;}
+  .rv-boat{padding:6px 10px;font-size:12px;}
+  .rv-name{font-size:11px;max-width:70px;}
+}

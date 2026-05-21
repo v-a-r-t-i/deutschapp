@@ -205,4 +205,19 @@ function showChallengeNotif(room){
   });
 }
 
+function acceptChallenge(code){
+  sbFetch('race_rooms','code=eq.'+code+'&limit=1',true).then(rows=>{
+    if(!rows?.length)return;
+    let room=rows[0];
+    let words;
+    try{words=JSON.parse(room.words||'[]');}catch(e){words=[];}
+    raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:true};
+    ranksSubTab='race';
+    if(typeof rSocial==='function')rSocial();
+    else if(typeof setTab==='function')setTab('social');
+    if(typeof pollRaceStart==='function')pollRaceStart(room.id||room.code,code);
+  });
+}
+
+
 
