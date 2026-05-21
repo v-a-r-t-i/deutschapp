@@ -22,6 +22,27 @@ function allW(){let w=[];for(let c of Object.keys(DATA))for(let i of(DATA[c]||[]
 function cp(cat){let ws=DATA[cat]||[];return{k:ws.filter(w=>known.has(w.de)).length,t:ws.length};}
 function shuf(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
 function ring(k,t){let r=7,c=2*Math.PI*r,p=t?k/t:0,da=(p*c).toFixed(1),ga=((1-p)*c).toFixed(1),col=p===1?'#1D9E75':p>0?'#5DCAA5':'rgba(128,128,128,0.2)';return`<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="2"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${da} ${ga}" stroke-linecap="round" transform="rotate(-90 8 8)"/></svg>`;}
+// ── MODAL ─────────────────────────────────────────────
+function showModal({title,body,confirm='Confirm',cancel='Cancel',onConfirm,onCancel}={}){
+  let existing=document.getElementById('app-modal');
+  if(existing)existing.remove();
+  let m=document.createElement('div');
+  m.id='app-modal';
+  m.innerHTML=`<div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-box">
+      <div class="modal-title">${title||''}</div>
+      <div class="modal-body">${body||''}</div>
+      <div class="modal-btns">
+        <button class="modal-btn-cancel" onclick="closeModal()">${cancel}</button>
+        <button class="modal-btn-confirm" id="modal-confirm-btn">${confirm}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  document.getElementById('modal-confirm-btn').onclick=()=>{closeModal();if(onConfirm)onConfirm();};
+}
+function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove();}
+
+
 function updAll(){
   // Throttled session save — at most once every 3s to catch wrong answers too
   if(CU){let now=Date.now();if(!updAll._lastSave||now-updAll._lastSave>3000){updAll._lastSave=now;saveLocalCache();}}
@@ -575,9 +596,15 @@ async function loadBattle(){
 
 function startBattle(fid,fname,fxp){
   let myBP=getBP(xpTotal),theirBP=Math.floor((fxp||0)/10);
-  if(!confirm('⚔️ Battle '+fname+'?\n\nWinner steals 5 BP.\nYour BP: '+myBP+' · Their BP: '+theirBP))return;
-  window._pendingBattle={opponentId:fid,opponentName:fname,stake:5};
-  challengeFriend(fid,fname);
+  showModal({
+    title:'⚔️ Battle '+fname+'?',
+    body:'Winner steals <b>5 BP</b> from the loser.<div style="display:flex;justify-content:center;gap:24px;margin-top:12px"><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--green)">'+myBP+'</div><div style="font-size:11px;color:var(--txt2)">Your BP</div></div><div style="font-size:22px;color:var(--txt3);padding-top:8px">vs</div><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--bd)">'+theirBP+'</div><div style="font-size:11px;color:var(--txt2)">Their BP</div></div></div>',
+    confirm:'⚔️ Battle!',
+    onConfirm:()=>{
+      window._pendingBattle={opponentId:fid,opponentName:fname,stake:5};
+      challengeFriend(fid,fname);
+    }
+  });
 }
 
 
@@ -702,17 +729,18 @@ async function removeFriend(fid){
   loadFriends();
 }
 
-async function challengeFriend(friendId,friendName){
-  let btn=event.target;
-  btn.disabled=true;btn.textContent='Creating room...';
+async function challengeFriend(friendId,friendName,btnEl){
+  let btn=btnEl||(typeof event!=='undefined'&&event?.target)||null;
+  if(btn){btn.disabled=true;btn.textContent='Creating...';}
   let words=aw();if(words.length<4)words=Object.values(DATA).flat();
   shuf(words);words=words.slice(0,10);
   let code=Math.random().toString(36).slice(2,6).toUpperCase();
   let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
   let res=await sbUpsert('race_rooms',room);
-  if(!res){btn.disabled=false;btn.textContent='⚡ Challenge to a Race';return;}
+  if(!res){if(btn){btn.disabled=false;btn.textContent='⚡ Race Challenge';}return;}
   let savedRoom=(Array.isArray(res)&&res[0])||{...room};
   raceSt={room:savedRoom,words,idx:0,score:0,startTime:null,done:false,isCreator:true,waiting:true};
+  closeModal();
   ranksSubTab='race';
   rSocial();
 }
