@@ -38,7 +38,7 @@ function showModal({title,body,confirm='Confirm',cancel='Cancel',onConfirm,onCan
       </div>
     </div>`;
   document.body.appendChild(m);
-  document.getElementById('modal-confirm-btn').onclick=()=>{closeModal();if(onConfirm)onConfirm();};
+  document.getElementById('modal-confirm-btn').onclick=()=>{if(onConfirm)onConfirm();closeModal();};
 }
 function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove();}
 
@@ -742,7 +742,7 @@ async function challengeFriend(friendId,friendName,btnEl){
   let words=aw();if(words.length<4)words=Object.values(DATA).flat();
   shuf(words);words=words.slice(0,10);
   let code=Math.random().toString(36).slice(2,6).toUpperCase();
-  let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting'};
+  let room={code,creator_id:CU.id,words:JSON.stringify(words),status:'waiting',invited_id:friendId};
   let res=await sbUpsert('race_rooms',room);
   if(!res){if(btn){btn.disabled=false;btn.textContent='⚡ Race Challenge';}return;}
   let savedRoom=(Array.isArray(res)&&res[0])||{...room};

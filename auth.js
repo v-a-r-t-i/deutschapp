@@ -120,6 +120,7 @@ async function handleSession(session){
         document.getElementById('teacher-app').style.display='none';
         let ub=document.getElementById('user-btn');if(ub)ub.textContent=(CP?.display_name||CU.email)+' ▾';
         loadProg();
+        subscribeToChalllenges();
       }
     }else{
       document.getElementById('loading-screen').style.display='none';
@@ -211,7 +212,7 @@ function confirmDeleteAccount(){
     onConfirm: async()=>{
       let val=document.getElementById('delete-confirm-input')?.value?.trim();
       if(val!=='DELETE'){
-        showModal({title:'Incorrect',body:'You must type DELETE exactly to confirm.',confirm:'OK',cancel:null,onConfirm:confirmDeleteAccount});
+        closeModal();setTimeout(()=>showModal({title:'Incorrect',body:'You must type DELETE exactly to confirm.',confirm:'OK',cancel:null,onConfirm:confirmDeleteAccount}),50);
         return;
       }
       await deleteAccount();

@@ -138,3 +138,56 @@ function addXP(amt,type){
 }
 
 // ── AI PHRASES ────────────────────────────────────────
+// ── CHALLENGE NOTIFICATIONS (Realtime) ───────────────
+let _realtimeChannel=null;
+function subscribeToChalllenges(){
+  if(!CU||_realtimeChannel)return;
+  _realtimeChannel=sb.channel('challenges_'+CU.id)
+    .on('postgres_changes',{
+      event:'INSERT',schema:'public',table:'race_rooms',
+      filter:'invited_id=eq.'+CU.id
+    },payload=>{
+      let room=payload.new;
+      if(!room||room.status!=='waiting')return;
+      showChallengeNotif(room);
+    })
+    .subscribe();
+}
+function unsubscribeFromChallenges(){
+  if(_realtimeChannel){sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
+}
+function showChallengeNotif(room){
+  // Fetch challenger name from profiles
+  sbFetch('profiles','select=display_name&id=eq.'+room.creator_id,true).then(rows=>{
+    let name=(rows&&rows[0]?.display_name)||'Someone';
+    let n=document.createElement('div');
+    n.id='challenge-notif';
+    n.innerHTML=`<div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">⚔️</span>
+      <div style="flex:1"><b>${name}</b> challenged you to a battle!</div>
+      <button onclick="acceptChallenge('${room.code}');this.closest('#challenge-notif').remove()" style="background:var(--green);color:#fff;border:none;border-radius:var(--rs);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Accept</button>
+      <button onclick="this.closest('#challenge-notif').remove()" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--txt2)">×</button>
+    </div>`;
+    n.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg);border:1.5px solid var(--green);border-radius:var(--r);padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:400;min-width:300px;max-width:420px;animation:slideup 0.3s ease';
+    let style=document.createElement('style');
+    style.textContent='@keyframes slideup{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+    document.head.appendChild(style);
+    // Remove old notif if any
+    document.getElementById('challenge-notif')?.remove();
+    document.body.appendChild(n);
+    // Auto-dismiss after 30s
+    setTimeout(()=>n.remove(),30000);
+  });
+}
+function acceptChallenge(code){
+  // Find the room and join it
+  sbFetch('race_rooms','code=eq.'+code+'&status=eq.waiting').then(rows=>{
+    if(!rows?.length)return;
+    let room=rows[0];
+    let words=JSON.parse(room.words||'[]');
+    raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:false};
+    ranksSubTab='race';
+    if(typeof rSocial==='function')rSocial();
+    else setTab('social');
+  });
+}

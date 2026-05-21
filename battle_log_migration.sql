@@ -19,3 +19,6 @@ create policy "Anyone can read battle_log"
 create policy "Winner inserts own battles"
   on battle_log for insert
   with check (auth.uid() = winner_id);
+
+-- Also run this to enable challenge notifications:
+ALTER TABLE race_rooms ADD COLUMN IF NOT EXISTS invited_id uuid;
