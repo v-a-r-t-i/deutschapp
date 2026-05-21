@@ -798,16 +798,24 @@ function confetti(){
 
 // ── LANGUAGE SWITCHER ────────────────────────────────
 function switchLang(l){
+  if(lang===l)return;
   lang=l;
   localStorage.setItem('app_lang',l);
   document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.id==='lang-'+l));
   let logo=document.getElementById('nav-logo');
   if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400">v'+APP_VERSION+'</span>';
+  // Show loading immediately so it feels instant
+  let c=document.getElementById('content');
+  if(c)c.innerHTML='<div style="text-align:center;padding:60px;color:var(--txt2)"><span class="spinner"></span> Loading '+( l==='de'?'German':'Korean')+' words...</div>';
+  // Reset state
   DATA={};selCats=new Set();queue=[];qIdx=0;known=new Set();sm2Cache={};
+  // Also reload SM-2 progress for this language
   loadWords().then(()=>{
     selCats=new Set(Object.keys(DATA));
-    updSidebar();
-    setTab('flash');
+    loadProg().then(()=>{
+      updSidebar();
+      setTab('flash');
+    });
   });
 }
 
