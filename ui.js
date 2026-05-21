@@ -404,105 +404,113 @@ async function loadRiver(){
   let wrap=document.getElementById('river-wrap');
   if(!wrap)return;
   try{
-    let [profiles,streaksData]=await Promise.all([
+    let week=getWeekStart();
+    let [profiles,battles]=await Promise.all([
       sbFetch('profiles','select=id,display_name&limit=100'),
-      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
+      sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake',true)
     ]);
     let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
-    let users=(streaksData||[]).map(s=>({
-      id:s.user_id,name:pMap[s.user_id]||'Learner',
-      xp:s.xp_total||0,streak:s.streak_count||0,
-      isMe:s.user_id===CU?.id
-    }));
-    // Include self if not in list
-    if(CU&&!users.find(u=>u.isMe))users.push({id:CU.id,name:CP?.display_name||'You',xp:xpTotal,streak:streakN,isMe:true});
-    users.sort((a,b)=>b.xp-a.xp);
+
+    // Compute weekly BP per user from battle_log
+    let weeklyBP={};
+    (battles||[]).forEach(b=>{
+      weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
+      weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+    });
+
+    // Build user list from anyone who appears in profiles + has XP
+    // Use weekly BP as position; everyone not in battle_log starts at 0
+    let allIds=new Set([...Object.keys(pMap),...Object.keys(weeklyBP)]);
+    let users=[...allIds].map(id=>({
+      id,name:pMap[id]||id.slice(0,8),
+      weekBP:Math.max(0,weeklyBP[id]||0),
+      isMe:id===CU?.id
+    })).filter(u=>u.isMe||u.weekBP>0||(profiles||[]).find(p=>p.id===u.id));
+
+    // Override my own weekly BP with local store (most up-to-date)
+    let myStore=getBPStore();
+    let myWeekBP=Math.max(0,myStore.delta||0);
+    if(CU){
+      let me=users.find(u=>u.isMe);
+      if(me)me.weekBP=myWeekBP;
+      else users.push({id:CU.id,name:CP?.display_name||'You',weekBP:myWeekBP,isMe:true});
+    }
+
+    users.sort((a,b)=>b.weekBP-a.weekBP);
     renderRiver(users,wrap);
   }catch(e){
     if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Could not load river data.</div>';
   }
 }
 function renderRiver(users,wrap,compact=false){
-  // Sort by BP descending
-  users=users.slice().sort((a,b)=>b.xp-a.xp);
-  const getBPLocal=xp=>Math.floor((xp||0)/10);
-  users.forEach((u,i)=>{u.bp=getBPLocal(u.xp);u.rank=i+1;});
+  // Weekly river — position = weekly BP (resets Monday, battles only)
+  users=users.slice().sort((a,b)=>b.weekBP-a.weekBP);
+  users.forEach((u,i)=>{u.rank=i+1;});
 
   let me=users.find(u=>u.isMe);
   let myIdx=users.findIndex(u=>u.isMe);
 
-  // Pick rivals: 2 above + 2 below me by rank, fill gaps if near top/bottom
+  // Pick 4 closest rivals
   let pool=[];
-  for(let d=1;d<=4;d++){
-    if(myIdx-d>=0)pool.push({...users[myIdx-d],lane:d%2===1?0:2});
-    if(myIdx+d<users.length)pool.push({...users[myIdx+d],lane:d%2===1?2:0});
+  for(let d=1;d<=6;d++){
+    if(myIdx-d>=0)pool.push(users[myIdx-d]);
+    if(myIdx+d<users.length)pool.push(users[myIdx+d]);
     if(pool.length>=4)break;
   }
   pool=pool.slice(0,4);
 
-  // Assign lanes 0–4 (5 lanes): rivals spread, me in center (lane 2)
-  // Give each rival a unique lane slot
-  let leftSlots=[0,1],rightSlots=[3,4],li=0,ri=0;
-  pool.forEach(u=>{
-    if(u.rank<(me?.rank||999)){u.lane=leftSlots[li++%leftSlots.length];}
-    else{u.lane=rightSlots[ri++%rightSlots.length];}
-  });
+  // Assign 5 lanes (0–4), me = lane 2
+  const laneX=[10,26,44,62,78];
+  let above=pool.filter(u=>u.rank<(me?.rank||999));
+  let below=pool.filter(u=>u.rank>=(me?.rank||999));
+  let leftSlots=[0,1],rightSlots=[3,4];
+  above.forEach((u,i)=>{u.lane=leftSlots[i%2];});
+  below.forEach((u,i)=>{u.lane=rightSlots[i%2];});
   if(me)me.lane=2;
 
   let shown=[...pool];
   if(me)shown.push(me);
 
-  // Y positions: sqrt scale relative to top BP
-  const topBP=Math.max(...shown.map(u=>u.bp),1);
+  // Y: scale to max weekly BP among shown; everyone starts at bottom (0 BP = 5%)
+  const topBP=Math.max(...shown.map(u=>u.weekBP),1);
   const MAX_RIVER=Math.max(topBP*1.2,10);
-  const bpToY=bp=>Math.round(5+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*87);
+  const bpToY=bp=>Math.round(7+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*83);
 
-  // Milestones
-  const milestones=LEVELS.map(l=>({bp:Math.floor(l.min/10),name:l.name,lvl:l.lvl}))
-    .filter(l=>l.bp>0&&l.bp<=MAX_RIVER*1.05);
+  let height=compact?300:480;
+  let daysLeft=getDaysUntilReset();
+  let myWeekBP=me?.weekBP||0;
+  let rank=me?.rank||'?';
 
-  // Lane X positions (5 lanes across the river)
-  const laneX=[10,26,44,62,78];
-
-  let height=compact?320:520;
-
-  // Build boats
   let boatsHTML=shown.map(u=>{
-    let y=bpToY(u.bp);
+    let y=bpToY(u.weekBP);
     let x=laneX[u.lane??2];
-    let isMe=u.isMe;
-    return '<div class="rv-boat'+(isMe?' rv-me':'')+'" style="bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%)">'
-      +'<span class="rv-emoji">'+(isMe?'⛵':'🚣')+'</span>'
-      +'<span class="rv-name">'+(isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
-      +'<span class="rv-xp">'+u.bp+' BP</span>'
+    return '<div class="rv-boat'+(u.isMe?' rv-me':'')+'" style="bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%)">'
+      +'<span class="rv-emoji">'+(u.isMe?'⛵':'🚣')+'</span>'
+      +'<span class="rv-name">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
+      +'<span class="rv-xp">'+u.weekBP+' BP</span>'
       +'</div>';
   }).join('');
 
-  // Lane dividers — subtle vertical lines
-  let lanesHTML=laneX.map((x,i)=>
-    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.04);transform:translateX(-50%)"></div>'
-  ).join('');
+  // Start line at y=7% (bottom)
+  let startLine='<div style="position:absolute;left:0;right:0;bottom:7%;border-top:2px dashed rgba(255,255,255,0.18);"></div>'
+    +'<div style="position:absolute;left:50%;bottom:7%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(11,16,32,0.85);color:var(--txt3);white-space:nowrap">⚓ Week Start</div>';
 
-  let milestonesHTML=milestones.map(m=>{
-    let p=Math.round(5+Math.sqrt(m.bp/MAX_RIVER)*87);
-    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' · '+m.name+' ('+m.bp+' BP)</span></div>';
-  }).join('');
-
-  let rank=me?.rank||'?';
-  let totalShown=shown.length;
+  let lanesHTML=laneX.map(x=>'<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.04);transform:translateX(-50%)"></div>').join('');
 
   let header=compact?''
-    :'<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div>'
-    +'<div style="font-size:13px;color:var(--txt2)">Your rank: <b>#'+rank+'</b> of '+users.length+' · '+( me?.bp||0)+' BP · '+totalShown+' shown</div></div>';
+    :'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    +'<div><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 Weekly River</div>'
+    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> · <b>'+myWeekBP+' BP</b> this week</div></div>'
+    +'<div style="text-align:right;font-size:12px;color:var(--txt3)">Resets in<br><b style="color:var(--txt2)">'+daysLeft+'d</b></div>'
+    +'</div>';
 
   let footer=compact?''
-    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Showing your 4 closest rivals · earn XP to move up</div>';
+    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Win battles to move up · resets every Monday</div>';
 
   wrap.innerHTML=header
     +'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px">'
-    +lanesHTML+milestonesHTML+boatsHTML
-    +'<div class="rv-start">⚓ Start</div>'
-    +'<div class="rv-end">🏆 Leader</div>'
+    +lanesHTML+startLine+boatsHTML
+    +'<div class="rv-end" style="top:10px">🏆 Leader</div>'
     +'</div></div>'+footer;
 }
 
@@ -604,8 +612,11 @@ async function loadFriends(){
       let skd=sk.find(x=>x.user_id===fid);
       return {id:fid,name:p?.display_name||fid.slice(0,8),xp:skd?.xp_total||0,streak:skd?.streak_count||0,isMe:false};
     });
-    riverUsers.push({id:CU.id,name:CP?.display_name||'You',xp:xpTotal,streak:streakN,isMe:true});
-    riverUsers.sort((a,b)=>b.xp-a.xp);
+    // Add weekly BP for friends river
+    let myStore=getBPStore();
+    riverUsers.forEach(u=>{u.weekBP=Math.floor((u.xp||0)/10);});
+    riverUsers.push({id:CU.id,name:CP?.display_name||'You',weekBP:Math.max(0,myStore.delta||0),xp:xpTotal,streak:streakN,isMe:true});
+    riverUsers.sort((a,b)=>b.weekBP-a.weekBP);
     renderRiver(riverUsers,riverWrap,true);
   }
 }
