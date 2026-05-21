@@ -23,6 +23,8 @@ function cp(cat){let ws=DATA[cat]||[];return{k:ws.filter(w=>known.has(w.de)).len
 function shuf(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
 function ring(k,t){let r=7,c=2*Math.PI*r,p=t?k/t:0,da=(p*c).toFixed(1),ga=((1-p)*c).toFixed(1),col=p===1?'#1D9E75':p>0?'#5DCAA5':'rgba(128,128,128,0.2)';return`<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="2"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${da} ${ga}" stroke-linecap="round" transform="rotate(-90 8 8)"/></svg>`;}
 function updAll(){
+  // Throttled session save — at most once every 3s to catch wrong answers too
+  if(CU){let now=Date.now();if(!updAll._lastSave||now-updAll._lastSave>3000){updAll._lastSave=now;saveLocalCache();}}
   let all=aw(),t=all.length,k=all.filter(x=>known.has(x.de)).length;
   let due=all.filter(w=>s2due(w.de)).length;
   let lvl=getLevelInfo(xpTotal);

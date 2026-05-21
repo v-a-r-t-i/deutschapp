@@ -6,6 +6,8 @@ function saveLocalCache(){
       streakN,lastStudy,bestStreak,xpTotal,
       mistakes,
       selCats:[...selCats],
+      sessionDate:tday(),
+      sessionReviewed,sessionCorrect,sessionXP,
       savedAt:Date.now()
     }));
   }catch(e){}
@@ -24,6 +26,11 @@ function loadLocalCache(){
     if(c.xpTotal!==undefined)xpTotal=c.xpTotal;
     if(c.mistakes)mistakes=c.mistakes;
     if(c.selCats&&c.selCats.length)selCats=new Set(c.selCats);
+    if(c.sessionDate===tday()){
+      if(c.sessionReviewed!==undefined)sessionReviewed=c.sessionReviewed;
+      if(c.sessionCorrect!==undefined)sessionCorrect=c.sessionCorrect;
+      if(c.sessionXP!==undefined)sessionXP=c.sessionXP;
+    }
     return true;
   }catch(e){return false;}
 }
@@ -78,7 +85,9 @@ async function loadProg(){
   let sk=Array.isArray(skArr)?skArr[0]:null;
   if(sk){streakN=sk.streak_count||0;lastStudy=sk.last_study_date;bestStreak=sk.best_streak||0;xpTotal=sk.xp_total||0;}
   setDot('');
-  selCats=new Set(Object.keys(DATA));
+  // Preserve user's category selection — only default to all if nothing was saved
+  let cachedCats=[...selCats];
+  if(cachedCats.length===0)selCats=new Set(Object.keys(DATA));
   saveLocalCache();
   updAll();buildQ();setTab('flash');
 }
