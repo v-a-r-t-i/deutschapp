@@ -397,6 +397,77 @@ function rSocial(){
 function rRanks(){ranksSubTab='friends';rSocial();}
 function raceNav(){ranksSubTab='race';rSocial();}
 
+
+// ── BATTLE ARENA ──────────────────────────────────────
+function rBattleUI(){
+  let bp=getBP(xpTotal);
+  let store=getBPStore();
+  let wins=(store.battles||[]).filter(b=>b.won).length;
+  let losses=(store.battles||[]).filter(b=>!b.won).length;
+  let daysLeft=getDaysUntilReset();
+  return '<div id="battle-wrap">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
+    +'<div style="background:rgba(255,255,255,0.05);border:1px solid var(--bor);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:26px;font-weight:700;color:var(--green)">'+bp+'</div><div style="font-size:11px;color:var(--txt2)">Total BP</div></div>'
+    +'<div style="background:rgba(255,255,255,0.05);border:1px solid var(--bor);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:26px;font-weight:700">'+wins+'W '+losses+'L</div><div style="font-size:11px;color:var(--txt2)">This week</div></div>'
+    +'<div style="background:rgba(255,255,255,0.05);border:1px solid var(--bor);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:26px;font-weight:700;color:var(--bd)">'+daysLeft+'d</div><div style="font-size:11px;color:var(--txt2)">Until reset</div></div>'
+    +'</div>'
+    +'<div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:var(--rs);padding:10px 12px;margin-bottom:14px;font-size:12px;color:#fcd34d">⚔️ Win to steal <b>5 BP</b>. Lose and give 5 BP. Only ±2 levels can battle. Resets every Monday.</div>'
+    +'<div style="font-size:13px;font-weight:600;margin-bottom:10px">Opponents near your level</div>'
+    +'<div id="battle-opponents"><div style="text-align:center;padding:16px;color:var(--txt3);font-size:13px"><span class="spinner"></span> Matching…</div></div>'
+    +'</div>';
+}
+
+async function loadBattle(){
+  await syncBPFromSupabase();
+  let wrap=document.getElementById('battle-opponents');
+  if(!wrap)return;
+  try{
+    let myLvl=getLevelInfo(xpTotal).lvl;
+    let [profiles,streaksData]=await Promise.all([
+      sbFetch('profiles','select=id,display_name&limit=100'),
+      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
+    ]);
+    let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
+    let opponents=(streaksData||[])
+      .filter(s=>s.user_id!==CU?.id)
+      .map(s=>({id:s.user_id,name:pMap[s.user_id]||'Learner',xp:s.xp_total||0,lvl:getLevelInfo(s.xp_total||0).lvl}))
+      .filter(u=>Math.abs(u.lvl-myLvl)<=2);
+    for(let i=opponents.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opponents[i],opponents[j]]=[opponents[j],opponents[i]];}
+    opponents=opponents.slice(0,8);
+    if(!opponents.length){wrap.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:16px">No opponents near your level yet.</div>';return;}
+    let store=getBPStore();
+    wrap.innerHTML=opponents.map(u=>{
+      let theirBP=Math.floor((u.xp||0)/10);
+      let fought=(store.battles||[]).find(b=>b.opponentId===u.id);
+      let badge=fought?'<span style="font-size:10px;background:'+(fought.won?'rgba(34,197,94,0.14)':'rgba(239,68,68,0.12)')+';color:'+(fought.won?'#86efac':'#fca5a5')+';padding:2px 7px;border-radius:10px;margin-left:4px">'+(fought.won?'Won +5':'Lost -5')+'</span>':'';
+      return '<div style="background:rgba(255,255,255,0.04);border:1px solid var(--bor);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">'
+        +'<div><div style="font-size:14px;font-weight:600">'+u.name+badge+'</div>'
+        +'<div style="font-size:11px;color:var(--txt2);margin-top:2px">Lvl '+u.lvl+' · '+theirBP+' BP</div></div>'
+        +'<button class="btn-sm-green" style="padding:7px 14px" id="battle-btn-'+u.id+'">⚔️ Battle</button>'
+        +'</div>';
+    }).join('');
+    // Bind battle buttons after render to avoid quote issues
+    opponents.forEach(u=>{
+      let btn=document.getElementById('battle-btn-'+u.id);
+      if(btn)btn.onclick=()=>startBattle(u.id,u.name,u.xp);
+    });
+  }catch(e){if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Error loading opponents.</div>';}
+}
+
+function startBattle(fid,fname,fxp){
+  let myBP=getBP(xpTotal),theirBP=Math.floor((fxp||0)/10);
+  showModal({
+    title:'⚔️ Battle '+fname+'?',
+    body:'Winner steals <b>5 BP</b> from the loser.<div style="display:flex;justify-content:center;gap:24px;margin-top:12px"><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--green)">'+myBP+'</div><div style="font-size:11px;color:var(--txt2)">Your BP</div></div><div style="font-size:22px;color:var(--txt3);padding-top:8px">vs</div><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--bd)">'+theirBP+'</div><div style="font-size:11px;color:var(--txt2)">Their BP</div></div></div>',
+    confirm:'⚔️ Battle!',
+    onConfirm:()=>{
+      window._pendingBattle={opponentId:fid,opponentName:fname,stake:5};
+      challengeFriend(fid,fname);
+    }
+  });
+}
+
+
 function rRiverUI(){
   return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
 }
@@ -528,7 +599,10 @@ function renderRiver(users,wrap,compact=false){
   // Y: scale to max weekly BP among shown; everyone starts at bottom (0 BP = 5%)
   const topBP=Math.max(...shown.map(u=>u.weekBP),1);
   const MAX_RIVER=Math.max(topBP*1.2,10);
+  // If everyone is at 0 BP (start of week), use rank-based spread so it's not a pile
+  const allZero=shown.every(u=>u.weekBP===0);
   const bpToY=bp=>Math.round(7+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*83);
+  const rankToY=(rank,total)=>Math.round(10+(total-rank)/(Math.max(total-1,1))*75);
 
   let height=compact?300:480;
   let daysLeft=getDaysUntilReset();
@@ -536,7 +610,7 @@ function renderRiver(users,wrap,compact=false){
   let rank=me?.rank||'?';
 
   let boatsHTML=shown.map(u=>{
-    let y=bpToY(u.weekBP);
+    let y=allZero?rankToY(u.rank,shown.length):bpToY(u.weekBP);
     let x=laneX[u.lane??2];
     return '<div class="rv-boat'+(u.isMe?' rv-me':'')+'" style="bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%)">'
       +'<span class="rv-emoji">'+(u.isMe?'⛵':'🚣')+'</span>'
