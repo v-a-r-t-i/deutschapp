@@ -806,11 +806,25 @@ function switchLang(l){
   if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400">v'+APP_VERSION+'</span>';
   let c=document.getElementById('content');
   if(c)c.innerHTML='<div style="text-align:center;padding:60px;color:var(--txt2)"><span class="spinner"></span> Loading '+(l==='de'?'German':'Korean')+' words...</div>';
-  DATA={};selCats=new Set();queue=[];qIdx=0;known=new Set();sm2Cache={};
-  loadWords().catch(()=>{}).then(()=>{
+  // Fetch words directly — bypass loadProg entirely
+  DATA={};
+  sbFetch('words','select=*&language=eq.'+l+'&order=category').then(words=>{
+    let newData={};
+    let seen={};
+    (words||[]).forEach(w=>{
+      if(!newData[w.category])newData[w.category]=[];
+      let key=w.category+'|'+w.de;
+      if(seen[key])return;
+      seen[key]=true;
+      newData[w.category].push({de:w.de,art:w.art,en:w.en,phrases:Array.isArray(w.phrases)?w.phrases:[]});
+    });
+    DATA=newData;
     selCats=new Set(Object.keys(DATA));
+    queue=[];qIdx=0;
     updSidebar();
     setTab('flash');
+  }).catch(e=>{
+    if(c)c.innerHTML='<div style="text-align:center;padding:40px;color:var(--rd)">Failed to load words. Please try again.</div>';
   });
 }
 
