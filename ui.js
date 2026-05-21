@@ -4,14 +4,14 @@ function speak(t,btn){
   if(btn&&btn.classList.contains('speaking')){btn.classList.remove('speaking');return;}
   document.querySelectorAll('.speaking').forEach(b=>b.classList.remove('speaking'));
   let u=new SpeechSynthesisUtterance(t);
-  u.lang='de-DE';
-  u.rate=0.75;  // slower = clearer
+  let isKr=lang==='kr';
+  u.lang=isKr?'ko-KR':'de-DE';
+  u.rate=isKr?0.85:0.75;
   u.pitch=1.0;
-  // Prefer high quality voices: Google Deutsch, then any de-DE, then any de
   let voices=speechSynthesis.getVoices();
-  let preferred=voices.find(v=>v.name.includes('Google')&&v.lang.startsWith('de'))
-    ||voices.find(v=>v.lang==='de-DE')
-    ||voices.find(v=>v.lang.startsWith('de'));
+  let preferred=isKr
+    ?(voices.find(v=>v.name.includes('Google')&&v.lang.startsWith('ko'))||voices.find(v=>v.lang.startsWith('ko')))
+    :(voices.find(v=>v.name.includes('Google')&&v.lang.startsWith('de'))||voices.find(v=>v.lang==='de-DE')||voices.find(v=>v.lang.startsWith('de')));
   if(preferred)u.voice=preferred;
   if(btn){btn.classList.add('speaking');u.onend=()=>btn.classList.remove('speaking');}
   speechSynthesis.speak(u);
@@ -88,10 +88,11 @@ function setTab(t){
   // Show/hide study mode pills
   let sm=document.getElementById('study-modes');
   if(sm)sm.style.display=isStudy?'flex':'none';
-  // Update active pill
-  if(isStudy){
-    document.querySelectorAll('.mode-pill').forEach(p=>p.classList.toggle('active',p.id==='pill-'+t));
-  }
+  let studyPills=['flash','listen','quiz','fill','gender'];
+  let studyLabels=lang==='kr'?['Flash','Listen','Quiz','Fill-in','Formality']:['Flash','Listen','Quiz','Fill-in','Gender'];
+  document.getElementById('study-modes').innerHTML=studyPills.map((t,i)=>
+    `<div class="mode-pill${tab===t?' active':''}" id="pill-${t}" onclick="setStudyTab('${t}')">${studyLabels[i]}</div>`
+  ).join('');
   updAll();
   if(t==='flash'){buildQ();rFlash();}
   else if(t==='listen'){buildListenQ();rListen();}
@@ -125,14 +126,16 @@ function rFlash(){
   let item=queue[qIdx],sm=s2g(item.de),isR=(flashMode==='en');
   let autoAI=(sm.reps||0)>=4;
   let dueC=queue.filter(w=>s2due(w.de)).length;
-  let artS=item.art?`<div class="art-s">${item.art}</div>`:'';
+  let artS=lang==='kr'
+    ?(item.art?`<div class="art-s" style="font-size:13px;color:var(--txt2);margin-top:4px">${item.art}</div>`:'')
+    :(item.art?`<div class="art-s">${item.art}</div>`:'');
   let front=isR?`<div style="text-align:center"><div class="de-word" style="font-size:22px;color:var(--green)">${item.en}</div><div style="font-size:13px;color:var(--txt2);margin-top:4px">German word?</div></div><div style="font-size:12px;color:var(--txt3);text-align:center;margin-top:8px">Phrases hidden until reveal</div>`:`<div style="text-align:center">${artS}<div class="de-word">${item.de}</div></div><div class="divider"></div>${phDE(item)}`;
   let back=isR?`<div style="text-align:center">${artS}<div class="de-word">${item.de}</div></div><div class="divider"></div>${phFull(item)}`:`<div class="en-word">${item.en}</div><div class="divider"></div>${phFull(item)}`;
   let smI=sm.next?`EF:${sm.ef.toFixed(2)} · ${sm.interval}d · next:${sm.next}`:'New card';
   c.innerHTML=statsH()+catH()+
   `<div class="mode-row">
-    <button class="mode-btn${flashMode==='de'?' active':''}" onclick="flashMode='de';buildQ();rFlash()">Flash DE</button>
-    <button class="mode-btn${flashMode==='en'?' active':''}" onclick="flashMode='en';buildQ();rFlash()">Flash EN</button>
+    <button class="mode-btn${flashMode==='de'?' active':''}" onclick="flashMode='de';buildQ();rFlash()">${lang==='kr'?'Flash 한국어':'Flash DE'}</button>
+    <button class="mode-btn${flashMode==='en'?' active':''}" onclick="flashMode='en';buildQ();rFlash()">${lang==='kr'?'Flash EN':'Flash EN'}</button>
     <button class="mode-btn${answerMode==='mistakes'?' active':''}" onclick="answerMode=${answerMode==='mistakes'?`'choice'`:`'mistakes'`};buildQ();rFlash()">⚠️ Mistakes</button>
   </div>
   <div class="info-box">🧠 <b>SM-2:</b> ${dueC} due · card ${qIdx+1}/${queue.length} · ${smI}</div>
@@ -791,6 +794,21 @@ function confetti(){
     document.body.appendChild(el);
     setTimeout(()=>el.remove(),2500);
   }
+}
+
+// ── LANGUAGE SWITCHER ────────────────────────────────
+function switchLang(l){
+  lang=l;
+  localStorage.setItem('app_lang',l);
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.id==='lang-'+l));
+  let logo=document.getElementById('nav-logo');
+  if(logo)logo.innerHTML=(l==='de'?'🇩🇪 Deutsch':'🇰🇷 Korean')+' <span style="font-size:10px;color:var(--txt3);font-weight:400">v'+APP_VERSION+'</span>';
+  DATA={};selCats=new Set();queue=[];qIdx=0;known=new Set();sm2Cache={};
+  loadWords().then(()=>{
+    selCats=new Set(Object.keys(DATA));
+    updSidebar();
+    setTab('flash');
+  });
 }
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────

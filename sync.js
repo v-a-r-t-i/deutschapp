@@ -29,7 +29,7 @@ function loadLocalCache(){
 }
 async function loadWords(){
   try{
-    let words=await sbFetch('words','select=*&language=eq.de&order=category');
+    let words=await sbFetch('words','select=*&language=eq.'+lang+'&order=category');
     if(Array.isArray(words)&&words.length){
       // Rebuild DATA from Supabase
       let newData={};

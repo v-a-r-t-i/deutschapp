@@ -93,8 +93,12 @@ document.querySelectorAll('#ver-display,#nav-ver').forEach(el=>el.textContent='v
     <!-- MAIN COLUMN -->
     <div class="main-col app">
       <div class="nav">
-        <div class="nav-logo">🇩🇪 Deutsch <span style="font-size:10px;color:var(--txt3);font-weight:400" id="nav-ver">v5.1</span></div>
+        <div class="nav-logo" id="nav-logo">🇩🇪 Deutsch <span style="font-size:10px;color:var(--txt3);font-weight:400" id="nav-ver">v5.1</span></div>
         <div class="nav-right">
+          <div id="lang-switcher" style="display:flex;gap:4px;margin-right:4px">
+            <button class="lang-btn active" id="lang-de" onclick="switchLang('de')">🇩🇪</button>
+            <button class="lang-btn" id="lang-kr" onclick="switchLang('kr')">🇰🇷</button>
+          </div>
           <span class="sync-dot" id="sync-dot"></span>
           <div class="xp-pill" id="xp-pill" onclick="showXPInfo()">⭐ 0 XP</div>
           <div class="streak cold" id="streak-el">❄️ 0</div>
