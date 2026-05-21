@@ -385,8 +385,15 @@ function rPlan(){
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){
   let c=document.getElementById('content');
+  // Race is a hidden route — no tab button, shown when battle/race is active
+  if(ranksSubTab==='race'){
+    c.innerHTML=rRaceUI();
+    if(raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
+    if(!raceSt)loadRaceRoom();
+    return;
+  }
   let tabs=[['friends','👥 Friends'],['river','🚤 River'],['battle','⚔️ Battle']];
-  let html=`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
+  let html='<div class="social-tabs">'+tabs.map(([t,l])=>'<button class="social-tab'+(ranksSubTab===t?' active':'')+'" onclick="ranksSubTab=\''+t+'\';rSocial()">'+l+'</button>').join('')+'</div>';
   if(ranksSubTab==='river')html+=rRiverUI();
   else if(ranksSubTab==='battle')html+=rBattleUI();
   else html+=rFriendsUI();
@@ -396,7 +403,7 @@ function rSocial(){
   if(ranksSubTab==='battle')loadBattle();
 }
 function rRanks(){ranksSubTab='friends';rSocial();}
-function raceNav(){ranksSubTab='friends';rSocial();}
+function raceNav(){ranksSubTab='race';rSocial();}
 
 function rRiverUI(){
   return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
