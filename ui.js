@@ -400,6 +400,60 @@ function raceNav(){ranksSubTab='race';rSocial();}
 function rRiverUI(){
   return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
 }
+
+// ── BP / WEEKLY HELPERS ───────────────────────────────
+function getWeekStart(){
+  let d=new Date();d.setHours(0,0,0,0);
+  d.setDate(d.getDate()-((d.getDay()+6)%7));
+  return d.toISOString().split('T')[0];
+}
+function getDaysUntilReset(){
+  let now=new Date(),next=new Date(now);
+  next.setDate(now.getDate()+(8-((now.getDay()+6)%7+1))%7||7);
+  next.setHours(0,0,0,0);
+  return Math.ceil((next-now)/86400000);
+}
+function getBPStore(){
+  if(!CU)return{delta:0,battles:[]};
+  let key='bp_'+CU.id+'_'+getWeekStart();
+  try{let s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
+  return{delta:0,battles:[]};
+}
+function saveBPStore(store){
+  if(!CU)return;
+  let key='bp_'+CU.id+'_'+getWeekStart();
+  try{localStorage.setItem(key,JSON.stringify(store));}catch(e){}
+}
+function getBP(xp){
+  let base=Math.floor((xp||0)/10);
+  let store=getBPStore();
+  return Math.max(0,base+(store.delta||0));
+}
+async function syncBPFromSupabase(){
+  if(!CU)return;
+  let week=getWeekStart();
+  try{
+    let rows=await sbFetch('battle_log',
+      'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week,true);
+    if(!Array.isArray(rows)||!rows.length)return;
+    let delta=0,battles=[];
+    rows.forEach(r=>{
+      let won=r.winner_id===CU.id;
+      delta+=won?r.stake:-r.stake;
+      battles.push({opponentId:won?r.loser_id:r.winner_id,won,week,delta:won?r.stake:-r.stake,room_id:r.room_id});
+    });
+    let store=getBPStore();
+    store.delta=delta;store.battles=battles;
+    saveBPStore(store);
+  }catch(e){}
+}
+async function saveBattleResult(winnerId,loserId,roomId,stake){
+  try{
+    await sbUpsert('battle_log',{winner_id:winnerId,loser_id:loserId,room_id:roomId,stake,week_start:getWeekStart()});
+  }catch(e){}
+}
+
+
 async function loadRiver(){
   let wrap=document.getElementById('river-wrap');
   if(!wrap)return;
