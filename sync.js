@@ -25,7 +25,10 @@ function loadLocalCache(){
     if(c.bestStreak!==undefined)bestStreak=c.bestStreak;
     if(c.xpTotal!==undefined)xpTotal=c.xpTotal;
     if(c.mistakes)mistakes=c.mistakes;
-    if(c.selCats&&c.selCats.length)selCats=new Set(c.selCats);
+    if(c.selCats&&c.selCats.length){
+      let validCats=c.selCats.filter(k=>DATA[k]!==undefined);
+      if(validCats.length)selCats=new Set(validCats);
+    }
     if(c.sessionDate===tday()){
       if(c.sessionReviewed!==undefined)sessionReviewed=c.sessionReviewed;
       if(c.sessionCorrect!==undefined)sessionCorrect=c.sessionCorrect;

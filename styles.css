@@ -2044,8 +2044,10 @@ font-family:inherit;
 .undone-btn{width:100%;padding:12px;margin-top:12px;border:none;border-radius:16px;background:rgba(255,255,255,0.06);color:var(--txt2);font-weight:700;font-size:14px;cursor:pointer;}
 
 /* Browse */
-.phrase-row{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.phrase-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
 .phrase-row:last-child{border-bottom:none;}
+.psb{background:rgba(255,255,255,0.06);border:none;color:white;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:13px;flex-shrink:0;transition:.15s ease;}
+.psb:hover{background:rgba(255,255,255,0.12);}
 .phrase-de{font-size:14px;font-weight:600;margin-bottom:2px;}
 .phrase-en{font-size:13px;color:var(--txt2);}
 .refresh-phrase{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--txt2);border-radius:999px;padding:6px 14px;font-size:12px;cursor:pointer;}
