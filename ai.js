@@ -77,8 +77,11 @@ async function regenAllPhrases(){
     await new Promise(r=>setTimeout(r,400));
   }
   document.getElementById('regen-fill').style.width='100%';
-  document.getElementById('regen-status').textContent=`✅ Done! ${done-errors} updated${errors?`, ${errors} failed`:''}. Refresh Browse to see changes.`;
+  document.getElementById('regen-status').textContent=`✅ Done! ${done-errors} updated${errors?`, ${errors} failed`:''}.`;
   btn.disabled=false;
+  // Re-render so changes show immediately without needing a page refresh
+  buildQ();
+  setTimeout(()=>rBrowse(),800);
 }
 
 // ── AI PLAN ───────────────────────────────────────────

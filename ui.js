@@ -364,13 +364,15 @@ function rPlan(){
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){
   let c=document.getElementById('content');
-  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race']];
+  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race'],['river','🚤 River']];
   let html=statsH()+`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
   if(ranksSubTab==='leaderboard')html+=rRanksGlobal();
   else if(ranksSubTab==='friends')html+=rFriendsUI();
+  else if(ranksSubTab==='river')html+=rRiverUI();
   else html+=rRaceUI();
   c.innerHTML=html;
   if(ranksSubTab==='friends')loadFriends();
+  if(ranksSubTab==='river')loadRiver();
   if(ranksSubTab==='race'&&raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
   if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
@@ -417,6 +419,84 @@ function rRanksGlobal(){
     </div>
   </div>`;
   return html;
+}
+
+// ── RIVER ─────────────────────────────────────────────
+function rRiverUI(){
+  return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
+}
+async function loadRiver(){
+  let wrap=document.getElementById('river-wrap');
+  if(!wrap)return;
+  try{
+    let [profiles,streaksData]=await Promise.all([
+      sbFetch('profiles','select=id,display_name&limit=100'),
+      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
+    ]);
+    let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
+    let users=(streaksData||[]).map(s=>({
+      id:s.user_id,name:pMap[s.user_id]||'Learner',
+      xp:s.xp_total||0,streak:s.streak_count||0,
+      isMe:s.user_id===CU?.id
+    }));
+    // Include self if not in list
+    if(CU&&!users.find(u=>u.isMe))users.push({id:CU.id,name:CP?.display_name||'You',xp:xpTotal,streak:streakN,isMe:true});
+    users.sort((a,b)=>b.xp-a.xp);
+    renderRiver(users,wrap);
+  }catch(e){
+    if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Could not load river data.</div>';
+  }
+}
+function renderRiver(users,wrap){
+  const MAX_XP=2500; // Meister threshold
+  const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl})).filter(l=>l.xp>0);
+  // Position = xp / MAX_XP * 100, clamped 2–96%
+  const pos=xp=>Math.min(96,Math.max(2,Math.round(xp/MAX_XP*94)+2));
+  let myPos=pos(users.find(u=>u.isMe)?.xp||0);
+
+  // Build boats HTML — group by position to avoid overlap
+  let boatsByPos={};
+  users.forEach(u=>{
+    let p=pos(u.xp);
+    if(!boatsByPos[p])boatsByPos[p]=[];
+    boatsByPos[p].push(u);
+  });
+
+  let boatsHTML=Object.entries(boatsByPos).map(([p,us])=>{
+    return us.map((u,i)=>
+      `<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${p}%;left:${u.isMe?'52%':'12%'};transform:translateX(${i*44}px)">
+        <span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>
+        <span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>
+        <span class="rv-xp">${u.xp} XP</span>
+      </div>`
+    ).join('');
+  }).join('');
+
+  let milestonesHTML=milestones.map(m=>{
+    let p=pos(m.xp);
+    return `<div class="rv-milestone" style="bottom:${p}%">
+      <span class="rv-ms-line"></span>
+      <span class="rv-ms-label">Lvl ${m.lvl} · ${m.name} (${m.xp} XP)</span>
+    </div>`;
+  }).join('');
+
+  let rank=users.findIndex(u=>u.isMe)+1||'?';
+
+  wrap.innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div>
+      <div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} · ${users.find(u=>u.isMe)?.xp||xpTotal} XP</div>
+    </div>
+    <div class="rv-wrap">
+      <div class="rv-river">
+        <div class="rv-current" style="height:${myPos}%"></div>
+        ${milestonesHTML}
+        ${boatsHTML}
+        <div class="rv-start">⚓ Start</div>
+        <div class="rv-end">🏆 Meister</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>`;
 }
 
 // ── FRIENDS ───────────────────────────────────────────
