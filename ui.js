@@ -536,36 +536,51 @@ async function loadRiver(){
 function renderRiver(users,wrap,compact=false){
   const MAX_XP=2500;
   const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl})).filter(l=>l.xp>0);
-  // Square-root scale: spreads low-XP users more evenly
-  const pos=xp=>Math.min(94,Math.max(4,Math.round(Math.sqrt(Math.max(0,xp)/MAX_XP)*88)+4));
-  // 7 columns spread across river width for x positioning
-  function stableX(id,idx){
-    let h=0;for(let c of (id||''))h=(h*31+c.charCodeAt(0))&0xffff;
-    let slots=[6,17,29,41,53,65,77];
-    return slots[(h+idx)%slots.length];
-  }
 
+  // Rank-based y: evenly spread by rank so no clustering, regardless of XP gaps
+  // Sort descending by XP first
+  users=users.slice().sort((a,b)=>b.xp-a.xp);
+  const n=users.length;
+  users.forEach((u,i)=>{
+    // Spread from 92% (top) down to 6% (bottom), evenly by rank
+    u.yPos=n===1?50:Math.round(92-i*(86/(n-1)));
+  });
+
+  // X columns: cycle through 7 columns, pin my boat to col 3 (center-ish)
+  const xCols=[7,19,32,46,60,73,86];
+  let colIdx=0;
+  users.forEach(u=>{
+    if(u.isMe){u.xPos=46;}
+    else{
+      // Skip col 3 (46%) for others so my boat stands out
+      let c=xCols[colIdx%xCols.length];
+      if(c===46){colIdx++;c=xCols[colIdx%xCols.length];}
+      u.xPos=c;colIdx++;
+    }
+  });
+
+  // Milestone y uses XP scale for accuracy
+  const xpPos=xp=>Math.min(94,Math.max(4,Math.round(Math.sqrt(Math.max(0,xp)/MAX_XP)*88)+4));
   let myUser=users.find(u=>u.isMe);
-  let myPos=pos(myUser?.xp||0);
+  let myYPos=myUser?.yPos||50;
   let rank=users.findIndex(u=>u.isMe)+1||'?';
   let height=compact?320:520;
-  let boatsHTML=users.map((u,i)=>{
-    let y=pos(u.xp);
-    let x=u.isMe?44:stableX(u.id,i);
-    return `<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${y}%;left:${x}%">
-      <span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>
-      <span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>
-      <span class="rv-xp">${u.xp} XP</span>
-    </div>`;
-  }).join('');
-  let milestonesHTML=milestones.map(m=>{
-    let p=pos(m.xp);
-    return `<div class="rv-milestone" style="bottom:${p}%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl ${m.lvl} · ${m.name} (${m.xp} XP)</span></div>`;
-  }).join('');
-  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} · ${myUser?.xp||xpTotal} XP</div></div>`;
-    let footer=compact?'':'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>';
-  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myPos+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">\u2693 Start</div><div class="rv-end">\ud83c\udfc6 Meister</div></div></div>'+footer;}
 
+  let boatsHTML=users.map(u=>`<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${u.yPos}%;left:${u.xPos}%">`+
+    `<span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>`+
+    `<span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>`+
+    `<span class="rv-xp">${u.xp} XP</span>`+
+    '</div>').join('');
+
+  let milestonesHTML=milestones.map(m=>{
+    let p=xpPos(m.xp);
+    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' · '+m.name+' ('+m.xp+' XP)</span></div>';
+  }).join('');
+
+  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${n} · ${myUser?.xp||xpTotal} XP</div></div>`;
+  let footer=compact?'':'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>';
+  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myYPos+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">⚓ Start</div><div class="rv-end">🏆 Meister</div></div></div>'+footer;
+}
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){
   return `<div id="friends-wrap">
