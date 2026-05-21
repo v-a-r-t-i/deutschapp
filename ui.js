@@ -512,7 +512,7 @@ async function syncBPFromSupabase(){
   let week=getWeekStart();
   try{
     let rows=await sbFetch('battle_log',
-      'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week);
+      'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week,true);
     if(!Array.isArray(rows)||!rows.length)return;
     let delta=0,battles=[];
     rows.forEach(r=>{

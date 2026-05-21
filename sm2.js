@@ -61,7 +61,7 @@ async function flush(){
   setDot(error?'err':'');
 }
 // Raw fetch helper - bypasses broken Supabase JS client
-async function sbFetch(table, params=''){
+async function sbFetch(table, params='', silent=false){
   let token=authToken||SKEY;
   let url=SURL+'/rest/v1/'+table+(params?'?'+params:'');
   try{
@@ -74,10 +74,10 @@ async function sbFetch(table, params=''){
       }
     });
     let data=await r.json();
-    if(!r.ok){if(typeof showErr==='function')showErr('DB error: '+table,data?.message||r.status);return[];}
+    if(!r.ok){if(!silent&&typeof showErr==='function')showErr('DB error: '+table,data?.message||r.status);return[];}
     return data;
   }catch(e){
-    if(typeof showErr==='function')showErr('Network error: '+table,e.message);
+    if(!silent&&typeof showErr==='function')showErr('Network error: '+table,e.message);
     return[];
   }
 }
