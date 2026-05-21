@@ -118,7 +118,7 @@ async function handleSession(session){
         document.getElementById('auth-screen').style.display='none';
         document.getElementById('main-app').style.display='block';
         document.getElementById('teacher-app').style.display='none';
-        let ub=document.getElementById('user-btn');if(ub)ub.textContent=CP?.display_name||CU.email;
+        let ub=document.getElementById('user-btn');if(ub)ub.textContent=(CP?.display_name||CU.email)+' ▾';
         loadProg();
       }
     }else{
@@ -185,3 +185,59 @@ function maybeShowSummary(){
 function closeSummary(){document.getElementById('summary-overlay').style.display='none';summaryShown=false;}
 
 // ── HELPERS ───────────────────────────────────────────
+function toggleUserMenu(){
+  let m=document.getElementById('user-menu');
+  if(!m)return;
+  let open=m.style.display==='block';
+  m.style.display=open?'none':'block';
+  if(!open){
+    // Close on outside click
+    setTimeout(()=>document.addEventListener('click',function h(e){
+      if(!document.getElementById('user-menu-wrap')?.contains(e.target)){
+        m.style.display='none';document.removeEventListener('click',h);
+      }
+    }),0);
+  }
+}
+
+function confirmDeleteAccount(){
+  toggleUserMenu();
+  if(typeof showModal==='undefined'){alert('Delete not available');return;}
+  showModal({
+    title:'🗑️ Delete account?',
+    body:'This permanently deletes <b>all your data</b> — progress, XP, streaks, friends, everything. This cannot be undone.<br><br>Type <b>DELETE</b> in the box to confirm:<br><input id="delete-confirm-input" class="type-input" style="margin-top:8px;width:100%" placeholder="Type DELETE">',
+    confirm:'Delete my account',
+    cancel:'Cancel',
+    onConfirm: async()=>{
+      let val=document.getElementById('delete-confirm-input')?.value?.trim();
+      if(val!=='DELETE'){
+        showModal({title:'Incorrect',body:'You must type DELETE exactly to confirm.',confirm:'OK',cancel:null,onConfirm:confirmDeleteAccount});
+        return;
+      }
+      await deleteAccount();
+    }
+  });
+}
+
+async function deleteAccount(){
+  if(!CU)return;
+  let uid=CU.id;
+  let token=authToken||SKEY;
+  let headers={'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'};
+  // Delete all user data from public tables (order matters for FK constraints)
+  let tables=[
+    'battle_log?or=(winner_id.eq.'+uid+',loser_id.eq.'+uid+')',
+    'race_results?user_id=eq.'+uid,
+    'word_progress?user_id=eq.'+uid,
+    'friendships?or=(user_id.eq.'+uid+',friend_id.eq.'+uid+')',
+    'streaks?user_id=eq.'+uid,
+    'profiles?id=eq.'+uid
+  ];
+  for(let q of tables){
+    try{await fetch(SURL+'/rest/v1/'+q,{method:'DELETE',headers});}catch(e){}
+  }
+  // Sign out
+  await sb.auth.signOut();
+  // Reload to auth screen
+  location.reload();
+}

@@ -336,3 +336,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal-btn-cancel{flex:1;padding:10px;border-radius:var(--rs);border:0.5px solid var(--bor2);background:var(--bg2);color:var(--txt2);font-size:13px;cursor:pointer;}
 .modal-btn-confirm{flex:2;padding:10px;border-radius:var(--rs);border:none;background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer;}
 .modal-btn-confirm:hover{filter:brightness(1.08);}
+
+/* USER MENU DROPDOWN */
+.user-menu-wrap{position:relative;}
+.user-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg);border:0.5px solid var(--bor);border-radius:var(--r);box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:170px;z-index:300;overflow:hidden;}
+.user-menu-item{display:block;width:100%;padding:10px 14px;text-align:left;background:transparent;border:none;font-size:13px;color:var(--txt);cursor:pointer;}
+.user-menu-item:hover{background:var(--bg2);}
+.user-menu-danger{color:#d85a30!important;}
+.user-menu-danger:hover{background:var(--rl)!important;}
