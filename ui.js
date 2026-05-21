@@ -811,7 +811,14 @@ function switchLang(l){
   sbFetch('words','select=*&language=eq.'+l+'&order=category').then(words=>{
     let newData={};
     let seen={};
-    (words||[]).forEach(w=>{
+    if(!Array.isArray(words)||words.length===0){
+      DATA=newData;
+      selCats=new Set();
+      if(c)c.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">No '+( l==='de'?'German':'Korean')+' words found.<br><span style="font-size:12px">Make sure the words are added to Supabase.</span></div>';
+      updSidebar();
+      return;
+    }
+    words.forEach(w=>{
       if(!newData[w.category])newData[w.category]=[];
       let key=w.category+'|'+w.de;
       if(seen[key])return;
