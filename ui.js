@@ -447,64 +447,41 @@ async function loadRiver(){
     if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Could not load river data.</div>';
   }
 }
-function renderRiver(users,wrap){
-  const MAX_XP=2500; // Meister threshold
+function renderRiver(users,wrap,compact=false){
+  const MAX_XP=2500;
   const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl})).filter(l=>l.xp>0);
-  // Position = xp / MAX_XP * 100, clamped 2–96%
-  const pos=xp=>Math.min(96,Math.max(2,Math.round(xp/MAX_XP*94)+2));
-  let myPos=pos(users.find(u=>u.isMe)?.xp||0);
-
-  // Build boats HTML — group by position to avoid overlap
-  let boatsByPos={};
-  users.forEach(u=>{
-    let p=pos(u.xp);
-    if(!boatsByPos[p])boatsByPos[p]=[];
-    boatsByPos[p].push(u);
-  });
-
-  let boatsHTML=Object.entries(boatsByPos).map(([p,us])=>{
-    return us.map((u,i)=>
-      `<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${p}%;left:${u.isMe?'52%':'12%'};transform:translateX(${i*44}px)">
-        <span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>
-        <span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>
-        <span class="rv-xp">${u.xp} XP</span>
-      </div>`
-    ).join('');
-  }).join('');
-
-  let milestonesHTML=milestones.map(m=>{
-    let p=pos(m.xp);
-    return `<div class="rv-milestone" style="bottom:${p}%">
-      <span class="rv-ms-line"></span>
-      <span class="rv-ms-label">Lvl ${m.lvl} · ${m.name} (${m.xp} XP)</span>
+  const pos=xp=>Math.min(95,Math.max(3,Math.round(xp/MAX_XP*92)+3));
+  function stableX(id,idx){
+    let h=0;for(let c of (id||''))h=(h*31+c.charCodeAt(0))&0xffff;
+    let slots=[8,22,38,54,70,84];
+    return slots[(h+idx)%slots.length];
+  }
+  let myUser=users.find(u=>u.isMe);
+  let myPos=pos(myUser?.xp||0);
+  let rank=users.findIndex(u=>u.isMe)+1||'?';
+  let height=compact?320:520;
+  let boatsHTML=users.map((u,i)=>{
+    let y=pos(u.xp);
+    let x=u.isMe?44:stableX(u.id,i);
+    return `<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${y}%;left:${x}%">
+      <span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>
+      <span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>
+      <span class="rv-xp">${u.xp} XP</span>
     </div>`;
   }).join('');
-
-  let rank=users.findIndex(u=>u.isMe)+1||'?';
-
-  wrap.innerHTML=`
-    <div style="margin-bottom:14px">
-      <div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div>
-      <div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} · ${users.find(u=>u.isMe)?.xp||xpTotal} XP</div>
-    </div>
-    <div class="rv-wrap">
-      <div class="rv-river">
-        <div class="rv-current" style="height:${myPos}%"></div>
-        ${milestonesHTML}
-        ${boatsHTML}
-        <div class="rv-start">⚓ Start</div>
-        <div class="rv-end">🏆 Meister</div>
-      </div>
-    </div>
-    <div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>`;
-}
+  let milestonesHTML=milestones.map(m=>{
+    let p=pos(m.xp);
+    return `<div class="rv-milestone" style="bottom:${p}%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl ${m.lvl} · ${m.name} (${m.xp} XP)</span></div>`;
+  }).join('');
+  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} · ${myUser?.xp||xpTotal} XP</div></div>`;
+    let footer=compact?'':'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>';
+  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myPos+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">\u2693 Start</div><div class="rv-end">\ud83c\udfc6 Meister</div></div></div>'+footer;}
 
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){
   return `<div id="friends-wrap">
-    <div style="font-size:16px;font-weight:600;margin-bottom:4px">👥 Friends</div>
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:14px">Add friends to compare progress</div>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
+    <div id="friends-river" style="margin-bottom:16px"><div style="text-align:center;padding:16px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
       <input id="friend-search" class="type-input" placeholder="Search by name..." style="flex:1;margin:0" oninput="searchFriends(this.value)">
     </div>
     <div id="friend-search-results"></div>
@@ -580,10 +557,42 @@ async function loadFriends(){
           <div style="font-size:11px;color:var(--txt2)">${xp} XP</div>
         </div>
       </div>
-      <button class="btn-sm-green" style="width:100%;padding:8px" onclick="challengeFriend('${fid}','${name}')">⚡ Challenge to a Race</button>
+      <div class="fc-actions" id="fc-${fid}" style="display:none">
+        <button class="btn-sm-green" style="width:100%;padding:8px;margin-bottom:6px" onclick="challengeFriend('${fid}','${name}')">⚡ Race Challenge</button>
+        <button class="btn-sm" style="width:100%;padding:8px;background:var(--bg3);color:var(--txt)" onclick="removeFriend('${fid}')">Remove friend</button>
+      </div>
+      <button class="fc-toggle" onclick="toggleFriendActions('${fid}',this)"><span>Actions</span><span class="fc-arr">›</span></button>
     </div>`;
   }
   listEl.innerHTML=html;
+  // Build mini river with friends + self
+  let riverWrap=document.getElementById('friends-river');
+  if(riverWrap){
+    let riverUsers=friendIds.map(fid=>{
+      let p=allProfs.find(x=>x.id===fid);
+      let skd=sk.find(x=>x.user_id===fid);
+      return {id:fid,name:p?.display_name||fid.slice(0,8),xp:skd?.xp_total||0,streak:skd?.streak_count||0,isMe:false};
+    });
+    riverUsers.push({id:CU.id,name:CP?.display_name||'You',xp:xpTotal,streak:streakN,isMe:true});
+    riverUsers.sort((a,b)=>b.xp-a.xp);
+    renderRiver(riverUsers,riverWrap,true);
+  }
+}
+function toggleFriendActions(fid,btn){
+  let el=document.getElementById('fc-'+fid);
+  if(!el)return;
+  let open=el.style.display==='block';
+  el.style.display=open?'none':'block';
+  let arr=btn.querySelector('.fc-arr');
+  if(arr)arr.textContent=open?'›':'‹';
+}
+async function removeFriend(fid){
+  if(!confirm('Remove this friend?'))return;
+  let token=authToken||SKEY;
+  await fetch(SURL+'/rest/v1/friendships?or=(and(user_id.eq.'+CU.id+',friend_id.eq.'+fid+'),and(user_id.eq.'+fid+',friend_id.eq.'+CU.id+'))',{
+    method:'DELETE',headers:{'apikey':SKEY,'Authorization':'Bearer '+token}
+  });
+  loadFriends();
 }
 
 async function challengeFriend(friendId,friendName){
