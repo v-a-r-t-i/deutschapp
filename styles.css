@@ -1350,3 +1350,114 @@ padding-top:6px;
 .social-tabs{
 margin-top:10px;
 }
+/* =========================================================
+   UNIVERSAL UI SYSTEM
+========================================================= */
+
+.ui-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:24px;
+    padding:24px;
+    backdrop-filter:blur(14px);
+    box-shadow:0 10px 40px rgba(0,0,0,0.25);
+}
+
+.ui-button{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    color:#f5f7ff;
+    border-radius:18px;
+    padding:14px 22px;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .22s ease;
+}
+
+.ui-button:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,0.09);
+    border-color:rgba(90,140,255,0.35);
+}
+
+.ui-button.primary{
+    background:linear-gradient(135deg,#4f7cff,#7b61ff);
+    border:none;
+}
+
+.ui-input{
+    width:100%;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    color:#fff;
+    border-radius:18px;
+    padding:16px 18px;
+    font-size:16px;
+    outline:none;
+    transition:.2s ease;
+}
+
+.ui-input:focus{
+    border-color:#6ea8ff;
+    box-shadow:0 0 0 4px rgba(110,168,255,0.12);
+}
+
+.ui-modal{
+    background:#12172b;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:28px;
+    padding:28px;
+    box-shadow:0 25px 80px rgba(0,0,0,0.45);
+}
+
+.friend-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:22px;
+    padding:18px;
+    margin-bottom:16px;
+    transition:.22s ease;
+}
+
+.friend-card:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,0.06);
+}
+
+.battle-popup{
+    background:#151a31;
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:24px;
+    padding:30px;
+    box-shadow:0 20px 70px rgba(0,0,0,0.45);
+}
+
+.plan-inputs{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-top:18px;
+}
+
+.recent-mistakes span,
+.due-soon span{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:10px 16px;
+    border-radius:999px;
+    margin:6px;
+    border:1px solid rgba(110,168,255,0.55);
+    background:rgba(80,120,255,0.08);
+    color:#dce7ff;
+    font-weight:600;
+}
+
+.flash-card{
+    background:linear-gradient(180deg,#171d35,#12162a);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:32px;
+    overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,0.4);
+}
