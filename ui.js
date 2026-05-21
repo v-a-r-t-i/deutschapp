@@ -534,52 +534,58 @@ async function loadRiver(){
   }
 }
 function renderRiver(users,wrap,compact=false){
-  const MAX_XP=2500;
-  const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl})).filter(l=>l.xp>0);
-
-  // Rank-based y: evenly spread by rank so no clustering, regardless of XP gaps
-  // Sort descending by XP first
+  // Scale relative to the top user's XP so the leader fills ~90% of river
   users=users.slice().sort((a,b)=>b.xp-a.xp);
-  const n=users.length;
-  users.forEach((u,i)=>{
-    // Spread from 92% (top) down to 6% (bottom), evenly by rank
-    u.yPos=n===1?50:Math.round(92-i*(86/(n-1)));
-  });
+  const topXP=Math.max(...users.map(u=>u.xp),1);
+  // Next level threshold above topXP — river ceiling = that level's max
+  const ceilLevel=LEVELS.find(l=>l.max>topXP)||LEVELS[LEVELS.length-1];
+  const MAX_RIVER=Math.max(ceilLevel.min+1,topXP*1.15);
 
-  // X columns: cycle through 7 columns, pin my boat to col 3 (center-ish)
-  const xCols=[7,19,32,46,60,73,86];
-  let colIdx=0;
+  // sqrt scale: spreads low-XP users more than linear, still XP-correlated
+  const xpToY=xp=>Math.round(4+Math.sqrt(Math.max(0,xp)/MAX_RIVER)*88);
+
+  // Assign ideal y, then enforce MIN_GAP upward to prevent overlap
+  const MIN_GAP=7;
+  users.forEach(u=>{ u.y=xpToY(u.xp); });
+  // Work bottom-up: if gap between adjacent boats < MIN_GAP, push the upper one up
+  for(let i=users.length-2;i>=0;i--){
+    let lo=users[i+1],hi=users[i];
+    if(hi.y-lo.y<MIN_GAP) hi.y=lo.y+MIN_GAP;
+  }
+  // Cap to max 94%
+  users.forEach(u=>{u.y=Math.min(94,u.y);});
+
+  // X columns: cycle 7 slots, reserve center (46%) for me
+  const xCols=[7,19,32,60,72,85,42];
+  let ci=0;
   users.forEach(u=>{
-    if(u.isMe){u.xPos=46;}
-    else{
-      // Skip col 3 (46%) for others so my boat stands out
-      let c=xCols[colIdx%xCols.length];
-      if(c===46){colIdx++;c=xCols[colIdx%xCols.length];}
-      u.xPos=c;colIdx++;
-    }
+    if(u.isMe){u.x=46;}
+    else{u.x=xCols[ci%xCols.length];ci++;}
   });
 
-  // Milestone y uses XP scale for accuracy
-  const xpPos=xp=>Math.min(94,Math.max(4,Math.round(Math.sqrt(Math.max(0,xp)/MAX_XP)*88)+4));
+  // Milestones: only show levels within current river range
+  const milestones=LEVELS.map(l=>({xp:l.min,name:l.name,lvl:l.lvl}))
+    .filter(l=>l.xp>0&&l.xp<=MAX_RIVER*1.05);
+
   let myUser=users.find(u=>u.isMe);
-  let myYPos=myUser?.yPos||50;
+  let myY=myUser?.y||4;
   let rank=users.findIndex(u=>u.isMe)+1||'?';
   let height=compact?320:520;
 
-  let boatsHTML=users.map(u=>`<div class="rv-boat${u.isMe?' rv-me':''}" style="bottom:${u.yPos}%;left:${u.xPos}%">`+
-    `<span class="rv-emoji">${u.isMe?'⛵':'🚣'}</span>`+
-    `<span class="rv-name">${u.isMe?'<b>'+u.name+'</b>':u.name}</span>`+
-    `<span class="rv-xp">${u.xp} XP</span>`+
+  let boatsHTML=users.map(u=>'<div class="rv-boat'+(u.isMe?' rv-me':'')+'" style="bottom:'+u.y+'%;left:'+u.x+'%">'+
+    '<span class="rv-emoji">'+(u.isMe?'⛵':'🚣')+'</span>'+
+    '<span class="rv-name">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'+
+    '<span class="rv-xp">'+u.xp+' XP</span>'+
     '</div>').join('');
 
   let milestonesHTML=milestones.map(m=>{
-    let p=xpPos(m.xp);
-    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' · '+m.name+' ('+m.xp+' XP)</span></div>';
+    let p=Math.round(4+Math.sqrt(m.xp/MAX_RIVER)*88);
+    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' \u00b7 '+m.name+' ('+m.xp+' XP)</span></div>';
   }).join('');
 
-  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${n} · ${myUser?.xp||xpTotal} XP</div></div>`;
+  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} \u00b7 ${myUser?.xp||xpTotal} XP</div></div>`;
   let footer=compact?'':'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP studying to sail further up the river</div>';
-  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myYPos+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">⚓ Start</div><div class="rv-end">🏆 Meister</div></div></div>'+footer;
+  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myY+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">\u2693 Start</div><div class="rv-end">\ud83c\udfc6 '+ceilLevel.name+'</div></div></div>'+footer;
 }
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){
