@@ -35,6 +35,17 @@ function showModal({title,body,confirm='Confirm',cancel='Cancel',onConfirm,onCan
 function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove();}
 
 
+// ── MOBILE NAV SYNC ───────────────────────────────────
+function setMobNav(tab){
+  let map={study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
+  // flash/listen/quiz/fill/gender all belong to "study"
+  let key=(['flash','listen','quiz','fill','gender'].includes(tab)?'study':tab);
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+  let btn=document.getElementById(map[key]||'mob-study');
+  if(btn)btn.classList.add('active');
+}
+
+
 function updAll(){
   // Throttled session save — at most once every 3s to catch wrong answers too
   if(CU){let now=Date.now();if(!updAll._lastSave||now-updAll._lastSave>3000){updAll._lastSave=now;saveLocalCache();}}
@@ -92,7 +103,7 @@ function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answ
 let lastStudyTab='flash';
 const studyTabs=['flash','listen','quiz','fill','gender'];
 function setTab(t){
-  tab=t;
+  tab=t;setMobNav(t);
   let isStudy=studyTabs.includes(t);
   if(isStudy)lastStudyTab=t;
   // Update main tabs

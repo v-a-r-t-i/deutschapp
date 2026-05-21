@@ -2107,3 +2107,139 @@ font-family:inherit;
   .rv-boat{padding:6px 10px;font-size:12px;}
   .rv-name{font-size:11px;max-width:70px;}
 }
+
+/* =====================================================
+   MOBILE — DUOLINGO-STYLE LAYOUT
+   Applies on screens ≤ 700px
+===================================================== */
+@media(max-width:700px){
+
+  /* Hide sidebars entirely */
+  .sidebar-left,.sidebar-right{display:none!important;}
+
+  /* Full-width layout, no gap */
+  .page-wrap{
+    padding:0;
+    gap:0;
+    display:block;
+  }
+
+  .main-col{
+    max-width:100%;
+    padding-bottom:72px; /* space for bottom nav */
+  }
+
+  /* ── COMPACT STICKY TOP BAR ── */
+  .nav{
+    padding:10px 16px;
+    position:sticky;
+    top:0;
+    z-index:200;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  .nav-logo{font-size:15px;font-weight:800;}
+
+  /* Hide lang switcher + sync dot to save space on mobile */
+  #lang-switcher{display:none!important;}
+  .sync-dot{display:none!important;}
+
+  /* Slim nav pills */
+  .xp-pill,.streak,.due-pill{
+    padding:6px 10px;
+    font-size:11px;
+    font-weight:700;
+  }
+  .due-pill{display:none;} /* hide on very small — available in content */
+  .user-btn{padding:6px 10px;font-size:11px;}
+
+  /* ── HIDE TOP TABS — replaced by bottom nav ── */
+  .tabs{display:none!important;}
+
+  /* ── BOTTOM NAV ── */
+  .mobile-bottom-nav{
+    display:flex!important;
+  }
+
+  /* ── CONTENT AREA ── */
+  .content{
+    padding:12px 14px;
+  }
+
+  /* ── STUDY MODE PILLS ── */
+  .study-modes{
+    padding:8px 14px 0;
+    gap:6px;
+  }
+  .mode-pill{
+    padding:8px 14px;
+    font-size:12px;
+    border-radius:999px;
+  }
+
+  /* ── CARDS ── */
+  .card{
+    border-radius:24px;
+    padding:24px 20px;
+  }
+  .de-word{font-size:clamp(28px,9vw,46px);}
+  .en-word{font-size:clamp(20px,6vw,30px);}
+
+  /* ── CATEGORY GRID ── */
+  .cat-grid{gap:8px;}
+  .cat-btn{padding:8px 12px;font-size:12px;}
+
+  /* ── QUIZ GRID ── */
+  .quiz-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .q-opt{padding:14px 10px;font-size:14px;border-radius:16px;}
+
+  /* ── SOCIAL ── */
+  .social-tabs{gap:6px;margin-top:8px;}
+  .social-tab{padding:10px 6px;font-size:12px;border-radius:14px;}
+
+  /* ── RIVER ── */
+  .rv-river{min-height:360px!important;}
+
+  /* ── PLAN ── */
+  .ai-plan-wrap{padding:16px;}
+  .plan-stats{grid-template-columns:1fr 1fr;}
+
+  /* ── FRIEND CARDS ── */
+  .fc-row{padding:12px;}
+  .fc-av{width:40px;height:40px;font-size:13px;}
+}
+
+/* ── BOTTOM NAV COMPONENT ── */
+.mobile-bottom-nav{
+  display:none; /* shown only on mobile via media query above */
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:64px;
+  background:rgba(11,16,32,0.96);
+  backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,0.08);
+  z-index:300;
+  align-items:center;
+  justify-content:space-around;
+  padding:0 8px;
+}
+.mob-nav-btn{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:8px 4px;
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,0.4);
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+  transition:color .15s;
+  border-radius:12px;
+}
+.mob-nav-btn.active{color:#fff;}
+.mob-nav-btn .mob-icon{font-size:22px;line-height:1;}
