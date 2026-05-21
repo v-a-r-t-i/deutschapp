@@ -568,67 +568,81 @@ async function loadRiver(){
   }
 }
 function renderRiver(users,wrap,compact=false){
-  // Weekly river — position = weekly BP (resets Monday, battles only)
   users=users.slice().sort((a,b)=>b.weekBP-a.weekBP);
   users.forEach((u,i)=>{u.rank=i+1;});
 
   let me=users.find(u=>u.isMe);
   let myIdx=users.findIndex(u=>u.isMe);
 
-  // Pick 4 closest rivals
-  let pool=[];
-  for(let d=1;d<=6;d++){
-    if(myIdx-d>=0)pool.push(users[myIdx-d]);
-    if(myIdx+d<users.length)pool.push(users[myIdx+d]);
-    if(pool.length>=4)break;
+  // Pick exactly 4 rivals: 2 just above, 2 just below in rank
+  let above=[],below=[];
+  for(let d=1;d<=users.length&&(above.length<2||below.length<2);d++){
+    if(above.length<2&&myIdx-d>=0)above.push(users[myIdx-d]);
+    if(below.length<2&&myIdx+d<users.length)below.push(users[myIdx+d]);
   }
-  pool=pool.slice(0,4);
+  // Fill gaps if near top/bottom
+  while(above.length<2&&below.length>0)above.unshift(below.pop());
+  while(below.length<2&&above.length>0)below.push(above.shift());
 
-  // Assign 5 lanes (0–4), me = lane 2
-  const laneX=[10,26,44,62,78];
-  let above=pool.filter(u=>u.rank<(me?.rank||999));
-  let below=pool.filter(u=>u.rank>=(me?.rank||999));
-  let leftSlots=[0,1],rightSlots=[3,4];
-  above.forEach((u,i)=>{u.lane=leftSlots[i%2];});
-  below.forEach((u,i)=>{u.lane=rightSlots[i%2];});
+  // Fixed lane X positions — 5 columns evenly across river
+  // Lane: 0=far-left, 1=left, 2=CENTER(me), 3=right, 4=far-right
+  const LANES=[12,29,50,71,88];
+
+  above[0]&&(above[0].lane=0);
+  above[1]&&(above[1].lane=1);
   if(me)me.lane=2;
+  below[0]&&(below[0].lane=3);
+  below[1]&&(below[1].lane=4);
 
-  let shown=[...pool];
-  if(me)shown.push(me);
+  let shown=[...above,...(me?[me]:[]),...below];
 
-  // Y: scale to max weekly BP among shown; everyone starts at bottom (0 BP = 5%)
+  // Y position: BP-based, but when all zero use position-within-shown for spread
   const topBP=Math.max(...shown.map(u=>u.weekBP),1);
-  const MAX_RIVER=Math.max(topBP*1.2,10);
-  // If everyone is at 0 BP (start of week), use rank-based spread so it's not a pile
+  const MAX_RIVER=Math.max(topBP*1.25,1);
   const allZero=shown.every(u=>u.weekBP===0);
-  const bpToY=bp=>Math.round(7+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*83);
-  const rankToY=(rank,total)=>Math.round(10+(total-rank)/(Math.max(total-1,1))*75);
+
+  // posY: index within shown array (0=top shown, last=bottom)
+  shown.forEach((u,i)=>{u.shownIdx=i;});
+  const n=shown.length;
+
+  const getY=u=>{
+    if(allZero){
+      // Spread evenly: top boat near top, bottom boat near start line
+      return Math.round(82-(u.shownIdx/(Math.max(n-1,1)))*72);
+    }
+    return Math.round(8+Math.sqrt(u.weekBP/MAX_RIVER)*82);
+  };
 
   let height=compact?300:480;
   let daysLeft=getDaysUntilReset();
   let myWeekBP=me?.weekBP||0;
   let rank=me?.rank||'?';
 
+  // Lane dividers — visible enough to show the lanes clearly
+  let lanesHTML=LANES.map(x=>
+    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.07);transform:translateX(-50%)"></div>'
+  ).join('');
+
+  // Start line
+  let startLine=
+    '<div style="position:absolute;left:0;right:0;bottom:8%;border-top:1px dashed rgba(255,255,255,0.2)"></div>'+
+    '<div style="position:absolute;left:50%;bottom:8%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(11,16,32,0.9);color:rgba(255,255,255,0.4);white-space:nowrap">⚓ Week Start</div>';
+
   let boatsHTML=shown.map(u=>{
-    let y=allZero?rankToY(u.rank,shown.length):bpToY(u.weekBP);
-    let x=laneX[u.lane??2];
-    return '<div class="rv-boat'+(u.isMe?' rv-me':'')+'" style="bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%)">'
-      +'<span class="rv-emoji">'+(u.isMe?'⛵':'🚣')+'</span>'
-      +'<span class="rv-name">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
-      +'<span class="rv-xp">'+u.weekBP+' BP</span>'
+    let y=getY(u);
+    let x=LANES[u.lane??2];
+    return '<div class="rv-boat'+(u.isMe?' rv-me':'')
+      +'" style="position:absolute;bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%);display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:'+(u.isMe?'rgba(139,92,246,0.3)':'rgba(255,255,255,0.08)')+';border:1px solid '+(u.isMe?'rgba(139,92,246,0.5)':'rgba(255,255,255,0.12)')+';white-space:nowrap;backdrop-filter:blur(8px)">'
+      +'<span style="font-size:18px">'+(u.isMe?'⛵':'🚣')+'</span>'
+      +'<span style="font-size:12px;font-weight:700;color:white">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
+      +'<span style="font-size:11px;color:rgba(255,255,255,0.5)">'+u.weekBP+' BP</span>'
       +'</div>';
   }).join('');
-
-  // Start line at y=7% (bottom)
-  let startLine='<div style="position:absolute;left:0;right:0;bottom:7%;border-top:2px dashed rgba(255,255,255,0.18);"></div>'
-    +'<div style="position:absolute;left:50%;bottom:7%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(11,16,32,0.85);color:var(--txt3);white-space:nowrap">⚓ Week Start</div>';
-
-  let lanesHTML=laneX.map(x=>'<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.04);transform:translateX(-50%)"></div>').join('');
 
   let header=compact?''
     :'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
     +'<div><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 Weekly River</div>'
-    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> · <b>'+myWeekBP+' BP</b> this week</div></div>'
+    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> of '+users.length+' · <b>'+myWeekBP+' BP</b> this week</div></div>'
     +'<div style="text-align:right;font-size:12px;color:var(--txt3)">Resets in<br><b style="color:var(--txt2)">'+daysLeft+'d</b></div>'
     +'</div>';
 
@@ -636,10 +650,10 @@ function renderRiver(users,wrap,compact=false){
     :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Win battles to move up · resets every Monday</div>';
 
   wrap.innerHTML=header
-    +'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px">'
+    +'<div style="position:relative;width:100%;height:'+height+'px;border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(59,130,246,0.14),rgba(59,130,246,0.04));border:1px solid rgba(255,255,255,0.08)">'
     +lanesHTML+startLine+boatsHTML
-    +'<div class="rv-end" style="top:10px">🏆 Leader</div>'
-    +'</div></div>'+footer;
+    +'<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(11,16,32,0.9);color:rgba(245,158,11,0.9);border:1px solid rgba(245,158,11,0.3)">🏆 Leader</div>'
+    +'</div>'+footer;
 }
 
 // ── FRIENDS ───────────────────────────────────────────
