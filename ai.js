@@ -7,7 +7,7 @@ async function genAIPhrases(word,level=1){
       body:JSON.stringify({
         model:'claude-haiku-4-5-20251001',
         max_tokens:200,
-        messages:[{role:'user',content:'Generate 2 very short German sentences (max 8 words each) using the word "'+word+'" at A1 beginner level. Simple vocabulary only. The word must appear in each sentence. Return JSON only, no markdown: {"phrases":[["German sentence","English translation"],["German sentence 2","English translation 2"]]}'}]
+        messages:[{role:'user',content:'Write 2 German sentences for A1 beginners using the word "'+word+'". STRICT rules:\n- Max 5 words per sentence\n- Only the most basic A1 words: ich, du, er, sie, es, wir, ist, hat, kauft, geht, macht, kommt, etc.\n- No subordinate clauses, no commas, no unknown vocabulary\n- The word "'+word+'" must appear in each sentence\n- Both sentences must feel natural and useful\nGood example for "Brot": ["Ich kaufe das Brot.", "Das Brot ist frisch."]\nReturn JSON only, no markdown: {"phrases":[["German","English"],["German","English"]]}'}]
       })
     });
     let data=await resp.json();
