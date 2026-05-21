@@ -456,9 +456,11 @@ function renderRiver(users,wrap,compact=false){
 // ── BATTLE ARENA ──────────────────────────────────────
 function getWeekStart(){
   let d=new Date();d.setHours(0,0,0,0);
-  d.setDate(d.getDate()-d.getDay()+1); // Monday
+  d.setDate(d.getDate()-((d.getDay()+6)%7)); // Monday
   return d.toISOString().split('T')[0];
 }
+
+// ── LOCAL BP CACHE (instant, synced from Supabase) ────
 function getBPStore(){
   if(!CU)return{delta:0,battles:[]};
   let key='bp_'+CU.id+'_'+getWeekStart();
@@ -470,25 +472,51 @@ function saveBPStore(store){
   let key='bp_'+CU.id+'_'+getWeekStart();
   try{localStorage.setItem(key,JSON.stringify(store));}catch(e){}
 }
-function getTotalBP(xp){
+function getBP(xp){
   let base=Math.floor((xp||0)/10);
   let store=getBPStore();
   return Math.max(0,base+(store.delta||0));
 }
-function getBP(xp){return getTotalBP(xp);}
+function getTotalBP(xp){return getBP(xp);}
 function getDaysUntilReset(){
-  let now=new Date();
-  let next=new Date(now);
-  next.setDate(now.getDate()+(8-now.getDay())%7||7);
+  let now=new Date(),next=new Date(now);
+  next.setDate(now.getDate()+(8-((now.getDay()+6)%7+1))%7||7);
   next.setHours(0,0,0,0);
   return Math.ceil((next-now)/86400000);
 }
 
+// ── SYNC BP FROM SUPABASE ─────────────────────────────
+async function syncBPFromSupabase(){
+  if(!CU)return;
+  let week=getWeekStart();
+  try{
+    let rows=await sbFetch('battle_log',
+      'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week);
+    if(!Array.isArray(rows)||!rows.length)return;
+    let delta=0,battles=[];
+    rows.forEach(r=>{
+      let won=r.winner_id===CU.id;
+      delta+=won?r.stake:-r.stake;
+      battles.push({opponentId:won?r.loser_id:r.winner_id,won,week,delta:won?r.stake:-r.stake,room_id:r.room_id});
+    });
+    let store=getBPStore();
+    store.delta=delta;store.battles=battles;
+    saveBPStore(store);
+  }catch(e){/* table may not exist yet — silent fail */}
+}
+
+// ── SAVE BATTLE RESULT TO SUPABASE ───────────────────
+async function saveBattleResult(winnerId,loserId,roomId,stake){
+  try{
+    await sbUpsert('battle_log',{winner_id:winnerId,loser_id:loserId,room_id:roomId,stake,week_start:getWeekStart()});
+  }catch(e){/* silent fail if table missing */}
+}
+
 function rBattleUI(){
-  let bp=getTotalBP(xpTotal);
+  let bp=getBP(xpTotal);
   let store=getBPStore();
-  let wins=store.battles.filter(b=>b.won).length;
-  let losses=store.battles.filter(b=>!b.won).length;
+  let wins=(store.battles||[]).filter(b=>b.won).length;
+  let losses=(store.battles||[]).filter(b=>!b.won).length;
   let daysLeft=getDaysUntilReset();
   return `<div id="battle-wrap">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
@@ -506,7 +534,7 @@ function rBattleUI(){
       </div>
     </div>
     <div style="background:var(--yl);border-left:3px solid var(--yd);border-radius:var(--rs);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--yd)">
-      ⚔️ Win a battle to steal <b>5 BP</b>. Lose and give 5 BP. Only ±2 levels can battle. Resets every Monday.
+      ⚔️ Win to steal <b>5 BP</b>. Lose and give 5 BP. Only ±2 levels can battle. Resets every Monday.
     </div>
     <div style="font-size:13px;font-weight:600;margin-bottom:10px">Opponents near your level</div>
     <div id="battle-opponents"><div style="text-align:center;padding:16px;color:var(--txt3);font-size:13px"><span class="spinner"></span> Matching…</div></div>
@@ -514,6 +542,7 @@ function rBattleUI(){
 }
 
 async function loadBattle(){
+  await syncBPFromSupabase();
   let wrap=document.getElementById('battle-opponents');
   if(!wrap)return;
   try{
@@ -530,17 +559,14 @@ async function loadBattle(){
     for(let i=opponents.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opponents[i],opponents[j]]=[opponents[j],opponents[i]];}
     opponents=opponents.slice(0,8);
     if(!opponents.length){wrap.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:16px">No opponents near your level yet.</div>';return;}
-    let myBP=getTotalBP(xpTotal);
     let store=getBPStore();
     wrap.innerHTML=opponents.map(u=>{
       let theirBP=Math.floor((u.xp||0)/10);
-      let fought=store.battles.find(b=>b.opponentId===u.id&&b.week===getWeekStart());
-      let foughtBadge=fought?`<span style="font-size:10px;background:${fought.won?'var(--gl)':'var(--rl)'};color:${fought.won?'var(--gd)':'var(--rd)'};padding:2px 7px;border-radius:10px">${fought.won?'Won +5':'Lost -5'}</span>`:'';
+      let fought=(store.battles||[]).find(b=>b.opponentId===u.id);
+      let badge=fought?`<span style="font-size:10px;background:${fought.won?'var(--gl)':'var(--rl)'};color:${fought.won?'var(--gd)':'var(--rd)'};padding:2px 7px;border-radius:10px;margin-left:4px">${fought.won?'Won +5':'Lost -5'}</span>`:'';
       return `<div style="background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:14px;font-weight:600">${u.name} ${foughtBadge}</div>
-          <div style="font-size:11px;color:var(--txt2);margin-top:2px">Lvl ${u.lvl} · ${theirBP} BP</div>
-        </div>
+        <div><div style="font-size:14px;font-weight:600">${u.name}${badge}</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:2px">Lvl ${u.lvl} · ${theirBP} BP</div></div>
         <button class="btn-sm-green" style="padding:7px 14px" onclick="startBattle('${u.id}','${u.name}',${u.xp})">⚔️ Battle</button>
       </div>`;
     }).join('');
@@ -548,10 +574,9 @@ async function loadBattle(){
 }
 
 function startBattle(fid,fname,fxp){
-  let myBP=getTotalBP(xpTotal),theirBP=Math.floor((fxp||0)/10),stake=5;
-  if(!confirm('⚔️ Battle '+fname+'?\n\nWinner steals '+stake+' BP from loser.\nYour BP: '+myBP+' · Their BP: '+theirBP))return;
-  // Flag this race as a battle so finishRace can apply BP transfer
-  window._pendingBattle={opponentId:fid,opponentName:fname,stake};
+  let myBP=getBP(xpTotal),theirBP=Math.floor((fxp||0)/10);
+  if(!confirm('⚔️ Battle '+fname+'?\n\nWinner steals 5 BP.\nYour BP: '+myBP+' · Their BP: '+theirBP))return;
+  window._pendingBattle={opponentId:fid,opponentName:fname,stake:5};
   challengeFriend(fid,fname);
 }
 
@@ -899,11 +924,12 @@ async function finishRace(){
       if(!mine)return;
       let myScore=mine.score,theirScore=theirs?.score??-1;
       let won=myScore>theirScore;
-      let store=getBPStore();
-      store.delta=(store.delta||0)+(won?raceSt.battle.stake:-raceSt.battle.stake);
-      store.battles=store.battles||[];
-      store.battles.push({opponentId:raceSt.battle.opponentId,opponentName:raceSt.battle.opponentName,won,week:getWeekStart(),delta:won?raceSt.battle.stake:-raceSt.battle.stake});
-      saveBPStore(store);
+      // Save to Supabase (winner inserts the record)
+      if(won){
+        await saveBattleResult(CU.id,raceSt.battle.opponentId,roomId,raceSt.battle.stake);
+      }
+      // Sync full BP state from Supabase so both sides stay consistent
+      await syncBPFromSupabase();
       raceSt.battle.resolved=true;
       raceSt.battle.won=won;
     },2500);
