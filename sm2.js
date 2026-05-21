@@ -64,28 +64,40 @@ async function flush(){
 async function sbFetch(table, params=''){
   let token=authToken||SKEY;
   let url=SURL+'/rest/v1/'+table+(params?'?'+params:'');
-  let r=await fetch(url,{
-    headers:{
-      'apikey':SKEY,
-      'Authorization':'Bearer '+token,
-      'Content-Type':'application/json',
-      'Prefer':'return=representation'
-    }
-  });
-  return r.json();
+  try{
+    let r=await fetch(url,{
+      headers:{
+        'apikey':SKEY,
+        'Authorization':'Bearer '+token,
+        'Content-Type':'application/json',
+        'Prefer':'return=representation'
+      }
+    });
+    let data=await r.json();
+    if(!r.ok){if(typeof showErr==='function')showErr('DB error: '+table,data?.message||r.status);return[];}
+    return data;
+  }catch(e){
+    if(typeof showErr==='function')showErr('Network error: '+table,e.message);
+    return[];
+  }
 }
 async function sbUpsert(table, body){
   let token=authToken||SKEY;
-  let r=await fetch(SURL+'/rest/v1/'+table,{
-    method:'POST',
-    headers:{
-      'apikey':SKEY,
-      'Authorization':'Bearer '+token,
-      'Content-Type':'application/json',
-      'Prefer':'resolution=merge-duplicates,return=representation'
-    },
-    body:JSON.stringify(body)
-  });
-  if(!r.ok)return null;
-  return r.json();
+  try{
+    let r=await fetch(SURL+'/rest/v1/'+table,{
+      method:'POST',
+      headers:{
+        'apikey':SKEY,
+        'Authorization':'Bearer '+token,
+        'Content-Type':'application/json',
+        'Prefer':'resolution=merge-duplicates,return=representation'
+      },
+      body:JSON.stringify(body)
+    });
+    if(!r.ok){let d=await r.json().catch(()=>({}));if(typeof showErr==='function')showErr('Save error: '+table,d?.message||r.status);return null;}
+    return r.json();
+  }catch(e){
+    if(typeof showErr==='function')showErr('Network error saving: '+table,e.message);
+    return null;
+  }
 }

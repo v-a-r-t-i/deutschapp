@@ -786,6 +786,30 @@ function showXPInfo(){
 
 speechSynthesis.onvoiceschanged=()=>{};
 
+// ── ERROR REPORTER ────────────────────────────────────
+function showErr(msg,detail=''){
+  let id='err-toast-'+Date.now();
+  let el=document.createElement('div');
+  el.id=id;
+  el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;max-width:90vw;box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer';
+  el.textContent='⚠️ '+msg+(detail?' — '+detail:'');
+  el.onclick=()=>el.remove();
+  document.body.appendChild(el);
+  setTimeout(()=>el?.remove(),8000);
+  console.error('[DeutschApp]',msg,detail);
+}
+
+// Catch unhandled promise rejections
+window.addEventListener('unhandledrejection',e=>{
+  let msg=e.reason?.message||String(e.reason)||'Unknown error';
+  showErr('Unexpected error',msg);
+});
+
+// Catch JS errors
+window.addEventListener('error',e=>{
+  showErr('Script error',e.message+' ('+e.filename?.split('/').pop()+':'+e.lineno+')');
+});
+
 function confetti(){
   let colors=['#1D9E75','#7C3AED','#F0A020','#D85A30','#0C447C'];
   for(let i=0;i<60;i++){
