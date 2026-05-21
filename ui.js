@@ -423,189 +423,88 @@ async function loadRiver(){
   }
 }
 function renderRiver(users,wrap,compact=false){
+  // Sort by BP descending
   users=users.slice().sort((a,b)=>b.xp-a.xp);
-  // Position by BP (XP/10), scale relative to top user
-  const getBP=xp=>Math.floor((xp||0)/10);
-  users.forEach(u=>{u.bp=getBP(u.xp);});
-  const topBP=Math.max(...users.map(u=>u.bp),1);
-  const MAX_RIVER=Math.max(topBP*1.2,1);
-  const bpToY=bp=>Math.round(4+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*88);
+  const getBPLocal=xp=>Math.floor((xp||0)/10);
+  users.forEach((u,i)=>{u.bp=getBPLocal(u.xp);u.rank=i+1;});
 
-  // Soft min-gap: only push if boats are within 4% — allows natural stacking
-  const MIN_GAP=4;
-  users.forEach(u=>{u.y=bpToY(u.bp);});
-  for(let i=users.length-2;i>=0;i--){
-    let lo=users[i+1],hi=users[i];
-    if(hi.y-lo.y<MIN_GAP) hi.y=lo.y+MIN_GAP;
+  let me=users.find(u=>u.isMe);
+  let myIdx=users.findIndex(u=>u.isMe);
+
+  // Pick rivals: 2 above + 2 below me by rank, fill gaps if near top/bottom
+  let pool=[];
+  for(let d=1;d<=4;d++){
+    if(myIdx-d>=0)pool.push({...users[myIdx-d],lane:d%2===1?0:2});
+    if(myIdx+d<users.length)pool.push({...users[myIdx+d],lane:d%2===1?2:0});
+    if(pool.length>=4)break;
   }
-  users.forEach(u=>{u.y=Math.min(94,u.y);});
+  pool=pool.slice(0,4);
 
-  // X columns cycling, center reserved for me
-  const xCols=[7,19,32,60,72,85,42];
-  let ci=0;
-  users.forEach(u=>{
-    if(u.isMe){u.x=46;}
-    else{u.x=xCols[ci%xCols.length];ci++;}
+  // Assign lanes 0–4 (5 lanes): rivals spread, me in center (lane 2)
+  // Give each rival a unique lane slot
+  let leftSlots=[0,1],rightSlots=[3,4],li=0,ri=0;
+  pool.forEach(u=>{
+    if(u.rank<(me?.rank||999)){u.lane=leftSlots[li++%leftSlots.length];}
+    else{u.lane=rightSlots[ri++%rightSlots.length];}
   });
+  if(me)me.lane=2;
 
-  // Milestone lines in BP space
+  let shown=[...pool];
+  if(me)shown.push(me);
+
+  // Y positions: sqrt scale relative to top BP
+  const topBP=Math.max(...shown.map(u=>u.bp),1);
+  const MAX_RIVER=Math.max(topBP*1.2,10);
+  const bpToY=bp=>Math.round(5+Math.sqrt(Math.max(0,bp)/MAX_RIVER)*87);
+
+  // Milestones
   const milestones=LEVELS.map(l=>({bp:Math.floor(l.min/10),name:l.name,lvl:l.lvl}))
     .filter(l=>l.bp>0&&l.bp<=MAX_RIVER*1.05);
 
-  let myUser=users.find(u=>u.isMe);
-  let myY=myUser?.y||4;
-  let rank=users.findIndex(u=>u.isMe)+1||'?';
+  // Lane X positions (5 lanes across the river)
+  const laneX=[10,26,44,62,78];
+
   let height=compact?320:520;
 
-  let boatsHTML=users.map(u=>'<div class="rv-boat'+(u.isMe?' rv-me':'')+'" style="bottom:'+u.y+'%;left:'+u.x+'%">'+
-    '<span class="rv-emoji">'+(u.isMe?'⛵':'🚣')+'</span>'+
-    '<span class="rv-name">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'+
-    '<span class="rv-xp">'+u.bp+' BP</span>'+
-    '</div>').join('');
-
-  let milestonesHTML=milestones.map(m=>{
-    let p=Math.round(4+Math.sqrt(m.bp/MAX_RIVER)*88);
-    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' \u00b7 '+m.name+' ('+m.bp+' BP)</span></div>';
+  // Build boats
+  let boatsHTML=shown.map(u=>{
+    let y=bpToY(u.bp);
+    let x=laneX[u.lane??2];
+    let isMe=u.isMe;
+    return '<div class="rv-boat'+(isMe?' rv-me':'')+'" style="bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%)">'
+      +'<span class="rv-emoji">'+(isMe?'⛵':'🚣')+'</span>'
+      +'<span class="rv-name">'+(isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
+      +'<span class="rv-xp">'+u.bp+' BP</span>'
+      +'</div>';
   }).join('');
 
-  let header=compact?'':`<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div><div style="font-size:13px;color:var(--txt2)">Your rank: <b>#${rank}</b> of ${users.length} \u00b7 ${myUser?.bp||0} BP</div></div>`;
-  let footer=compact?'':'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Earn XP to gain BP and sail further</div>';
-  wrap.innerHTML=header+'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px"><div class="rv-current" style="height:'+myY+'%"></div>'+milestonesHTML+boatsHTML+'<div class="rv-start">\u2693 Start</div><div class="rv-end">\ud83c\udfc6 Leader</div></div></div>'+footer;
-}
+  // Lane dividers — subtle vertical lines
+  let lanesHTML=laneX.map((x,i)=>
+    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.04);transform:translateX(-50%)"></div>'
+  ).join('');
 
-// ── BATTLE ARENA ──────────────────────────────────────
-function getWeekStart(){
-  let d=new Date();d.setHours(0,0,0,0);
-  d.setDate(d.getDate()-((d.getDay()+6)%7)); // Monday
-  return d.toISOString().split('T')[0];
-}
+  let milestonesHTML=milestones.map(m=>{
+    let p=Math.round(5+Math.sqrt(m.bp/MAX_RIVER)*87);
+    return '<div class="rv-milestone" style="bottom:'+p+'%"><span class="rv-ms-line"></span><span class="rv-ms-label">Lvl '+m.lvl+' · '+m.name+' ('+m.bp+' BP)</span></div>';
+  }).join('');
 
-// ── LOCAL BP CACHE (instant, synced from Supabase) ────
-function getBPStore(){
-  if(!CU)return{delta:0,battles:[]};
-  let key='bp_'+CU.id+'_'+getWeekStart();
-  try{let s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
-  return{delta:0,battles:[]};
-}
-function saveBPStore(store){
-  if(!CU)return;
-  let key='bp_'+CU.id+'_'+getWeekStart();
-  try{localStorage.setItem(key,JSON.stringify(store));}catch(e){}
-}
-function getBP(xp){
-  let base=Math.floor((xp||0)/10);
-  let store=getBPStore();
-  return Math.max(0,base+(store.delta||0));
-}
-function getTotalBP(xp){return getBP(xp);}
-function getDaysUntilReset(){
-  let now=new Date(),next=new Date(now);
-  next.setDate(now.getDate()+(8-((now.getDay()+6)%7+1))%7||7);
-  next.setHours(0,0,0,0);
-  return Math.ceil((next-now)/86400000);
-}
+  let rank=me?.rank||'?';
+  let totalShown=shown.length;
 
-// ── SYNC BP FROM SUPABASE ─────────────────────────────
-async function syncBPFromSupabase(){
-  if(!CU)return;
-  let week=getWeekStart();
-  try{
-    let rows=await sbFetch('battle_log',
-      'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week,true);
-    if(!Array.isArray(rows)||!rows.length)return;
-    let delta=0,battles=[];
-    rows.forEach(r=>{
-      let won=r.winner_id===CU.id;
-      delta+=won?r.stake:-r.stake;
-      battles.push({opponentId:won?r.loser_id:r.winner_id,won,week,delta:won?r.stake:-r.stake,room_id:r.room_id});
-    });
-    let store=getBPStore();
-    store.delta=delta;store.battles=battles;
-    saveBPStore(store);
-  }catch(e){/* table may not exist yet — silent fail */}
-}
+  let header=compact?''
+    :'<div style="margin-bottom:14px"><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 The River</div>'
+    +'<div style="font-size:13px;color:var(--txt2)">Your rank: <b>#'+rank+'</b> of '+users.length+' · '+( me?.bp||0)+' BP · '+totalShown+' shown</div></div>';
 
-// ── SAVE BATTLE RESULT TO SUPABASE ───────────────────
-async function saveBattleResult(winnerId,loserId,roomId,stake){
-  try{
-    await sbUpsert('battle_log',{winner_id:winnerId,loser_id:loserId,room_id:roomId,stake,week_start:getWeekStart()});
-  }catch(e){/* silent fail if table missing */}
-}
+  let footer=compact?''
+    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Showing your 4 closest rivals · earn XP to move up</div>';
 
-function rBattleUI(){
-  let bp=getBP(xpTotal);
-  let store=getBPStore();
-  let wins=(store.battles||[]).filter(b=>b.won).length;
-  let losses=(store.battles||[]).filter(b=>!b.won).length;
-  let daysLeft=getDaysUntilReset();
-  return `<div id="battle-wrap">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-      <div style="background:var(--bg2);border-radius:var(--r);padding:12px;text-align:center">
-        <div style="font-size:26px;font-weight:700;color:var(--green)">${bp}</div>
-        <div style="font-size:11px;color:var(--txt2)">Total BP</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:var(--r);padding:12px;text-align:center">
-        <div style="font-size:26px;font-weight:700">${wins}W ${losses}L</div>
-        <div style="font-size:11px;color:var(--txt2)">This week</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:var(--r);padding:12px;text-align:center">
-        <div style="font-size:26px;font-weight:700;color:var(--bd)">${daysLeft}d</div>
-        <div style="font-size:11px;color:var(--txt2)">Until reset</div>
-      </div>
-    </div>
-    <div style="background:var(--yl);border-left:3px solid var(--yd);border-radius:var(--rs);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--yd)">
-      ⚔️ Win to steal <b>5 BP</b>. Lose and give 5 BP. Only ±2 levels can battle. Resets every Monday.
-    </div>
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Opponents near your level</div>
-    <div id="battle-opponents"><div style="text-align:center;padding:16px;color:var(--txt3);font-size:13px"><span class="spinner"></span> Matching…</div></div>
-  </div>`;
+  wrap.innerHTML=header
+    +'<div class="rv-wrap"><div class="rv-river" style="height:'+height+'px">'
+    +lanesHTML+milestonesHTML+boatsHTML
+    +'<div class="rv-start">⚓ Start</div>'
+    +'<div class="rv-end">🏆 Leader</div>'
+    +'</div></div>'+footer;
 }
-
-async function loadBattle(){
-  await syncBPFromSupabase();
-  let wrap=document.getElementById('battle-opponents');
-  if(!wrap)return;
-  try{
-    let myLvl=getLevelInfo(xpTotal).lvl;
-    let [profiles,streaksData]=await Promise.all([
-      sbFetch('profiles','select=id,display_name&limit=100'),
-      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
-    ]);
-    let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
-    let opponents=(streaksData||[])
-      .filter(s=>s.user_id!==CU?.id)
-      .map(s=>({id:s.user_id,name:pMap[s.user_id]||'Learner',xp:s.xp_total||0,lvl:getLevelInfo(s.xp_total||0).lvl}))
-      .filter(u=>Math.abs(u.lvl-myLvl)<=2);
-    for(let i=opponents.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opponents[i],opponents[j]]=[opponents[j],opponents[i]];}
-    opponents=opponents.slice(0,8);
-    if(!opponents.length){wrap.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:16px">No opponents near your level yet.</div>';return;}
-    let store=getBPStore();
-    wrap.innerHTML=opponents.map(u=>{
-      let theirBP=Math.floor((u.xp||0)/10);
-      let fought=(store.battles||[]).find(b=>b.opponentId===u.id);
-      let badge=fought?`<span style="font-size:10px;background:${fought.won?'var(--gl)':'var(--rl)'};color:${fought.won?'var(--gd)':'var(--rd)'};padding:2px 7px;border-radius:10px;margin-left:4px">${fought.won?'Won +5':'Lost -5'}</span>`:'';
-      return `<div style="background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-        <div><div style="font-size:14px;font-weight:600">${u.name}${badge}</div>
-        <div style="font-size:11px;color:var(--txt2);margin-top:2px">Lvl ${u.lvl} · ${theirBP} BP</div></div>
-        <button class="btn-sm-green" style="padding:7px 14px" onclick="startBattle('${u.id}','${u.name}',${u.xp})">⚔️ Battle</button>
-      </div>`;
-    }).join('');
-  }catch(e){if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Error loading opponents.</div>';}
-}
-
-function startBattle(fid,fname,fxp){
-  let myBP=getBP(xpTotal),theirBP=Math.floor((fxp||0)/10);
-  showModal({
-    title:'⚔️ Battle '+fname+'?',
-    body:'Winner steals <b>5 BP</b> from the loser.<div style="display:flex;justify-content:center;gap:24px;margin-top:12px"><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--green)">'+myBP+'</div><div style="font-size:11px;color:var(--txt2)">Your BP</div></div><div style="font-size:22px;color:var(--txt3);padding-top:8px">vs</div><div style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--bd)">'+theirBP+'</div><div style="font-size:11px;color:var(--txt2)">Their BP</div></div></div>',
-    confirm:'⚔️ Battle!',
-    onConfirm:()=>{
-      window._pendingBattle={opponentId:fid,opponentName:fname,stake:5};
-      challengeFriend(fid,fname);
-    }
-  });
-}
-
 
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){
