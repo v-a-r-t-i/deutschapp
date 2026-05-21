@@ -241,3 +241,31 @@ async function deleteAccount(){
   // Reload to auth screen
   location.reload();
 }
+
+function changeUsername(){
+  let current=CP?.display_name||'';
+  showModal({
+    title:'✏️ Change name',
+    body:'<input id="new-name-input" class="type-input" style="width:100%;margin-top:4px" placeholder="New name" value="'+current.replace(/"/g,'&quot;')+'">',
+    confirm:'Save',
+    cancel:'Cancel',
+    onConfirm:async()=>{
+      let val=document.getElementById('new-name-input')?.value?.trim();
+      if(!val||val===current)return;
+      let token=authToken||SKEY;
+      await fetch(SURL+'/rest/v1/profiles?id=eq.'+CU.id,{
+        method:'PATCH',
+        headers:{'apikey':SKEY,'Authorization':'Bearer '+token,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({display_name:val})
+      });
+      if(CP)CP.display_name=val;
+      let ub=document.getElementById('user-btn');
+      if(ub)ub.textContent=val+' ▾';
+    }
+  });
+  // Pre-select the text for quick editing
+  setTimeout(()=>{
+    let inp=document.getElementById('new-name-input');
+    if(inp){inp.focus();inp.select();}
+  },50);
+}
