@@ -364,150 +364,19 @@ function rPlan(){
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){
   let c=document.getElementById('content');
-  let tabs=[['leaderboard','🏆 Ranks'],['friends','👥 Friends'],['race','⚡ Race'],['river','🚤 River'],['battle','⚔️ Battle']];
-  let html=statsH()+`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
-  if(ranksSubTab==='leaderboard')html+=rRanksGlobal();
-  else if(ranksSubTab==='friends')html+=rFriendsUI();
-  else if(ranksSubTab==='river')html+=rRiverUI();
+  let tabs=[['friends','👥 Friends'],['river','🚤 River'],['battle','⚔️ Battle']];
+  let html=`<div class="social-tabs">${tabs.map(([t,l])=>`<button class="social-tab${ranksSubTab===t?' active':''}" onclick="ranksSubTab='${t}';rSocial()">${l}</button>`).join('')}</div>`;
+  if(ranksSubTab==='river')html+=rRiverUI();
   else if(ranksSubTab==='battle')html+=rBattleUI();
-  else html+=rRaceUI();
+  else html+=rFriendsUI();
   c.innerHTML=html;
-  if(ranksSubTab==='friends')loadFriends();
+  if(ranksSubTab==='friends'||ranksSubTab==='leaderboard')loadFriends();
   if(ranksSubTab==='river')loadRiver();
   if(ranksSubTab==='battle')loadBattle();
-  if(ranksSubTab==='race'&&raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
-  if(ranksSubTab==='race'&&!raceSt)loadRaceRoom();
 }
-function rRanks(){ranksSubTab='leaderboard';rSocial();}
-function raceNav(){ranksSubTab='race';rSocial();}
+function rRanks(){ranksSubTab='friends';rSocial();}
+function raceNav(){ranksSubTab='friends';rSocial();}
 
-function rRanksGlobal(){
-  let lvl=getLevelInfo(xpTotal);
-  let html=`<div style="margin-bottom:12px"><div style="font-size:16px;font-weight:600;margin-bottom:4px">⭐ Rank Ladder</div><div style="font-size:13px;color:var(--txt2);margin-bottom:16px">Earn XP by studying to level up</div></div>`;
-  for(let l of LEVELS){
-    let isCurrent=l.lvl===lvl.lvl;
-    let isDone=xpTotal>=l.max&&l.lvl<LEVELS.length;
-    let pct=isDone?100:isCurrent?Math.round((xpTotal-l.min)/(l.max-l.min)*100):xpTotal>=l.min?100:0;
-    html+=`<div style="border:${isCurrent?'1.5px solid var(--green)':'0.5px solid var(--bor)'};border-radius:var(--r);padding:14px 16px;margin-bottom:8px;background:${isCurrent?'var(--gl)':'var(--bg)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:50%;background:${isCurrent?'var(--green)':isDone?'var(--bg3)':'var(--bg2)'};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:${isCurrent?'#fff':'var(--txt2)'}">${l.lvl}</div>
-          <div>
-            <div style="font-size:15px;font-weight:600;color:${isCurrent?'var(--gd)':'var(--txt)'}">${l.name}${isCurrent?' ← you are here':''}</div>
-            <div style="font-size:12px;color:var(--txt2)">${l.min}–${l.max===99999?'∞':l.max} XP</div>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--txt2)">${isDone?'✓ Done':isCurrent?xpTotal+' / '+l.max+' XP':l.min+' XP to unlock'}</div>
-      </div>
-      <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${isCurrent?'var(--green)':isDone?'var(--bg3)':'var(--bg3)'};border-radius:2px;transition:width 0.4s"></div>
-      </div>
-      <div style="margin-top:8px;font-size:12px;color:var(--txt2)">
-        ${l.lvl===1?'Earn XP by answering correctly in any mode':
-          l.lvl===2?'Flash Easy: +10 · Quiz: +8 · Type: +10':
-          l.lvl===3?'Listen mode gives +10 XP per correct answer':
-          l.lvl===4?'Gender drill: +5 · Fill-in: +8 XP':
-          l.lvl===5?'Mix all modes for fastest XP gain':
-          l.lvl===6?'Daily streaks multiply your XP over time':
-          'Maximum level — Meister of German A1!'}
-      </div>
-    </div>`;
-  }
-  // How to earn XP breakdown
-  html+=`<div style="background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-top:8px">
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px">How to earn XP</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      ${[['🎴 Flash Easy','10 XP'],['🎴 Flash Good','5 XP'],['🎴 Flash Hard','2 XP'],['❓ Quiz correct','8 XP'],['⌨️ Type correct','10 XP'],['📝 Fill-in correct','8 XP'],['🔤 Gender correct','5 XP'],['👂 Listen correct','10 XP']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 8px;background:var(--bg);border-radius:var(--rs)"><span style="color:var(--txt2)">${k}</span><span style="color:var(--green);font-weight:500">${v}</span></div>`).join('')}
-    </div>
-  </div>`;
-  return html;
-}
-
-// ── BATTLE ────────────────────────────────────────────
-function getBP(xp){ return Math.floor((xp||0)/10); }
-function getWeeklyBP(){
-  let key='wbp_'+tday().slice(0,7); // e.g. "wbp_2026-05"
-  // Use Monday-reset week key
-  let d=new Date();let day=d.getDay();let diff=d.getDate()-(day===0?6:day-1);
-  let monday=new Date(d.setDate(diff)).toISOString().split('T')[0];
-  let stored=JSON.parse(localStorage.getItem('weekly_bp')||'{}');
-  if(stored.week!==monday){stored={week:monday,xpStart:xpTotal,gained:0};localStorage.setItem('weekly_bp',JSON.stringify(stored));}
-  return{week:monday,gained:Math.max(0,xpTotal-(stored.xpStart||xpTotal))+stored.gained,bp:getBP(Math.max(0,xpTotal-(stored.xpStart||xpTotal))+stored.gained)};
-}
-function rBattleUI(){
-  let bp=getBP(xpTotal);
-  let w=getWeeklyBP();
-  let daysLeft=7-((new Date().getDay()+6)%7);
-  return `<div id="battle-wrap">
-    <div style="margin-bottom:16px">
-      <div style="font-size:16px;font-weight:600;margin-bottom:2px">⚔️ Battle Arena</div>
-      <div style="font-size:13px;color:var(--txt2)">Challenge others — win to steal their Battle Points</div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div style="background:var(--bg2);border-radius:var(--r);padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:var(--green)">${bp}</div>
-        <div style="font-size:12px;color:var(--txt2)">Total BP</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px">10 XP = 1 BP</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:var(--r);padding:14px;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:var(--bd)">${w.bp}</div>
-        <div style="font-size:12px;color:var(--txt2)">Weekly BP</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px">Resets in ${daysLeft}d</div>
-      </div>
-    </div>
-    <div style="background:var(--yl);border-left:3px solid var(--yd);border-radius:var(--rs);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--yd)">
-      ⚔️ Win a battle to steal <b>5 BP</b> from your opponent. Lose and they take 5 BP from you. Only users within 2 levels can battle.
-    </div>
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Opponents near your level</div>
-    <div id="battle-opponents"><div style="text-align:center;padding:16px;color:var(--txt3);font-size:13px"><span class="spinner"></span> Matching opponents…</div></div>
-  </div>`;
-}
-async function loadBattle(){
-  let wrap=document.getElementById('battle-opponents');
-  if(!wrap)return;
-  try{
-    let myLvl=getLevelInfo(xpTotal).lvl;
-    let [profiles,streaksData]=await Promise.all([
-      sbFetch('profiles','select=id,display_name&limit=100'),
-      sbFetch('streaks','select=user_id,xp_total,streak_count&order=xp_total.desc&limit=100')
-    ]);
-    let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
-    let opponents=(streaksData||[])
-      .filter(s=>s.user_id!==CU?.id)
-      .map(s=>({id:s.user_id,name:pMap[s.user_id]||'Learner',xp:s.xp_total||0,lvl:getLevelInfo(s.xp_total||0).lvl}))
-      .filter(u=>Math.abs(u.lvl-myLvl)<=2);
-    // Shuffle and pick up to 8
-    for(let i=opponents.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[opponents[i],opponents[j]]=[opponents[j],opponents[i]];}
-    opponents=opponents.slice(0,8);
-    if(!opponents.length){wrap.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:16px">No opponents near your level yet. Invite friends!</div>';return;}
-    let myBP=getBP(xpTotal);
-    wrap.innerHTML=opponents.map(u=>{
-      let bp=getBP(u.xp);
-      let lvl=getLevelInfo(u.xp);
-      let diff=bp-myBP;
-      let diffStr=diff>0?'<span style="color:var(--rd);font-size:11px">+'+diff+' BP if you win</span>':'<span style="color:var(--green);font-size:11px">'+Math.abs(diff)+' BP at stake</span>';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
-        <div>
-          <div style="font-size:14px;font-weight:600">${u.name}</div>
-          <div style="font-size:12px;color:var(--txt2)">Lvl ${lvl.lvl} ${lvl.name} · ${bp} BP</div>
-          <div style="margin-top:2px">${diffStr}</div>
-        </div>
-        <button class="btn-sm-green" style="padding:7px 14px" onclick="startBattle('${u.id}','${u.name}',${u.xp})">⚔️ Battle</button>
-      </div>`;
-    }).join('');
-  }catch(e){
-    if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px">Could not load opponents.</div>';
-  }
-}
-function startBattle(fid,fname,fxp){
-  // For now, battle = race. BP transfer will be tracked once backend supports it.
-  let myBP=getBP(xpTotal),theirBP=getBP(fxp),stake=5;
-  if(confirm('⚔️ Battle '+fname+'?\n\nWinner takes '+stake+' BP from loser.\n(Currently launches a Race — BP tracking coming soon)')){
-    challengeFriend(fid,fname);
-  }
-}
-
-// ── RIVER ─────────────────────────────────────────────
 function rRiverUI(){
   return `<div id="river-wrap"><div style="text-align:center;padding:24px 0;color:var(--txt3);font-size:13px"><span class="spinner"></span> Loading river…</div></div>`;
 }
