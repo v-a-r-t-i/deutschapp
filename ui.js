@@ -615,16 +615,9 @@ function renderRiver(users,wrap,compact=false){
   const MAX_RIVER=Math.max(topBP*1.25,1);
   const allZero=shown.every(u=>u.weekBP===0);
 
-  // posY: index within shown array (0=top shown, last=bottom)
-  shown.forEach((u,i)=>{u.shownIdx=i;});
-  const n=shown.length;
-
   const getY=u=>{
-    if(allZero){
-      // Spread evenly: top boat near top, bottom boat near start line
-      return Math.round(82-(u.shownIdx/(Math.max(n-1,1)))*72);
-    }
-    return Math.round(8+Math.sqrt(u.weekBP/MAX_RIVER)*82);
+    if(allZero) return 12; // all at start line — same Y, different lanes
+    return Math.round(12+Math.sqrt(u.weekBP/MAX_RIVER)*80);
   };
 
   let height=compact?300:480;
