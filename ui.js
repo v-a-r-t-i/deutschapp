@@ -84,13 +84,24 @@ function statsH(){
   return`<div class="stats-row"><div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div><div class="stat"><div class="stat-n" style="color:var(--bd)">${d}</div><div class="stat-l">due today</div></div></div><div class="prog-bar"><div class="prog-fill" style="width:${t?Math.round(k/t*100):0}%"></div></div>`;
 }
 function catH(){
-  let singleCat=selCats.size===1?[...selCats][0]:null;
-  let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:10px;text-align:center">Studying <b>${singleCat}</b> only — tap another to add</div>`:'';
-  return nudge+'<div class="cat-sheet">'+Object.keys(DATA).map(cat=>{
-    let p=cp(cat);
-    let active=selCats.has(cat);
-    return `<button class="cat-chip${active?' active':''}" onclick="togCat('${cat}')"><span class="cc-ring"></span>${ring(p.k,p.t)}${cat}</button>`;
-  }).join('')+'</div>';
+  let active=[...selCats];
+  let all=Object.keys(DATA);
+  let singleCat=selCats.size===1?active[0]:null;
+  let summary=selCats.size===all.length?'All categories'
+    :active.length<=2?active.join(', ')
+    :active.length+' categories';
+  let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Studying <b>${singleCat}</b> only</div>`:'';
+  // On mobile: collapsible. On desktop: always open chips
+  return nudge+`<details class="cat-picker" id="cat-picker">
+    <summary class="cat-summary">
+      <span class="cat-summary-label">📚 ${summary}</span>
+      <span class="cat-summary-arr">›</span>
+    </summary>
+    <div class="cat-sheet">${all.map(cat=>{
+      let p=cp(cat);let active=selCats.has(cat);
+      return`<button class="cat-chip${active?' active':''}" onclick="togCat('${cat}')">${ring(p.k,p.t)}${cat}</button>`;
+    }).join('')}</div>
+  </details>`;
 }
 function togCat(cat){
   if(selCats.has(cat)){if(selCats.size>1)selCats.delete(cat);}else selCats.add(cat);
@@ -585,83 +596,80 @@ function renderRiver(users,wrap,compact=false){
   users=users.slice().sort((a,b)=>b.weekBP-a.weekBP);
   users.forEach((u,i)=>{u.rank=i+1;});
 
-  let me=users.find(u=>u.isMe);
+  let me=users.find(u=>u.isMe)||{id:'me',name:'You',weekBP:0,rank:1,isMe:true};
   let myIdx=users.findIndex(u=>u.isMe);
 
-  // Pick exactly 4 rivals: 2 just above, 2 just below in rank
-  let above=[],below=[];
-  for(let d=1;d<=users.length&&(above.length<2||below.length<2);d++){
-    if(above.length<2&&myIdx-d>=0)above.push(users[myIdx-d]);
-    if(below.length<2&&myIdx+d<users.length)below.push(users[myIdx+d]);
+  // Always fill exactly 4 rivals across all directions
+  let rivals=[];
+  for(let d=1;rivals.length<4&&d<=users.length;d++){
+    if(myIdx-d>=0)rivals.push(users[myIdx-d]);
+    if(rivals.length<4&&myIdx+d<users.length)rivals.push(users[myIdx+d]);
   }
-  // Fill gaps if near top/bottom
-  while(above.length<2&&below.length>0)above.unshift(below.pop());
-  while(below.length<2&&above.length>0)below.push(above.shift());
+  // If still <4 (tiny user base), pad with empty placeholders
+  while(rivals.length<4)rivals.push(null);
 
-  // Fixed lane X positions — 5 columns evenly across river
-  // Lane: 0=far-left, 1=left, 2=CENTER(me), 3=right, 4=far-right
-  const LANES=[12,29,50,71,88];
+  // FIXED lane assignment: [left2, left1, ME, right1, right2]
+  // rivals[0,1] → lanes 0,1 ; me → lane 2 ; rivals[2,3] → lanes 3,4
+  const LANES=[11,28,50,72,89];
+  let shown=[];
+  rivals.slice(0,2).forEach((u,i)=>{if(u){u.lane=i;shown.push(u);}});
+  me.lane=2; shown.push(me);
+  rivals.slice(2,4).forEach((u,i)=>{if(u){u.lane=3+i;shown.push(u);}});
 
-  above[0]&&(above[0].lane=0);
-  above[1]&&(above[1].lane=1);
-  if(me)me.lane=2;
-  below[0]&&(below[0].lane=3);
-  below[1]&&(below[1].lane=4);
-
-  let shown=[...above,...(me?[me]:[]),...below];
-
-  // Y position: BP-based, but when all zero use position-within-shown for spread
   const topBP=Math.max(...shown.map(u=>u.weekBP),1);
-  const MAX_RIVER=Math.max(topBP*1.25,1);
   const allZero=shown.every(u=>u.weekBP===0);
-
-  const getY=u=>{
-    if(allZero) return 12; // all at start line — same Y, different lanes
-    return Math.round(12+Math.sqrt(u.weekBP/MAX_RIVER)*80);
-  };
+  const getY=u=>allZero?10:Math.round(10+Math.sqrt(u.weekBP/Math.max(topBP*1.2,1))*82);
 
   let height=compact?300:480;
   let daysLeft=getDaysUntilReset();
-  let myWeekBP=me?.weekBP||0;
-  let rank=me?.rank||'?';
+  let rank=me.rank||'?';
 
-  // Lane dividers — visible enough to show the lanes clearly
+  // Water background — blue gradient + subtle wave layers
+  let waterBg='background:linear-gradient(180deg,#0d2847 0%,#0a1e3d 40%,#071428 100%)';
+
+  // Lane dividers
   let lanesHTML=LANES.map(x=>
-    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.07);transform:translateX(-50%)"></div>'
+    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.06)"></div>'
   ).join('');
 
+  // Wave overlay (CSS only)
+  let waveHTML='<div style="position:absolute;left:0;right:0;bottom:0;height:60px;background:linear-gradient(0deg,rgba(14,56,120,0.4),transparent);pointer-events:none"></div>';
+
   // Start line
-  let startLine=
-    '<div style="position:absolute;left:0;right:0;bottom:8%;border-top:1px dashed rgba(255,255,255,0.2)"></div>'+
-    '<div style="position:absolute;left:50%;bottom:8%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(11,16,32,0.9);color:rgba(255,255,255,0.4);white-space:nowrap">⚓ Week Start</div>';
+  let startLine='<div style="position:absolute;left:0;right:0;bottom:10%;border-top:1px dashed rgba(100,180,255,0.3)"></div>'
+    +'<div style="position:absolute;left:50%;bottom:10%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(7,20,40,0.9);color:rgba(100,180,255,0.6);white-space:nowrap;border:1px solid rgba(100,180,255,0.2)">⚓ Week Start</div>';
 
   let boatsHTML=shown.map(u=>{
     let y=getY(u);
-    let x=LANES[u.lane??2];
-    return '<div class="rv-boat'+(u.isMe?' rv-me':'')
-      +'" style="position:absolute;bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%);display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:'+(u.isMe?'rgba(139,92,246,0.3)':'rgba(255,255,255,0.08)')+';border:1px solid '+(u.isMe?'rgba(139,92,246,0.5)':'rgba(255,255,255,0.12)')+';white-space:nowrap;backdrop-filter:blur(8px)">'
-      +'<span style="font-size:18px">'+(u.isMe?'⛵':'🚣')+'</span>'
-      +'<span style="font-size:12px;font-weight:700;color:white">'+(u.isMe?'<b>'+u.name+'</b>':u.name)+'</span>'
-      +'<span style="font-size:11px;color:rgba(255,255,255,0.5)">'+u.weekBP+' BP</span>'
+    let x=LANES[u.lane];
+    let isMe=u.isMe;
+    return '<div style="position:absolute;bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%);display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;'
+      +'background:'+(isMe?'rgba(139,92,246,0.35)':'rgba(255,255,255,0.07)')+';'
+      +'border:1px solid '+(isMe?'rgba(139,92,246,0.6)':'rgba(255,255,255,0.1)')+';'
+      +'white-space:nowrap;backdrop-filter:blur(8px)">'
+      +'<span style="font-size:18px">'+(isMe?'⛵':'🚣')+'</span>'
+      +'<div><div style="font-size:12px;font-weight:700;color:white;line-height:1.2">'+(isMe?'<b>'+u.name+'</b>':u.name)+'</div>'
+      +'<div style="font-size:10px;color:rgba(150,200,255,0.7)">'+u.weekBP+' BP</div></div>'
       +'</div>';
   }).join('');
 
   let header=compact?''
     :'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
     +'<div><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 Weekly River</div>'
-    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> of '+users.length+' · <b>'+myWeekBP+' BP</b> this week</div></div>'
+    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> of '+users.length+' · <b>'+(me.weekBP||0)+' BP</b> this week</div></div>'
     +'<div style="text-align:right;font-size:12px;color:var(--txt3)">Resets in<br><b style="color:var(--txt2)">'+daysLeft+'d</b></div>'
     +'</div>';
 
   let footer=compact?''
-    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">Win battles to move up · resets every Monday</div>';
+    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">⚔️ Win battles to move up · resets every Monday</div>';
 
   wrap.innerHTML=header
-    +'<div style="position:relative;width:100%;height:'+height+'px;border-radius:24px;overflow:hidden;background:linear-gradient(180deg,rgba(59,130,246,0.14),rgba(59,130,246,0.04));border:1px solid rgba(255,255,255,0.08)">'
-    +lanesHTML+startLine+boatsHTML
-    +'<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(11,16,32,0.9);color:rgba(245,158,11,0.9);border:1px solid rgba(245,158,11,0.3)">🏆 Leader</div>'
+    +'<div style="position:relative;width:100%;height:'+height+'px;border-radius:24px;overflow:hidden;'+waterBg+';border:1px solid rgba(100,180,255,0.1)">'
+    +lanesHTML+waveHTML+startLine+boatsHTML
+    +'<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(7,20,40,0.9);color:rgba(245,158,11,0.9);border:1px solid rgba(245,158,11,0.3)">🏆 Leader</div>'
     +'</div>'+footer;
 }
+
 
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){

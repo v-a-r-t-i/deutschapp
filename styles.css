@@ -2306,3 +2306,28 @@ font-family:inherit;
   .mobile-bottom-nav{display:none!important;}
   .tabs{display:flex!important;}
 }
+
+/* ── CATEGORY PICKER ── */
+.cat-picker{margin-bottom:12px;}
+.cat-picker[open] .cat-summary-arr{transform:rotate(90deg);}
+.cat-summary{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05);
+  cursor:pointer;list-style:none;
+  font-size:13px;font-weight:600;color:white;
+  margin-bottom:8px;
+  user-select:none;
+}
+.cat-summary::-webkit-details-marker{display:none;}
+.cat-summary-label{flex:1;}
+.cat-summary-arr{font-size:16px;color:var(--txt3);transition:transform .2s;margin-left:8px;}
+/* On desktop always show expanded */
+@media(min-width:701px){
+  .cat-picker{open:true;}
+  details.cat-picker>summary{display:none;}
+  details.cat-picker{display:block;}
+  details.cat-picker .cat-sheet{display:flex!important;}
+}
