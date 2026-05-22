@@ -77,9 +77,15 @@ async function doSignup(){
   if(!name||!e||!p){document.getElementById('auth-err').textContent='Please fill in all fields.';return;}
   if(p.length<6){document.getElementById('auth-err').textContent='Password must be at least 6 characters.';return;}
   let btn=document.getElementById('su-btn');btn.disabled=true;btn.textContent='Creating account...';
-  let{data,error}=await sb.auth.signUp({email:e,password:p});
+  let{data,error}=await sb.auth.signUp({email:e,password:p,options:{data:{display_name:name,role}}});
   if(error){btn.disabled=false;btn.textContent='Create account';document.getElementById('auth-err').textContent=error.message;return;}
-  if(data.user)await sb.from('profiles').upsert({id:data.user.id,email:e,display_name:name,role});
+  // Try to create profile immediately — works if email confirmation is disabled
+  // If session exists (no email confirm needed), upsert directly
+  if(data.user){
+    try{
+      await sb.from('profiles').upsert({id:data.user.id,email:e,display_name:name,role},{ onConflict:'id' });
+    }catch(e){}
+  }
   btn.disabled=false;btn.textContent='Create account';
   document.getElementById('auth-err').textContent='Account created! Sign in now.';
   switchAuth('login');
@@ -108,6 +114,16 @@ async function handleSession(session){
         p=data;
       }catch(e){console.warn('Profile fetch failed:',e);}
       CP=p;
+      // If profile missing, create it from auth metadata
+      if(!p&&CU){
+        let meta=CU.user_metadata||{};
+        let name=meta.display_name||CU.email?.split('@')[0]||'Learner';
+        let role=meta.role||'student';
+        try{
+          await sb.from('profiles').upsert({id:CU.id,email:CU.email,display_name:name,role},{onConflict:'id'});
+          CP={id:CU.id,display_name:name,role};
+        }catch(e){}
+      }
       if(p?.role==='teacher'){
         document.getElementById('loading-screen').style.display='none';
         document.getElementById('auth-screen').style.display='none';

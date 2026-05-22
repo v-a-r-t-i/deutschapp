@@ -1044,11 +1044,16 @@ function ansRace(chosen,correct,btn){
     if(!raceSt)return;
     raceSt.answered=false;
     raceSt.idx++;
-    // Wrap around if words run out — battle is time-limited not word-limited
+    // When words run out, pull a fresh shuffled batch from the full word pool
     if(raceSt.idx>=raceSt.words.length){
-      raceSt.words=[...raceSt.words];shuf(raceSt.words);
-      raceSt.idx=0;
+      let allWords=aw();if(allWords.length<4)allWords=Object.values(DATA).flat();
+      let fresh=allWords.filter(w=>!raceSt.usedDe?.has(w.de));
+      if(fresh.length<4)fresh=allWords; // reset used tracking if near-exhausted
+      shuf(fresh);
+      raceSt.words=[...raceSt.words,...fresh.slice(0,10)];
     }
+    if(!raceSt.usedDe)raceSt.usedDe=new Set();
+    raceSt.usedDe.add(raceSt.words[raceSt.idx]?.de);
     raceNav();
   },ok?300:700);
 }
