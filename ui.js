@@ -37,12 +37,13 @@ function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove()
 
 // ── MOBILE NAV SYNC ───────────────────────────────────
 function setMobNav(tab){
-  let map={study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
-  // flash/listen/quiz/fill/gender all belong to "study"
-  let key=(['flash','listen','quiz','fill','gender'].includes(tab)?'study':tab);
+  let key=['flash','listen','quiz','fill','gender'].includes(tab)?'study':tab;
+  let mobileMap={study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
+  let desktopMap={study:'desk-study',browse:'desk-browse',plan:'desk-plan',social:'desk-social'};
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
-  let btn=document.getElementById(map[key]||'mob-study');
-  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.desk-nav-btn').forEach(b=>b.classList.remove('active'));
+  let mob=document.getElementById(mobileMap[key]);if(mob)mob.classList.add('active');
+  let desk=document.getElementById(desktopMap[key]);if(desk)desk.classList.add('active');
 }
 
 
@@ -83,11 +84,13 @@ function statsH(){
   return`<div class="stats-row"><div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div><div class="stat"><div class="stat-n" style="color:var(--bd)">${d}</div><div class="stat-l">due today</div></div></div><div class="prog-bar"><div class="prog-fill" style="width:${t?Math.round(k/t*100):0}%"></div></div>`;
 }
 function catH(){
-  // interleave nudge
-  let nudge='';
   let singleCat=selCats.size===1?[...selCats][0]:null;
-  if(singleCat){let cnt=catSessionCount[singleCat]||0;if(cnt>10)nudge=`<div class="nudge"><span>💡 You've been on <b>${singleCat}</b> for a while. Mix in another category for 30% better retention!</span><button onclick="document.querySelector('.nudge').style.display='none'">Dismiss</button></div>`;}
-  return nudge+'<div class="cat-grid">'+Object.keys(DATA).map(cat=>{let p=cp(cat);return`<button class="cat-btn${selCats.has(cat)?' active':''}" onclick="togCat('${cat}')">${ring(p.k,p.t)}${cat}</button>`;}).join('')+'</div>';
+  let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:10px;text-align:center">Studying <b>${singleCat}</b> only — tap another to add</div>`:'';
+  return nudge+'<div class="cat-sheet">'+Object.keys(DATA).map(cat=>{
+    let p=cp(cat);
+    let active=selCats.has(cat);
+    return `<button class="cat-chip${active?' active':''}" onclick="togCat('${cat}')"><span class="cc-ring"></span>${ring(p.k,p.t)}${cat}</button>`;
+  }).join('')+'</div>';
 }
 function togCat(cat){
   if(selCats.has(cat)){if(selCats.size>1)selCats.delete(cat);}else selCats.add(cat);
