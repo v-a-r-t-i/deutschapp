@@ -109,7 +109,7 @@ function addXP(amt,type){
   // Award 1 weekly study BP per 15 correct answers
   // sessionCorrect is already incremented before addXP is called
   if(CU&&typeof sessionCorrect!=='undefined'){
-    const BP_PER_N=15;
+    const BP_PER_N=5;
     let store=getBPStore();
     let prevCount=store.weeklyCorrect||0;
     let newCount=sessionCorrect+(store.weeklyCorrectBase||0);
