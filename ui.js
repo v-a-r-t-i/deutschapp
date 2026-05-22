@@ -603,21 +603,17 @@ function renderRiver(users,wrap,compact=false){
   let me=users.find(u=>u.isMe)||{id:'me',name:'You',weekBP:0,rank:1,isMe:true};
   let myIdx=users.findIndex(u=>u.isMe);
 
-  // Always fill exactly 4 rivals across all directions
   let rivals=[];
   for(let d=1;rivals.length<4&&d<=users.length;d++){
     if(myIdx-d>=0)rivals.push(users[myIdx-d]);
     if(rivals.length<4&&myIdx+d<users.length)rivals.push(users[myIdx+d]);
   }
-  // If still <4 (tiny user base), pad with empty placeholders
   while(rivals.length<4)rivals.push(null);
 
-  // FIXED lane assignment: [left2, left1, ME, right1, right2]
-  // rivals[0,1] → lanes 0,1 ; me → lane 2 ; rivals[2,3] → lanes 3,4
   const LANES=[11,28,50,72,89];
   let shown=[];
   rivals.slice(0,2).forEach((u,i)=>{if(u){u.lane=i;shown.push(u);}});
-  me.lane=2; shown.push(me);
+  me.lane=2;shown.push(me);
   rivals.slice(2,4).forEach((u,i)=>{if(u){u.lane=3+i;shown.push(u);}});
 
   const topBP=Math.max(...shown.map(u=>u.weekBP),1);
@@ -628,52 +624,73 @@ function renderRiver(users,wrap,compact=false){
   let daysLeft=getDaysUntilReset();
   let rank=me.rank||'?';
 
-  // Water background — blue gradient + subtle wave layers
-  let waterBg='background:linear-gradient(180deg,#0d2847 0%,#0a1e3d 40%,#071428 100%)';
+  // Animated wave layers
+  let waves=`
+    <div class="rv-wave rv-wave1"></div>
+    <div class="rv-wave rv-wave2"></div>
+    <div class="rv-wave rv-wave3"></div>`;
 
-  // Lane dividers
-  let lanesHTML=LANES.map(x=>
-    '<div style="position:absolute;left:'+x+'%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.06)"></div>'
+  // Lane dividers with shimmer
+  let lanesHTML=LANES.map((x,i)=>
+    `<div class="rv-lane-div" style="left:${x}%"></div>`
   ).join('');
 
-  // Wave overlay (CSS only)
-  let waveHTML='<div style="position:absolute;left:0;right:0;bottom:0;height:60px;background:linear-gradient(0deg,rgba(14,56,120,0.4),transparent);pointer-events:none"></div>';
-
   // Start line
-  let startLine='<div style="position:absolute;left:0;right:0;bottom:10%;border-top:1px dashed rgba(100,180,255,0.3)"></div>'
-    +'<div style="position:absolute;left:50%;bottom:10%;transform:translate(-50%,50%);font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:rgba(7,20,40,0.9);color:rgba(100,180,255,0.6);white-space:nowrap;border:1px solid rgba(100,180,255,0.2)">⚓ Week Start</div>';
+  let startLine=`
+    <div class="rv-start-line"></div>
+    <div class="rv-start-label">⚓ Week Start</div>`;
 
-  let boatsHTML=shown.map(u=>{
+  // Boats — SVG-based with wake trail
+  let boatsHTML=shown.map((u,i)=>{
     let y=getY(u);
     let x=LANES[u.lane];
     let isMe=u.isMe;
-    return '<div style="position:absolute;bottom:'+y+'%;left:'+x+'%;transform:translate(-50%,50%);display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;'
-      +'background:'+(isMe?'rgba(139,92,246,0.35)':'rgba(255,255,255,0.07)')+';'
-      +'border:1px solid '+(isMe?'rgba(139,92,246,0.6)':'rgba(255,255,255,0.1)')+';'
-      +'white-space:nowrap;backdrop-filter:blur(8px)">'
-      +'<span style="font-size:18px">'+(isMe?'⛵':'🚣')+'</span>'
-      +'<div><div style="font-size:12px;font-weight:700;color:white;line-height:1.2">'+(isMe?'<b>'+u.name+'</b>':u.name)+'</div>'
-      +'<div style="font-size:10px;color:rgba(150,200,255,0.7)">'+u.weekBP+' BP</div></div>'
-      +'</div>';
+    let delay=(i*0.4).toFixed(1);
+    let boatSVG=isMe
+      ? `<svg width="36" height="36" viewBox="0 0 36 36">
+          <ellipse cx="18" cy="26" rx="14" ry="5" fill="rgba(139,92,246,0.5)"/>
+          <polygon points="18,4 28,24 8,24" fill="#a78bfa"/>
+          <polygon points="18,6 24,20 18,20" fill="white" opacity="0.9"/>
+          <rect x="17" y="6" width="2" height="18" fill="#c4b5fd"/>
+        </svg>`
+      : `<svg width="28" height="28" viewBox="0 0 28 28">
+          <ellipse cx="14" cy="21" rx="11" ry="4" fill="rgba(100,180,255,0.3)"/>
+          <polygon points="14,4 22,20 6,20" fill="#64b5f6"/>
+          <polygon points="14,6 19,17 14,17" fill="white" opacity="0.7"/>
+          <rect x="13" y="5" width="1.5" height="14" fill="#90caf9"/>
+        </svg>`;
+
+    return `<div class="rv-boat-wrap${isMe?' rv-me-wrap':''}"
+      style="bottom:${y}%;left:${x}%;animation-delay:${delay}s">
+      <div class="rv-wake"></div>
+      <div class="rv-boat-inner">
+        ${boatSVG}
+      </div>
+      <div class="rv-boat-label${isMe?' rv-me-label':''}">
+        <span class="rv-boat-name">${isMe?'<b>'+u.name+'</b>':u.name}</span>
+        <span class="rv-boat-bp">${u.weekBP} BP</span>
+      </div>
+    </div>`;
   }).join('');
 
   let header=compact?''
-    :'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
-    +'<div><div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 Weekly River</div>'
-    +'<div style="font-size:13px;color:var(--txt2)">Rank <b>#'+rank+'</b> of '+users.length+' · <b>'+(me.weekBP||0)+' BP</b> this week</div></div>'
-    +'<div style="text-align:right;font-size:12px;color:var(--txt3)">Resets in<br><b style="color:var(--txt2)">'+daysLeft+'d</b></div>'
-    +'</div>';
+    :`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:2px">🚤 Weekly River</div>
+        <div style="font-size:13px;color:var(--txt2)">Rank <b>#${rank}</b> of ${users.length} · <b>${me.weekBP||0} BP</b> this week</div>
+      </div>
+      <div style="text-align:right;font-size:12px;color:var(--txt3)">Resets in<br><b style="color:var(--txt2)">${daysLeft}d</b></div>
+    </div>`;
 
   let footer=compact?''
-    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">⚔️ Win battles to move up · resets every Monday</div>';
+    :'<div style="font-size:12px;color:var(--txt3);margin-top:10px;text-align:center">⚔️ Win battles · 📖 Study to move up · resets Monday</div>';
 
   wrap.innerHTML=header
-    +'<div style="position:relative;width:100%;height:'+height+'px;border-radius:24px;overflow:hidden;'+waterBg+';border:1px solid rgba(100,180,255,0.1)">'
-    +lanesHTML+waveHTML+startLine+boatsHTML
-    +'<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(7,20,40,0.9);color:rgba(245,158,11,0.9);border:1px solid rgba(245,158,11,0.3)">🏆 Leader</div>'
+    +`<div class="rv-container" style="height:${height}px">`
+    +waves+lanesHTML+startLine+boatsHTML
+    +`<div class="rv-leader-badge">🏆 Leader</div>`
     +'</div>'+footer;
 }
-
 
 // ── FRIENDS ───────────────────────────────────────────
 function rFriendsUI(){
