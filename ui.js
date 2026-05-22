@@ -1062,10 +1062,8 @@ function ansRace(chosen,correct,btn){
 async function finishRace(){
   if(raceSt.done)return;
   raceSt.done=true;
-  let timeMs=Date.now()-raceSt.startTime;
-  // Attach battle flag from pending battle
   if(window._pendingBattle){raceSt.battle=window._pendingBattle;window._pendingBattle=null;}
-  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:60,time_ms:timeMs});
+  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:60});
   // BP transfer: wait briefly for opponent result, then decide winner
   if(raceSt.battle){
     setTimeout(async()=>{
@@ -1110,7 +1108,7 @@ function rRaceResults(){
     let col=won?'var(--green)':'var(--rd)',bg=won?'var(--gl)':'var(--rl)';
     bpBanner='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:'+bg+';border-left:3px solid '+col+'"><div style="font-size:15px;font-weight:700;color:'+col+'">'+(won?'⚔️ Battle Won! +'+stake+' BP':'⚔️ Battle Lost… -'+stake+' BP')+'</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(won?'You stole BP from '+r.battle.opponentName:r.battle.opponentName+' stole your BP')+'</div></div>';
   }
-  let html='<div><div style="text-align:center;margin-bottom:16px"><div style="font-size:36px">'+emoji+'</div><div style="font-size:22px;font-weight:700;margin:6px 0">'+r.score+' / '+maxScore+' pts</div><div style="font-size:13px;color:var(--txt2)">'+pct+'% · '+r.words.length+' words</div></div>'+bpBanner+'<div id="race-comparison"><div style="text-align:center;color:var(--txt2);font-size:13px">Loading results...</div></div><button class="btn-next" style="margin-top:16px" onclick="raceSt=null;raceNav()">Done</button></div>';
+  let html='<div><div style="text-align:center;margin-bottom:16px"><div style="font-size:36px">'+emoji+'</div><div style="font-size:22px;font-weight:700;margin:6px 0">'+r.score+' correct</div><div style="font-size:13px;color:var(--txt2)">in 60 seconds · '+(r.score>=10?'Great round!':r.score>=5?'Good effort!':'Keep practicing!')+'</div></div>'+bpBanner+'<div id="race-comparison"><div style="text-align:center;color:var(--txt2);font-size:13px">Loading results...</div></div><button class="btn-next" style="margin-top:16px" onclick="raceSt=null;raceNav()">Done</button></div>';
   setTimeout(async()=>{
     let res=await sbFetch('race_results','room_id=eq.'+roomId+'&order=score.desc');
     let el=document.getElementById('race-comparison');
