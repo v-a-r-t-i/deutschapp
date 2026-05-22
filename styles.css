@@ -2429,3 +2429,22 @@ font-family:inherit;
 /* Boat inner — slight tilt on hover */
 .rv-boat-inner{transition:transform .2s;}
 .rv-boat-wrap:hover .rv-boat-inner{transform:rotate(-5deg) scale(1.1);}
+
+/* ── FILL-IN BLANK ── */
+.blank-phrase{font-size:20px;font-weight:600;margin-bottom:16px;line-height:1.6;color:white;}
+.blank{
+  display:inline-block;
+  min-width:80px;height:28px;
+  border-bottom:2.5px solid rgba(139,92,246,0.8);
+  background:rgba(139,92,246,0.1);
+  border-radius:4px;
+  vertical-align:middle;
+  margin:0 4px;
+  position:relative;
+}
+.blank::after{
+  content:'___';
+  color:rgba(139,92,246,0.5);
+  font-size:14px;
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+}
