@@ -960,20 +960,31 @@ async function pollRaceStart(roomId, code){
 
 function rRaceActive(){
   let r=raceSt;
-  if(r.idx>=r.words.length){finishRace();return rRaceResults();}
-  let item=r.words[r.idx];
+  // Battle mode: fixed 60s, score = correct answers
+  let BATTLE_SECS=60;
+  let elapsed=r.startTime?Math.floor((Date.now()-r.startTime)/1000):0;
+  let remaining=Math.max(0,BATTLE_SECS-elapsed);
+
+  // Time up — finish
+  if(remaining===0&&!r.done){finishRace();return rRaceResults();}
+
+  let item=r.words[r.idx%r.words.length];
   let ws=aw();if(ws.length<4)ws=Object.values(DATA).flat();
   let oth=ws.filter(w=>w.de!==item.de);shuf(oth);
   let opts=[item.en,...oth.slice(0,3).map(w=>w.en)];shuf(opts);
-  r.questionStart=Date.now();
   r.answered=false;
+
+  let pct=Math.round((remaining/BATTLE_SECS)*100);
+  let timerCol=remaining>20?'var(--green)':remaining>10?'#f59e0b':'#ef4444';
+
   return `<div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;color:var(--txt2)">⚡ ${r.idx+1} / ${r.words.length}</span>
-      <span style="font-size:14px;font-weight:700;color:var(--green)">⭐ ${r.score} pts</span>
+      <span style="font-size:13px;color:var(--txt2)">✅ ${r.score} correct</span>
+      <span style="font-size:18px;font-weight:800;color:${timerCol}" id="race-timer-display">${remaining}s</span>
+      <span style="font-size:13px;color:var(--txt2)">#${r.idx+1}</span>
     </div>
-    <div style="height:6px;background:var(--bg3);border-radius:3px;margin-bottom:14px;overflow:hidden">
-      <div id="race-timer-bar" style="height:100%;width:100%;background:var(--green);border-radius:3px;transition:width 10s linear"></div>
+    <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;margin-bottom:14px;overflow:hidden">
+      <div id="race-timer-bar" style="height:100%;width:${pct}%;background:${timerCol};border-radius:3px;transition:width 1s linear"></div>
     </div>
     <div class="card" style="text-align:center">
       ${item.art?`<div class="art-s">${item.art}</div>`:''}
@@ -983,43 +994,65 @@ function rRaceActive(){
     <div class="quiz-grid" style="margin-top:12px">
       ${opts.map(o=>`<button class="q-opt" onclick="ansRace('${o.replace(/'/g,"\\'")}','${item.en.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}
     </div>
-    <button class="btn-next" style="background:var(--bg3);color:var(--txt2);margin-top:8px;font-size:12px" onclick="clearTimeout(raceSt&&raceSt.timerOut);raceSt=null;rRanks()">✕ Quit</button>
+    <button class="btn-next" style="background:rgba(255,255,255,0.05);color:var(--txt2);margin-top:8px;font-size:12px" onclick="clearTimeout(raceSt&&raceSt.timerOut);raceSt=null;rRanks()">✕ Quit</button>
   </div>`;
 }
 
+
 function startRaceTimer(){
-  if(!raceSt||raceSt.answered)return;
-  let bar=document.getElementById('race-timer-bar');
-  if(bar)requestAnimationFrame(()=>{bar.style.width='0%';});
-  raceSt.timerOut=setTimeout(()=>{
-    if(!raceSt||raceSt.answered)return;
-    raceSt.answered=true;
-    document.querySelectorAll('.q-opt').forEach(b=>{
-      b.disabled=true;
-      if(b.textContent.trim()===raceSt.words[raceSt.idx].en)b.className='q-opt correct';
-    });
-    setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;rRanks();}},800);
-  },10000);
+  if(!raceSt||raceSt.done)return;
+  const BATTLE_SECS=60;
+  // Tick every second — update timer display and progress bar
+  function tick(){
+    if(!raceSt||raceSt.done)return;
+    let elapsed=Math.floor((Date.now()-raceSt.startTime)/1000);
+    let remaining=Math.max(0,BATTLE_SECS-elapsed);
+    let pct=Math.round((remaining/BATTLE_SECS)*100);
+    let timerCol=remaining>20?'var(--green)':remaining>10?'#f59e0b':'#ef4444';
+    let disp=document.getElementById('race-timer-display');
+    let bar=document.getElementById('race-timer-bar');
+    if(disp)disp.textContent=remaining+'s';
+    if(disp)disp.style.color=timerCol;
+    if(bar){bar.style.width=pct+'%';bar.style.background=timerCol;}
+    if(remaining<=0){finishRace();raceNav();return;}
+    raceSt.timerOut=setTimeout(tick,1000);
+  }
+  raceSt.timerOut=setTimeout(tick,1000);
 }
+
 
 function ansRace(chosen,correct,btn){
   if(!raceSt||raceSt.answered)return;
   raceSt.answered=true;
-  clearTimeout(raceSt.timerOut);
-  let elapsed=(Date.now()-raceSt.questionStart)/1000;
-  let pts=chosen===correct?Math.max(1,Math.round(10-elapsed)):0;
+  let ok=chosen===correct;
   let btns=btn.closest('.quiz-grid').querySelectorAll('.q-opt');
-  btns.forEach(b=>{b.disabled=true;if(b.textContent.trim()===correct)b.className='q-opt correct';else if(b===btn&&chosen!==correct)b.className='q-opt wrong';});
-  if(chosen===correct){
-    raceSt.score+=pts;
+  btns.forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===correct)b.className='q-opt correct';
+    else if(b===btn&&!ok)b.className='q-opt wrong';
+  });
+  if(ok){
+    raceSt.score++;
     let badge=document.createElement('div');
-    badge.textContent='+'+pts+' pts';
-    badge.style.cssText='position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;color:var(--green);pointer-events:none;animation:fadeUp 0.8s forwards';
+    badge.textContent='✓ +1';
+    badge.style.cssText='position:fixed;top:40%;left:50%;transform:translateX(-50%);font-size:32px;font-weight:800;color:var(--green);pointer-events:none;animation:fadeup 0.7s forwards';
     document.body.appendChild(badge);
-    setTimeout(()=>badge.remove(),800);
+    setTimeout(()=>badge.remove(),700);
   }
-  setTimeout(()=>{if(raceSt){raceSt.answered=false;raceSt.idx++;raceNav();}},800);
+  // Move to next word after short pause (300ms correct, 700ms wrong)
+  setTimeout(()=>{
+    if(!raceSt)return;
+    raceSt.answered=false;
+    raceSt.idx++;
+    // Wrap around if words run out — battle is time-limited not word-limited
+    if(raceSt.idx>=raceSt.words.length){
+      raceSt.words=[...raceSt.words];shuf(raceSt.words);
+      raceSt.idx=0;
+    }
+    raceNav();
+  },ok?300:700);
 }
+
 
 async function finishRace(){
   if(raceSt.done)return;
@@ -1027,7 +1060,7 @@ async function finishRace(){
   let timeMs=Date.now()-raceSt.startTime;
   // Attach battle flag from pending battle
   if(window._pendingBattle){raceSt.battle=window._pendingBattle;window._pendingBattle=null;}
-  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:raceSt.words.length*10,time_ms:timeMs});
+  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:60,time_ms:timeMs});
   // BP transfer: wait briefly for opponent result, then decide winner
   if(raceSt.battle){
     setTimeout(async()=>{
@@ -1060,9 +1093,9 @@ async function finishRace(){
 
 function rRaceResults(){
   let r=raceSt;
-  let maxScore=r.words.length*10;
-  let pct=Math.round(r.score/maxScore*100);
-  let emoji=pct>=90?'🏆':pct>=60?'🎉':pct>=30?'👍':'💪';
+  let maxScore=60; // 60 second battle
+  let pct=r.score; // score IS correct count
+  let emoji=r.score>=15?'🏆':r.score>=10?'🎉':r.score>=5?'👍':'💪';
   let roomId=r.room.id||r.room.code;
   // BP battle banner — shown after finishRace resolves (2.5s delay)
   // BP banner injected after result resolves (2.5s delay in finishRace)
@@ -1080,7 +1113,7 @@ function rRaceResults(){
     if(!res?.length){el.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px">No opponent results yet.</div>';return;}
     let cards=res.map((p,i)=>{
       let isMe=p.user_id===CU.id;
-      let pPct=Math.round(p.score/(p.total||maxScore)*100);
+      let pPct=p.score; // score = correct count
       let medal=i===0?'🥇':i===1?'🥈':'🥉';
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${isMe?'var(--green-soft, rgba(72,199,142,0.12))':'var(--bg2)'};border-radius:var(--r);margin-bottom:8px;border:${isMe?'1.5px solid var(--green)':'1px solid var(--bor)'}">
         <div>
