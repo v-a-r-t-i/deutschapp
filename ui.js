@@ -539,7 +539,11 @@ async function syncBPFromSupabase(){
       battles.push({opponentId:won?r.loser_id:r.winner_id,won,week,delta:won?r.stake:-r.stake,room_id:r.room_id});
     });
     let store=getBPStore();
+    // Preserve weeklyCorrect (study BP) — don't overwrite with battle-only data
     store.delta=delta;store.battles=battles;
+    // Re-add study BP on top of battle delta
+    let studyBP=Math.floor((store.weeklyCorrect||0)/15);
+    store.delta+=studyBP;
     saveBPStore(store);
   }catch(e){}
 }

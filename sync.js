@@ -106,6 +106,31 @@ async function markStudied(){
 function addXP(amt,type){
   xpTotal+=amt;sessionXP+=amt;
   markStudied();
+  // Award 1 weekly study BP per 15 correct answers
+  // sessionCorrect is already incremented before addXP is called
+  if(CU&&typeof sessionCorrect!=='undefined'){
+    const BP_PER_N=15;
+    let store=getBPStore();
+    let prevCount=store.weeklyCorrect||0;
+    let newCount=sessionCorrect+(store.weeklyCorrectBase||0);
+    let prevMilestone=Math.floor(prevCount/BP_PER_N);
+    let newMilestone=Math.floor(newCount/BP_PER_N);
+    if(newMilestone>prevMilestone){
+      let gained=newMilestone-prevMilestone;
+      store.delta=(store.delta||0)+gained;
+      store.weeklyCorrect=newCount;
+      saveBPStore(store);
+      // Show BP popup
+      let bp=document.createElement('div');
+      bp.style.cssText='position:fixed;top:60px;right:20px;background:rgba(139,92,246,0.9);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;z-index:200;animation:fadeup 1.5s ease forwards;pointer-events:none;margin-top:30px;';
+      bp.textContent='+'+gained+' BP';
+      document.body.appendChild(bp);
+      setTimeout(()=>bp.remove(),1500);
+    }else{
+      store.weeklyCorrect=newCount;
+      saveBPStore(store);
+    }
+  }
   // Always save xpTotal immediately on every gain
   if(CU){
     saveLocalCache();
