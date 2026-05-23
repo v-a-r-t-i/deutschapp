@@ -429,7 +429,7 @@ function rSocial(){
   // Race is a hidden route — no tab button, shown when battle/race is active
   if(ranksSubTab==='race'){
     c.innerHTML=rRaceUI();
-    if(raceSt&&!raceSt.done){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
+    if(raceSt&&!raceSt.done&&!raceSt.waiting&&raceSt.startTime){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
     if(!raceSt)loadRaceRoom();
     return;
   }
@@ -1024,7 +1024,7 @@ function rRaceActive(){
 
 
 function startRaceTimer(){
-  if(!raceSt||raceSt.done)return;
+  if(!raceSt||raceSt.done||raceSt.waiting||!raceSt.startTime)return;
   const BATTLE_SECS=60;
   // Tick every second — update timer display and progress bar
   function tick(){
