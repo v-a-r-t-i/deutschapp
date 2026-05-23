@@ -1087,36 +1087,68 @@ async function finishRace(){
   if(raceSt.done)return;
   raceSt.done=true;
   if(window._pendingBattle){raceSt.battle=window._pendingBattle;window._pendingBattle=null;}
-  await sbUpsert('race_results',{room_id:raceSt.room.id||raceSt.room.code,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:60});
-  // BP transfer: wait briefly for opponent result, then decide winner
+  let roomId=raceSt.room.id||raceSt.room.code;
+  await sbUpsert('race_results',{room_id:roomId,user_id:CU.id,display_name:CP?.display_name||'You',score:raceSt.score,total:60});
+  // Poll for opponent result — retry up to 15 times (30 seconds max)
   if(raceSt.battle){
-    setTimeout(async()=>{
-      let roomId=raceSt.room.id||raceSt.room.code;
+    let opponentId=raceSt.battle.opponentId;
+    let attempts=0;
+    let pollBP=async()=>{
+      attempts++;
       let results=await sbFetch('race_results','room_id=eq.'+roomId+'&order=score.desc');
-      if(!results?.length)return;
-      let mine=results.find(r=>r.user_id===CU.id);
-      let theirs=results.find(r=>r.user_id===raceSt.battle.opponentId);
-      if(!mine)return;
-      let myScore=mine.score,theirScore=theirs?.score??-1;
-      let won=myScore>theirScore;
-      // Save to Supabase (winner inserts the record)
-      if(won){
-        await saveBattleResult(CU.id,raceSt.battle.opponentId,roomId,raceSt.battle.stake);
-      }
-      // Sync full BP state from Supabase so both sides stay consistent
-      await syncBPFromSupabase();
-      raceSt.battle.resolved=true;
-      raceSt.battle.won=won;
-      // Inject BP banner into already-rendered results screen
-      let banner=document.getElementById('bp-battle-banner');
-      if(banner){
+      let mine=results?.find(r=>r.user_id===CU.id);
+      let theirs=results?.find(r=>r.user_id===opponentId);
+      // If both results in, resolve immediately
+      if(mine&&theirs){
+        let won=mine.score>theirs.score;
+        if(won)await saveBattleResult(CU.id,opponentId,roomId,raceSt.battle.stake);
+        await syncBPFromSupabase();
+        raceSt.battle.resolved=true;
+        raceSt.battle.won=won;
+        // Update comparison table if visible
+        updateResultsScreen(results);
+        // Inject BP banner
         let stake=raceSt.battle.stake||5;
         let col=won?'var(--green)':'var(--rd)',bg=won?'var(--gl)':'var(--rl)';
-        banner.outerHTML='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:'+bg+';border-left:3px solid '+col+'"><div style="font-size:15px;font-weight:700;color:'+col+'">'+(won?'⚔️ Battle Won! +'+stake+' BP':'⚔️ Battle Lost… -'+stake+' BP')+'</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(won?'You stole BP from '+raceSt.battle.opponentName:raceSt.battle.opponentName+' stole your BP')+'</div></div>';
+        let banner=document.getElementById('bp-battle-banner');
+        if(banner)banner.outerHTML='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:'+bg+';border-left:3px solid '+col+'"><div style="font-size:15px;font-weight:700;color:'+col+'">'+(won?'⚔️ Battle Won! +'+stake+' BP':'⚔️ Battle Lost… -'+stake+' BP')+'</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(won?'You stole BP from '+raceSt.battle.opponentName:raceSt.battle.opponentName+' stole your BP')+'</div></div>';
+        return;
       }
-    },2500);
+      // Keep polling if opponent hasn't finished yet (max 15 attempts = 30s)
+      if(attempts<15)setTimeout(pollBP,2000);
+      else{
+        // Opponent never finished — you win by default
+        if(mine){
+          await saveBattleResult(CU.id,opponentId,roomId,raceSt.battle.stake);
+          await syncBPFromSupabase();
+          raceSt.battle.resolved=true;raceSt.battle.won=true;
+          let banner=document.getElementById('bp-battle-banner');
+          if(banner)banner.outerHTML='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:var(--gl);border-left:3px solid var(--green)"><div style="font-size:15px;font-weight:700;color:var(--green)">⚔️ Battle Won! +'+raceSt.battle.stake+' BP</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">Opponent did not finish</div></div>';
+        }
+      }
+    };
+    setTimeout(pollBP,2000);
   }
 }
+
+
+function updateResultsScreen(res){
+  let el=document.getElementById('race-comparison');
+  if(!el)return;
+  if(!res?.length){el.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px;padding:12px">Waiting for opponent to finish…</div>';return;}
+  let cards=res.map((p,i)=>{
+    let isMe=p.user_id===CU?.id;
+    let medal=i===0?'🥇':i===1?'🥈':'🥉';
+    let winner=i===0;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:'+(isMe?'rgba(72,199,142,0.1)':'rgba(255,255,255,0.04)')+';border-radius:var(--r);margin-bottom:8px;border:'+(isMe?'1.5px solid var(--green)':'1px solid rgba(255,255,255,0.08)')+'">'+
+      '<div><div style="font-size:14px;font-weight:600">'+medal+' '+(p.display_name||'Player')+(isMe?' (you)':'')+'</div>'+
+      '<div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(winner?'Winner':'')+'</div></div>'+
+      '<div style="font-size:22px;font-weight:800;color:'+(winner?'var(--green)':'var(--txt)')+'">'+p.score+' correct</div></div>';
+  }).join('');
+  el.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Results</div>'+cards+
+    (res.length<2?'<div style="font-size:12px;color:var(--txt3);text-align:center;margin-top:6px">⏳ Waiting for opponent…</div>':'');
+}
+
 
 function rRaceResults(){
   let r=raceSt;
@@ -1133,25 +1165,16 @@ function rRaceResults(){
     bpBanner='<div style="margin-bottom:14px;padding:10px 14px;border-radius:var(--r);background:'+bg+';border-left:3px solid '+col+'"><div style="font-size:15px;font-weight:700;color:'+col+'">'+(won?'⚔️ Battle Won! +'+stake+' BP':'⚔️ Battle Lost… -'+stake+' BP')+'</div><div style="font-size:12px;color:var(--txt2);margin-top:2px">'+(won?'You stole BP from '+r.battle.opponentName:r.battle.opponentName+' stole your BP')+'</div></div>';
   }
   let html='<div><div style="text-align:center;margin-bottom:16px"><div style="font-size:36px">'+emoji+'</div><div style="font-size:22px;font-weight:700;margin:6px 0">'+r.score+' correct</div><div style="font-size:13px;color:var(--txt2)">in 60 seconds · '+(r.score>=10?'Great round!':r.score>=5?'Good effort!':'Keep practicing!')+'</div></div>'+bpBanner+'<div id="race-comparison"><div style="text-align:center;color:var(--txt2);font-size:13px">Loading results...</div></div><button class="btn-next" style="margin-top:16px" onclick="raceSt=null;raceNav()">Done</button></div>';
-  setTimeout(async()=>{
+  // Poll for results — keeps retrying until opponent result appears
+  let fetchAttempts=0;
+  let pollResults=async()=>{
+    fetchAttempts++;
     let res=await sbFetch('race_results','room_id=eq.'+roomId+'&order=score.desc');
+    updateResultsScreen(res);
     let el=document.getElementById('race-comparison');
-    if(!el)return;
-    if(!res?.length){el.innerHTML='<div style="text-align:center;color:var(--txt2);font-size:13px">No opponent results yet.</div>';return;}
-    let cards=res.map((p,i)=>{
-      let isMe=p.user_id===CU.id;
-      let pPct=p.score; // score = correct count
-      let medal=i===0?'🥇':i===1?'🥈':'🥉';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${isMe?'var(--green-soft, rgba(72,199,142,0.12))':'var(--bg2)'};border-radius:var(--r);margin-bottom:8px;border:${isMe?'1.5px solid var(--green)':'1px solid var(--bor)'}">
-        <div>
-          <div style="font-size:14px;font-weight:600">${medal} ${p.display_name||'Player'}${isMe?' (you)':''}</div>
-          <div style="font-size:12px;color:var(--txt2);margin-top:2px">${pPct}% efficiency</div>
-        </div>
-        <div style="font-size:20px;font-weight:800;color:${i===0?'var(--green)':'var(--txt)'}">${p.score} pts</div>
-      </div>`;
-    }).join('');
-    el.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Results</div>'+cards;
-  },300);
+    if(el&&res&&res.length<2&&fetchAttempts<10)setTimeout(pollResults,2000);
+  };
+  setTimeout(pollResults,500);
   return html;
 }
 
