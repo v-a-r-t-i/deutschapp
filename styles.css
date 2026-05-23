@@ -2448,3 +2448,58 @@ font-family:inherit;
   font-size:14px;
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
 }
+
+/* ── MOBILE STUDY SIMPLIFICATION ── */
+.stats-compact{
+  font-size:13px;color:var(--txt2);
+  margin-bottom:12px;
+  padding:0 4px;
+}
+
+/* Hide study mode strip on mobile — shown via settings button instead */
+@media(max-width:700px){
+  #study-modes{display:none!important;}
+  .mode-settings-btn{display:flex!important;}
+  .mobile-mode-sheet{display:block;}
+}
+@media(min-width:701px){
+  .mode-settings-btn{display:none!important;}
+  .mobile-mode-sheet{display:none;}
+}
+
+/* Settings button that reveals mode picker */
+.mode-settings-btn{
+  display:none;
+  align-items:center;gap:6px;
+  padding:8px 14px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:999px;
+  color:var(--txt2);font-size:13px;font-weight:600;
+  cursor:pointer;
+  margin-bottom:10px;
+}
+
+/* Mode bottom sheet on mobile */
+.mobile-mode-sheet{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(14,20,40,0.98);
+  border-top:1px solid rgba(255,255,255,0.1);
+  border-radius:24px 24px 0 0;
+  padding:20px 20px 80px;
+  z-index:350;
+  animation:slideup-sheet 0.25s ease;
+}
+@keyframes slideup-sheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mode-sheet-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:14px;}
+.mode-sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mode-sheet-btn{
+  padding:16px;border-radius:18px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.05);
+  color:white;font-size:15px;font-weight:700;
+  cursor:pointer;text-align:center;
+}
+.mode-sheet-btn.active{background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.4);}
+.mode-sheet-close{width:100%;padding:14px;margin-top:12px;border-radius:16px;border:none;background:rgba(255,255,255,0.08);color:white;font-size:15px;font-weight:700;cursor:pointer;}

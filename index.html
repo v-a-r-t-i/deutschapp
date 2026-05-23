@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '5.7.2';
+const APP_VERSION = '5.7.3';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -132,6 +132,21 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div class="mode-pill" id="pill-quiz" onclick="setStudyTab('quiz')">Quiz</div>
         <div class="mode-pill" id="pill-fill" onclick="setStudyTab('fill')">Fill-in</div>
         <div class="mode-pill" id="pill-gender" onclick="setStudyTab('gender')">Gender</div>
+      </div>
+      <!-- Mobile: settings button opens mode sheet -->
+      <button class="mode-settings-btn" onclick="openModeSheet()">
+        <span style="font-size:16px">⚙️</span> <span id="mob-mode-label">Flash</span>
+      </button>
+      <div class="mobile-mode-sheet" id="mob-mode-sheet" style="display:none">
+        <div class="mode-sheet-title">Study mode</div>
+        <div class="mode-sheet-grid">
+          <button class="mode-sheet-btn active" id="ms-flash" onclick="setStudyTab('flash');closeModeSheet()">📖 Flash</button>
+          <button class="mode-sheet-btn" id="ms-listen" onclick="setStudyTab('listen');closeModeSheet()">👂 Listen</button>
+          <button class="mode-sheet-btn" id="ms-quiz" onclick="setStudyTab('quiz');closeModeSheet()">❓ Quiz</button>
+          <button class="mode-sheet-btn" id="ms-fill" onclick="setStudyTab('fill');closeModeSheet()">✏️ Fill-in</button>
+          <button class="mode-sheet-btn" id="ms-gender" onclick="setStudyTab('gender');closeModeSheet()">🏷️ Gender</button>
+        </div>
+        <button class="mode-sheet-close" onclick="closeModeSheet()">Close</button>
       </div>
       <div class="content" id="content"><div style="text-align:center;padding:60px;color:var(--txt2)">Loading...</div></div>
     </div>

@@ -44,6 +44,24 @@ function setMobNav(tab){
   document.querySelectorAll('.desk-nav-btn').forEach(b=>b.classList.remove('active'));
   let mob=document.getElementById(mobileMap[key]);if(mob)mob.classList.add('active');
   let desk=document.getElementById(desktopMap[key]);if(desk)desk.classList.add('active');
+  // Sync mobile mode label and sheet active state
+  let modeLabels={flash:'📖 Flash',listen:'👂 Listen',quiz:'❓ Quiz',fill:'✏️ Fill-in',gender:'🏷️ Gender'};
+  let lbl=document.getElementById('mob-mode-label');
+  if(lbl&&modeLabels[tab])lbl.textContent=modeLabels[tab];
+  document.querySelectorAll('.mode-sheet-btn').forEach(b=>b.classList.remove('active'));
+  let msb=document.getElementById('ms-'+tab);if(msb)msb.classList.add('active');
+}
+
+
+
+// ── MOBILE MODE SHEET ────────────────────────────────
+function openModeSheet(){
+  let sheet=document.getElementById('mob-mode-sheet');
+  if(sheet)sheet.style.display='block';
+}
+function closeModeSheet(){
+  let sheet=document.getElementById('mob-mode-sheet');
+  if(sheet)sheet.style.display='none';
 }
 
 
@@ -81,7 +99,12 @@ function updAll(){
 }
 function statsH(){
   let all=aw(),t=all.length,k=all.filter(x=>known.has(x.de)).length,d=all.filter(w=>s2due(w.de)).length;
-  return`<div class="stats-row"><div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div><div class="stat"><div class="stat-n" style="color:var(--bd)">${d}</div><div class="stat-l">due today</div></div></div><div class="prog-bar"><div class="prog-fill" style="width:${t?Math.round(k/t*100):0}%"></div></div>`;
+  let pct=t?Math.round(k/t*100):0;
+  // Mobile: one compact line. Desktop: full stat cards.
+  if(window.innerWidth<=700){
+    return`<div class="stats-compact"><span style="color:var(--green);font-weight:700">${k}/${t}</span> known · <span style="color:var(--bd);font-weight:700">${d}</span> due<div class="prog-bar" style="margin-top:6px"><div class="prog-fill" style="width:${pct}%"></div></div></div>`;
+  }
+  return`<div class="stats-row"><div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div><div class="stat"><div class="stat-n" style="color:var(--bd)">${d}</div><div class="stat-l">due today</div></div></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>`;
 }
 function catH(){
   let active=[...selCats];
@@ -92,7 +115,8 @@ function catH(){
     :active.length+' categories';
   let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Studying <b>${singleCat}</b> only</div>`:'';
   // On mobile: collapsible. On desktop: always open chips
-  return nudge+`<details class="cat-picker" id="cat-picker">
+  let isDesktop=window.innerWidth>700;
+  return nudge+`<details class="cat-picker" id="cat-picker"${isDesktop?' open':''}>
     <summary class="cat-summary">
       <span class="cat-summary-label">📚 ${summary}</span>
       <span class="cat-summary-arr">›</span>
