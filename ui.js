@@ -115,7 +115,8 @@ function catH(){
     :active.length+' categories';
   let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Studying <b>${singleCat}</b> only</div>`:'';
   // On mobile: collapsible. On desktop: always open chips
-  return nudge+`<details class="cat-picker" id="cat-picker">
+  let desktopOpen=window.innerWidth>700;
+  return nudge+`<details class="cat-picker" id="cat-picker"${desktopOpen?' open':''}>
     <summary class="cat-summary">
       <span class="cat-summary-label">📚 ${summary}</span>
       <span class="cat-summary-arr">›</span>

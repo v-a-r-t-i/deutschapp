@@ -511,7 +511,7 @@ border:none;
 
 /* MODE PILLS */
 
-.study-modes{
+.study-modes{padding-top:14px;
 display:flex;
 gap:8px;
 padding:0 0 18px;
@@ -2168,7 +2168,7 @@ font-family:inherit;
   }
 
   /* ── STUDY MODE PILLS ── */
-  .study-modes{
+  .study-modes{padding-top:14px;
     padding:8px 14px 0;
     gap:6px;
   }
@@ -2465,8 +2465,7 @@ font-family:inherit;
   /* Desktop still uses the inline study-modes strip, not the sheet */
   .mode-settings-btn{display:none!important;}
   .mobile-mode-sheet{display:none;}
-  /* Show study modes on desktop */
-  #study-modes{display:flex!important;}
+  /* study-modes visibility is controlled by JS setTab, not CSS */
 }
 
 /* Settings button that reveals mode picker */
