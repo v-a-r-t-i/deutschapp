@@ -6,6 +6,7 @@ function saveLocalCache(){
       streakN,lastStudy,bestStreak,xpTotal,
       mistakes,
       selCats:[...selCats],
+      selLevel,
       sessionDate:tday(),
       sessionReviewed,sessionCorrect,sessionXP,
       savedAt:Date.now()
@@ -29,6 +30,7 @@ function loadLocalCache(){
       let validCats=c.selCats.filter(k=>DATA[k]!==undefined);
       if(validCats.length)selCats=new Set(validCats);
     }
+    if(c.selLevel)selLevel=c.selLevel;
     if(c.sessionDate===tday()){
       if(c.sessionReviewed!==undefined)sessionReviewed=c.sessionReviewed;
       if(c.sessionCorrect!==undefined)sessionCorrect=c.sessionCorrect;
@@ -39,6 +41,9 @@ function loadLocalCache(){
 }
 async function loadWords(){
   try{
+    // Snapshot local levels so we can preserve them if Supabase lacks a lvl column
+    let localLvl={};
+    Object.keys(DATA).forEach(c=>(DATA[c]||[]).forEach(w=>{localLvl[w.de]=w.lvl||'A1';}));
     let words=await sbFetch('words','select=*&language=eq.'+lang+'&order=category');
     if(Array.isArray(words)&&words.length){
       // Rebuild DATA from Supabase
@@ -53,14 +58,27 @@ async function loadWords(){
           de:w.de,
           art:w.art,
           en:w.en,
+          lvl:w.lvl||localLvl[w.de]||'A1',
           phrases:Array.isArray(w.phrases)?w.phrases:[]
         });
       });
       // Only replace if we got valid data
       if(Object.keys(newData).length>0){
+        // Merge: keep local-only categories and words that Supabase doesn't have yet
+        // (e.g. newly added A2 words, Verbindungswörter, Körper/Gesundheit)
+        let supaWords=new Set();
+        Object.keys(newData).forEach(c=>newData[c].forEach(w=>supaWords.add(c+'|'+w.de)));
+        Object.keys(DATA).forEach(cat=>{
+          (DATA[cat]||[]).forEach(w=>{
+            if(!supaWords.has(cat+'|'+w.de)){
+              if(!newData[cat])newData[cat]=[];
+              newData[cat].push(w); // local word not in Supabase — keep it
+            }
+          });
+        });
         Object.keys(DATA).forEach(k=>delete DATA[k]);
         Object.assign(DATA,newData);
-        console.log('Words loaded from Supabase:',words.length);
+        console.log('Words loaded (Supabase + local merge):',Object.values(DATA).flat().length);
       }
     }
   }catch(e){console.warn('words load error:',e);}

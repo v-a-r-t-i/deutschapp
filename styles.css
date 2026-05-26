@@ -1,37 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root{
---bg:#0b1020;
---bg2:#131a2e;
---bg3:#1b2440;
+--bg:#0a0e1a;
+--bg2:#121829;
+--bg3:#1a2238;
 
---card:rgba(255,255,255,0.06);
+--card:rgba(255,255,255,0.045);
 
---txt:#f8fafc;
---txt2:#cbd5e1;
---txt3:#64748b;
+--txt:#f5f7fa;
+--txt2:#aeb8ca;
+--txt3:#5c6678;
 
---bor:rgba(255,255,255,0.08);
---bor2:rgba(255,255,255,0.14);
+--bor:rgba(255,255,255,0.07);
+--bor2:rgba(255,255,255,0.12);
 
---green:#22c55e;
---gl:rgba(34,197,94,0.12);
---gd:#86efac;
+--green:#2dd4a7;
+--gl:rgba(45,212,167,0.12);
+--gd:#7eebcb;
 
---bl:rgba(59,130,246,0.12);
+--bl:rgba(96,165,250,0.12);
 --bd:#93c5fd;
 
---rl:rgba(239,68,68,0.12);
---rd:#fca5a5;
+--rl:rgba(244,113,116,0.12);
+--rd:#f47174;
 
---yl:rgba(245,158,11,0.12);
---yd:#fcd34d;
+--yl:rgba(245,180,80,0.12);
+--yd:#f5b450;
 
 --xp:#8b5cf6;
 --xpl:rgba(139,92,246,0.12);
 
---r:22px;
---rs:14px;
+--r:20px;
+--rs:13px;
 }
 
 *{
@@ -47,13 +47,11 @@ scroll-behavior:smooth;
 body{
 font-family:'Inter',sans-serif;
 background:
-radial-gradient(circle at top left,
-rgba(59,130,246,0.18),
-transparent 35%),
-radial-gradient(circle at bottom right,
-rgba(139,92,246,0.12),
-transparent 30%),
+radial-gradient(ellipse 80% 50% at 50% -10%,
+rgba(45,212,167,0.08),
+transparent 60%),
 var(--bg);
+background-attachment:fixed;
 
 color:var(--txt);
 min-height:100vh;
@@ -2504,3 +2502,41 @@ font-family:inherit;
 }
 .mode-sheet-btn.active{background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.4);}
 .mode-sheet-close{width:100%;padding:14px;margin-top:12px;border-radius:16px;border:none;background:rgba(255,255,255,0.08);color:white;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* ── LEVEL TOGGLE (A1/A2) ── */
+.level-toggle{
+  display:inline-flex;
+  gap:0;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:999px;
+  padding:3px;
+  margin-bottom:14px;
+}
+.level-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 16px;
+  border:none;background:transparent;
+  color:var(--txt2);
+  font-size:13px;font-weight:700;
+  cursor:pointer;border-radius:999px;
+  transition:all .18s ease;
+}
+.level-btn.active{
+  background:var(--green);
+  color:#fff;
+}
+.level-count{
+  font-size:10px;
+  font-weight:600;
+  opacity:0.7;
+  background:rgba(0,0,0,0.15);
+  padding:1px 6px;
+  border-radius:999px;
+}
+.level-btn.active .level-count{background:rgba(255,255,255,0.2);}
+
+/* ── LEVEL BADGE (browse) ── */
+.lw-lvl{font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:0.3px;}
+.lw-lvl-A1{background:rgba(72,199,142,0.16);color:#48c78e;}
+.lw-lvl-A2{background:rgba(96,165,250,0.16);color:#60a5fa;}

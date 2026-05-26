@@ -17,9 +17,10 @@ function speak(t,btn){
   speechSynthesis.speak(u);
 }
 function bw(s,w){return s.replace(new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:en|es|er|em|s|n)?)','gi'),'<span class="hw">$1</span>');}
-function aw(){let w=[];for(let c of selCats)for(let i of(DATA[c]||[]))w.push({...i,cat:c});return w;}
-function allW(){let w=[];for(let c of Object.keys(DATA))for(let i of(DATA[c]||[]))w.push({...i,cat:c});return w;}
-function cp(cat){let ws=DATA[cat]||[];return{k:ws.filter(w=>known.has(w.de)).length,t:ws.length};}
+function lvlOk(w){return selLevel==='all'||(w.lvl||'A1')===selLevel;}
+function aw(){let w=[];for(let c of selCats)for(let i of(DATA[c]||[]))if(lvlOk(i))w.push({...i,cat:c});return w;}
+function allW(){let w=[];for(let c of Object.keys(DATA))for(let i of(DATA[c]||[]))if(lvlOk(i))w.push({...i,cat:c});return w;}
+function cp(cat){let ws=(DATA[cat]||[]).filter(lvlOk);return{k:ws.filter(w=>known.has(w.de)).length,t:ws.length};}
 function shuf(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
 function ring(k,t){let r=7,c=2*Math.PI*r,p=t?k/t:0,da=(p*c).toFixed(1),ga=((1-p)*c).toFixed(1),col=p===1?'#1D9E75':p>0?'#5DCAA5':'rgba(128,128,128,0.2)';return`<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" fill="none" stroke="rgba(128,128,128,0.15)" stroke-width="2"/><circle cx="8" cy="8" r="${r}" fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${da} ${ga}" stroke-linecap="round" transform="rotate(-90 8 8)"/></svg>`;}
 // ── MODAL ─────────────────────────────────────────────
@@ -106,23 +107,41 @@ function statsH(){
   }
   return`<div class="stats-row"><div class="stat"><div class="stat-n">${t}</div><div class="stat-l">words</div></div><div class="stat"><div class="stat-n" style="color:var(--green)">${k}</div><div class="stat-l">known</div></div><div class="stat"><div class="stat-n" style="color:var(--bd)">${d}</div><div class="stat-l">due today</div></div></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>`;
 }
+function levelH(){
+  let levels=[['all','Alle'],['A1','A1'],['A2','A2']];
+  let counts={all:allCountForLevel('all'),A1:allCountForLevel('A1'),A2:allCountForLevel('A2')};
+  return '<div class="level-toggle">'+levels.map(([v,l])=>
+    '<button class="level-btn'+(selLevel===v?' active':'')+'" onclick="setLevel(\''+v+'\')">'+l+'<span class="level-count">'+counts[v]+'</span></button>'
+  ).join('')+'</div>';
+}
+function allCountForLevel(lv){
+  let n=0;
+  for(let c of Object.keys(DATA))for(let w of (DATA[c]||[]))if(lv==='all'||(w.lvl||'A1')===lv)n++;
+  return n;
+}
+function setLevel(lv){
+  selLevel=lv;
+  saveLocalCache();
+  buildQ();
+  setTab(tab);
+}
 function catH(){
   let active=[...selCats];
   let all=Object.keys(DATA);
   let singleCat=selCats.size===1?active[0]:null;
-  let summary=selCats.size===all.length?'All categories'
+  let summary=selCats.size===all.length?'Alle Kategorien'
     :active.length<=2?active.join(', ')
-    :active.length+' categories';
-  let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Studying <b>${singleCat}</b> only</div>`:'';
-  // On mobile: collapsible. On desktop: always open chips
+    :active.length+' Kategorien';
+  let nudge=singleCat?`<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Nur <b>${singleCat}</b></div>`:'';
   let desktopOpen=window.innerWidth>700;
-  return nudge+`<details class="cat-picker" id="cat-picker"${desktopOpen?' open':''}>
+  return levelH()+nudge+`<details class="cat-picker" id="cat-picker"${desktopOpen?' open':''}>
     <summary class="cat-summary">
       <span class="cat-summary-label">📚 ${summary}</span>
       <span class="cat-summary-arr">›</span>
     </summary>
     <div class="cat-sheet">${all.map(cat=>{
       let p=cp(cat);let active=selCats.has(cat);
+      if(p.t===0)return '';
       return`<button class="cat-chip${active?' active':''}" onclick="togCat('${cat}')">${ring(p.k,p.t)}${cat}</button>`;
     }).join('')}</div>
   </details>`;
@@ -373,17 +392,18 @@ function nG(){gIdx++;gAns=false;rGender();}
 function rBrowse(){
   let c=document.getElementById('content'),html=statsH()+catH();
   html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div style="font-size:13px;color:var(--txt2)">${Object.values(DATA).flat().length} words across ${Object.keys(DATA).length} categories</div>
+    <div style="font-size:13px;color:var(--txt2)">${allW().length} Wörter · ${selLevel==='all'?'A1+A2':selLevel} · Goethe-orientiert</div>
     <button id="regen-all-btn" class="refresh-phrase" onclick="regenAllPhrases()" style="font-size:12px;padding:6px 12px">✨ Regenerate all phrases</button>
   </div>
   <div id="regen-progress" style="display:none;margin-bottom:16px"></div>`;
   for(let cat of selCats){
-    let ws=DATA[cat]||[],p=cp(cat);
+    let ws=(DATA[cat]||[]).filter(lvlOk),p=cp(cat);
+    if(ws.length===0)continue;
     html+=`<div class="list-sec"><div class="list-cat-hdr">${cat}<span style="font-size:12px;color:var(--txt2);font-weight:400">${p.k}/${p.t}</span></div>`;
     for(let item of ws){
       let k=known.has(item.de),artS=item.art?`<span class="lw-art">${item.art}</span>`:'';
       let phH=item.phrases.map(p=>`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px"><div><div class="lp-de">${bw(p[0],item.de)}</div><div class="lp-en">${p[1]}</div></div><button class="psb" onclick="speak('${p[0].replace(/'/g,"\\'")}',this)" style="margin-left:auto;flex-shrink:0">🔊</button></div>`).join('');
-      html+=`<div class="list-word"><div class="list-hdr" onclick="this.nextElementSibling.classList.toggle('open')"><div class="lw-left"><button class="psb" onclick="event.stopPropagation();speak('${item.de.replace(/'/g,"\\'")}',this)">🔊</button>${artS}<span class="lw-de">${item.de}</span><span class="lw-en">— ${item.en}</span></div><div style="display:flex;align-items:center;gap:6px">${k?'<span class="lw-known">✓</span>':''}<span style="color:var(--txt3);font-size:16px">›</span></div></div><div class="list-body">${phH}<button class="refresh-phrase" style="margin-top:8px" onclick="refreshPhrases('${item.de}',this.nextElementSibling)">✨ AI phrases</button><div></div><button class="mark-btn${k?' known':''}" onclick="toggleKnown('${item.de}',${!k})">${k?'Mark as learning':'Mark as known ✓'}</button></div></div>`;
+      html+=`<div class="list-word"><div class="list-hdr" onclick="this.nextElementSibling.classList.toggle('open')"><div class="lw-left"><button class="psb" onclick="event.stopPropagation();speak('${item.de.replace(/'/g,"\\'")}',this)">🔊</button>${artS}<span class="lw-de">${item.de}</span><span class="lw-en">— ${item.en}</span></div><div style="display:flex;align-items:center;gap:6px"><span class="lw-lvl lw-lvl-${item.lvl||'A1'}">${item.lvl||'A1'}</span>${k?'<span class="lw-known">✓</span>':''}<span style="color:var(--txt3);font-size:16px">›</span></div></div><div class="list-body">${phH}<button class="refresh-phrase" style="margin-top:8px" onclick="refreshPhrases('${item.de}',this.nextElementSibling)">✨ AI phrases</button><div></div><button class="mark-btn${k?' known':''}" onclick="toggleKnown('${item.de}',${!k})">${k?'Mark as learning':'Mark as known ✓'}</button></div></div>`;
     }
     html+='</div>';
   }
@@ -566,7 +586,7 @@ async function syncBPFromSupabase(){
     // Preserve weeklyCorrect (study BP) — don't overwrite with battle-only data
     store.delta=delta;store.battles=battles;
     // Re-add study BP on top of battle delta
-    let studyBP=Math.floor((store.weeklyCorrect||0)/15);
+    let studyBP=Math.floor((store.weeklyCorrect||0)/5);
     store.delta+=studyBP;
     saveBPStore(store);
   }catch(e){}
@@ -606,8 +626,11 @@ async function loadRiver(){
     })).filter(u=>u.isMe||u.weekBP>0||(profiles||[]).find(p=>p.id===u.id));
 
     // Override my own weekly BP with local store (most up-to-date)
+    // Must include BOTH battle delta AND study BP (weeklyCorrect / BP_PER_N)
     let myStore=getBPStore();
-    let myWeekBP=Math.max(0,myStore.delta||0);
+    let battleDelta=myStore.delta||0;
+    let studyBP=Math.floor((myStore.weeklyCorrect||0)/5);
+    let myWeekBP=Math.max(0,battleDelta+studyBP);
     if(CU){
       let me=users.find(u=>u.isMe);
       if(me)me.weekBP=myWeekBP;

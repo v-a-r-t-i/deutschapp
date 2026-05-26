@@ -41,6 +41,7 @@ let known=new Set(),streakN=0,bestStreak=0,lastStudy=null,doneDays=new Set();
 let xpTotal=0,sessionXP=0,sessionCorrect=0,sessionReviewed=0;
 let mistakes=[];
 let tab='flash',flashMode='de',answerMode='choice',selCats=new Set(),queue=[],qIdx=0,revealed=false,confSel=3;
+let selLevel='all'; // 'all' | 'A1' | 'A2'
 let quizSt=null,blankSt=null,gQ=[],gIdx=0,gAns=false,gScore={ok:0,tot:0};
 let listenSt=null;
 let quizQueue=[],quizQIdx=0;
