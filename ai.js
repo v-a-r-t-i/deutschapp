@@ -85,6 +85,43 @@ async function regenAllPhrases(){
 }
 
 // ── AI PLAN ───────────────────────────────────────────
+// ── COMPOUND WORD BREAKDOWN ───────────────────────────
+let compoundCache={};
+async function genCompoundBreakdown(de){
+  let word=de.replace(/^(der|die|das|ein|eine)\s+/i,'').trim();
+  if(compoundCache[word]!==undefined)return compoundCache[word];
+  try{
+    let resp=await fetch('https://yngsuxuamhzefkkjsgus.supabase.co/functions/v1/ai-proxy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:200,
+        messages:[{role:'user',content:`Is the German word "${word}" a compound word (Kompositum) made of two or more smaller words? If yes, break it down. If no (simple root word, verb, adjective, etc.), return null.\nReturn JSON only, no markdown, no explanation:\n{"parts":[{"word":"Kranken","meaning":"sick"},{"word":"haus","meaning":"house"}],"together":"hospital — literally \\"house of the sick\\""}\nor if not a compound: null`}]
+      })
+    });
+    let data=await resp.json();
+    let txt=data.content?.[0]?.text||'null';
+    let clean=txt.replace(/```json|```/g,'').trim();
+    let parsed=JSON.parse(clean);
+    compoundCache[word]=parsed;
+    return parsed;
+  }catch(e){compoundCache[word]=null;return null;}
+}
+async function showCompound(de){
+  let area=document.getElementById('compound-area');
+  if(!area)return;
+  area.innerHTML='<div style="text-align:center;padding:10px;color:var(--txt3)"><span class="spinner"></span>Analysing word…</div>';
+  let result=await genCompoundBreakdown(de);
+  if(!result||!result.parts||!result.parts.length){
+    area.innerHTML='<div style="font-size:12px;color:var(--txt3);padding:6px 0;text-align:center">Not a compound word — it\'s a root word on its own.</div>';
+    return;
+  }
+  let parts=result.parts.map(p=>`<div class="cmp-part"><div class="cmp-word">${p.word}</div><div class="cmp-meaning">${p.meaning}</div></div>`).join('<div class="cmp-plus">+</div>');
+  area.innerHTML=`<div class="compound-box"><div class="compound-hdr">🧩 Word breakdown</div><div class="cmp-parts">${parts}</div><div class="cmp-together">→ ${result.together}</div></div>`;
+}
+
+// ── AI PLAN ───────────────────────────────────────────
 async function genAIPlan(){
   let goal=document.getElementById('plan-goal').value.trim();
   let days=parseInt(document.getElementById('plan-days').value)||7;

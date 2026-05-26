@@ -228,6 +228,7 @@ function rFlash(){
     <div id="fc-f">${front}</div>
     <div id="fc-b" style="display:none">${back}</div>
     <div id="ai-area" style="margin-top:4px"><div id="ai-phrase-area"></div></div>
+    <div id="compound-area" style="margin-top:8px"></div>
     <div class="hint-txt" id="fc-h" onclick="revCard()">tap to reveal ↓</div>
   </div>
   <div id="fc-btns" style="display:none">
@@ -241,7 +242,22 @@ function rFlash(){
     <div class="sm2-note" id="sm2n"></div>
   </div>`;
 }
-function revCard(){if(revealed)return;revealed=true;document.getElementById('fc-f').style.display='none';document.getElementById('fc-b').style.display='block';document.getElementById('fc-h').style.display='none';document.getElementById('fc-btns').style.display='block';document.getElementById('ai-area').style.display='none';}
+function revCard(){
+  if(revealed)return;revealed=true;
+  document.getElementById('fc-f').style.display='none';
+  document.getElementById('fc-b').style.display='block';
+  document.getElementById('fc-h').style.display='none';
+  document.getElementById('fc-btns').style.display='block';
+  document.getElementById('ai-area').style.display='none';
+  let ca=document.getElementById('compound-area');
+  if(ca){
+    let item=queue[qIdx];
+    let bare=(item.de||'').replace(/^(der|die|das|ein|eine)\s+/i,'').trim();
+    if(bare.length>=8){
+      ca.innerHTML=`<button class="cmp-btn" onclick="showCompound('${item.de.replace(/'/g,"\\'")}')">🧩 Break down this word</button>`;
+    }else{ca.innerHTML='';}
+  }
+}
 function rate(q){
   let item=queue[qIdx],r=s2r(item.de,q);
   sessionReviewed++;

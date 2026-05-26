@@ -2045,6 +2045,17 @@ font-family:inherit;
 .phrase-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
 .phrase-row:last-child{border-bottom:none;}
 .psb{background:rgba(255,255,255,0.06);border:none;color:white;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:13px;flex-shrink:0;transition:.15s ease;}
+/* Compound word breakdown */
+.cmp-btn{width:100%;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);color:#c4b5fd;border-radius:14px;padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s ease;margin-top:4px;}
+.cmp-btn:hover{background:rgba(139,92,246,0.22);}
+.compound-box{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.22);border-radius:16px;padding:14px 16px;margin-top:4px;}
+.compound-hdr{font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase;}
+.cmp-parts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.cmp-part{background:rgba(255,255,255,0.07);border-radius:10px;padding:6px 12px;text-align:center;}
+.cmp-word{font-size:15px;font-weight:700;color:#e9d5ff;}
+.cmp-meaning{font-size:11px;color:#a78bfa;margin-top:2px;}
+.cmp-plus{font-size:16px;color:rgba(167,139,250,0.5);font-weight:300;}
+.cmp-together{font-size:13px;color:#ddd6fe;line-height:1.5;border-top:1px solid rgba(139,92,246,0.18);padding-top:8px;}
 .psb:hover{background:rgba(255,255,255,0.12);}
 .phrase-de{font-size:14px;font-weight:600;margin-bottom:2px;}
 .phrase-en{font-size:13px;color:var(--txt2);}
