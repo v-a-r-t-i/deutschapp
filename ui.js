@@ -809,15 +809,15 @@ async function loadRiver(){
       weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
     });
 
-    // Build user list ONLY from users who appear in this week's battle_log
-    // Never pull from total XP — that bleeds lifetime stats into weekly river
-    let allIds=new Set([...Object.keys(weeklyBP)]);
-    if(CU)allIds.add(CU.id); // always include self even with 0 battle BP
+    // Include all known profiles on the river; BP comes from battle_log only.
+    // Users with no battles this week sit at 0 — still visible, just at the start line.
+    let allIds=new Set([...Object.keys(pMap),...Object.keys(weeklyBP)]);
+    if(CU)allIds.add(CU.id);
     let users=[...allIds].map(id=>({
       id,name:pMap[id]||id.slice(0,8),
       weekBP:Math.max(0,weeklyBP[id]||0),
       isMe:id===CU?.id
-    }));
+    })).filter(u=>u.isMe||pMap[u.id]); // only show users we have a display name for
 
     // Override my own weekly BP with local store (most up-to-date)
     // Must include BOTH battle delta AND study BP (weeklyCorrect / BP_PER_N)
