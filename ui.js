@@ -160,7 +160,9 @@ function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answ
 let lastStudyTab='flash';
 const studyTabs=['flash','listen','quiz','fill','gender','lesen'];
 function setTab(t){
-  tab=t;setMobNav(t);
+  tab=t;
+  localStorage.setItem('app_tab', t);  // persist tab across visits
+  setMobNav(t);
   let isStudy=studyTabs.includes(t);
   if(isStudy)lastStudyTab=t;
   // Update main tabs
@@ -178,7 +180,7 @@ function setTab(t){
   ).join('');
   updAll();
   if(t==='flash'){buildQ();rFlash();return;}
-  if(t==='lesen'){buildLesenSt();rLesen();return;}
+  if(t==='lesen'){if(!lesenSt.started)buildLesenSt();rLesen();return;}
   else if(t==='listen'){buildListenQ();rListen();}
   else if(t==='quiz'){buildQuizQ();quizSt=null;rQuiz();}
   else if(t==='fill'){blankSt=null;rFill();}
@@ -414,7 +416,7 @@ function nB(){blankSt=null;rFill();}
 function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAns=false;}
 
 // ── LESEN MODE ───────────────────────────────────────
-let lesenSt={idx:0,answers:[],checked:false,score:0};
+let lesenSt={idx:0,answers:[],checked:false,score:0,started:false};
 
 function getLesenTexts(){
   let base=typeof LESEN_TEXTS!=='undefined'?LESEN_TEXTS:[];
@@ -427,7 +429,7 @@ function getLesenTexts(){
 }
 
 function buildLesenSt(){
-  lesenSt={idx:0,answers:[],checked:false,score:0};
+  lesenSt={idx:0,answers:[],checked:false,score:0,started:true};
 }
 
 function rLesen(){

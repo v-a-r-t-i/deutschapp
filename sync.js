@@ -7,6 +7,7 @@ function saveLocalCache(){
       mistakes,
       selCats:[...selCats],
       selLevel,
+      lesenIdx:lesenSt.idx,
       sessionDate:tday(),
       sessionReviewed,sessionCorrect,sessionXP,
       savedAt:Date.now()
@@ -31,6 +32,10 @@ function loadLocalCache(){
       if(validCats.length)selCats=new Set(validCats);
     }
     if(c.selLevel)selLevel=c.selLevel;
+    if(c.lesenIdx!==undefined&&c.lesenIdx>0){
+      lesenSt.idx=c.lesenIdx;
+      lesenSt.started=true;
+    }
     if(c.sessionDate===tday()){
       if(c.sessionReviewed!==undefined)sessionReviewed=c.sessionReviewed;
       if(c.sessionCorrect!==undefined)sessionCorrect=c.sessionCorrect;
@@ -96,7 +101,8 @@ async function loadProg(){
   selCats=new Set(Object.keys(DATA));
   // Load from localStorage cache instantly
   let hasCached=loadLocalCache();
-  buildQ();setTab('flash');
+  let savedTab=localStorage.getItem('app_tab')||'flash';
+  buildQ();setTab(savedTab);
   if(hasCached)updAll();
   // Then sync from Supabase in background
   setDot('syncing');
@@ -117,7 +123,7 @@ async function loadProg(){
   let cachedCats=[...selCats];
   if(cachedCats.length===0)selCats=new Set(Object.keys(DATA));
   saveLocalCache();
-  updAll();buildQ();setTab('flash');
+  updAll();buildQ();setTab(localStorage.getItem('app_tab')||'flash');
 }
 async function markStudied(){
   let today=tday();if(lastStudy===today)return;
