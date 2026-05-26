@@ -204,7 +204,12 @@ function buildQ(){
 }
 function rFlash(){
   let c=document.getElementById('content');
-  if(!queue.length){c.innerHTML=statsH()+catH()+'<div class="end-card"><div class="end-emoji">🎉</div><div class="end-title">Queue empty!</div></div>';return;}
+  if(!queue.length){
+    let emptyMsg=lang==='de'
+      ?'<div class="end-card"><div class="end-emoji">🎉</div><div class="end-title">Queue empty!</div></div>'
+      :`<div class="end-card"><div class="end-emoji">🚧</div><div class="end-title">No ${lang==='kr'?'Korean':'words'} yet</div><div class="end-sub">Words for this language haven't been added to the database yet. Check back soon!</div></div>`;
+    c.innerHTML=statsH()+catH()+emptyMsg;return;
+  }
   if(qIdx>=queue.length){maybeShowSummary();c.innerHTML=statsH()+catH()+`<div class="end-card"><div class="end-emoji">✅</div><div class="end-title">All done!</div><div class="end-sub">Come back tomorrow for your next cards.</div><button class="btn-next" onclick="buildQ();rFlash()">Review again ↺</button></div>`;return;}
   revealed=false;
   let item=queue[qIdx],sm=s2g(item.de),isR=(flashMode==='en');

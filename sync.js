@@ -46,8 +46,8 @@ async function loadWords(){
     Object.keys(DATA).forEach(c=>(DATA[c]||[]).forEach(w=>{localLvl[w.de]=w.lvl||'A1';}));
     let words=await sbFetch('words','select=*&language=eq.'+lang+'&order=category');
     if(Array.isArray(words)&&words.length){
-      // Rebuild DATA from Supabase
       let newData={};
+
       let seen={};
       words.forEach(w=>{
         if(!newData[w.category])newData[w.category]=[];
@@ -83,6 +83,10 @@ async function loadWords(){
         Object.assign(DATA,newData);
         console.log('Words loaded (Supabase + local merge):',Object.values(DATA).flat().length);
       }
+    } else if(lang!=='de'){
+      // Non-German with no Supabase words — wipe German fallback so study
+      // modes show an empty state rather than wrong-language cards.
+      Object.keys(DATA).forEach(k=>delete DATA[k]);
     }
   }catch(e){console.warn('words load error:',e);}
 }
