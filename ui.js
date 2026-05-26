@@ -177,7 +177,7 @@ function setTab(t){
     `<div class="mode-pill${tab===t?' active':''}" id="pill-${t}" onclick="setStudyTab('${t}')">${studyLabels[i]}</div>`
   ).join('');
   updAll();
-  if(t==='flash'){buildQ();rFlash();}
+  if(t==='flash'){buildQ();rFlash();return;}
   if(t==='lesen'){buildLesenSt();rLesen();return;}
   else if(t==='listen'){buildListenQ();rListen();}
   else if(t==='quiz'){buildQuizQ();quizSt=null;rQuiz();}
