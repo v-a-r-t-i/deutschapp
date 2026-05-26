@@ -158,7 +158,7 @@ function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answ
 
 // ── TABS ─────────────────────────────────────────────
 let lastStudyTab='flash';
-const studyTabs=['flash','listen','quiz','fill','gender'];
+const studyTabs=['flash','listen','quiz','fill','gender','lesen'];
 function setTab(t){
   tab=t;setMobNav(t);
   let isStudy=studyTabs.includes(t);
@@ -171,8 +171,8 @@ function setTab(t){
   // Show/hide study mode pills
   let sm=document.getElementById('study-modes');
   if(sm)sm.style.display=isStudy?'flex':'none';
-  let studyPills=['flash','listen','quiz','fill','gender'];
-  let studyLabels=lang==='kr'?['Flash','Listen','Quiz','Fill-in','Formality']:['Flash','Listen','Quiz','Fill-in','Gender'];
+  let studyPills=['flash','listen','quiz','fill','gender','lesen'];
+  let studyLabels=lang==='kr'?['Flash','Listen','Quiz','Fill-in','Formality','Read']:['Flash','Listen','Quiz','Fill-in','Gender','Lesen'];
   document.getElementById('study-modes').innerHTML=studyPills.map((t,i)=>
     `<div class="mode-pill${tab===t?' active':''}" id="pill-${t}" onclick="setStudyTab('${t}')">${studyLabels[i]}</div>`
   ).join('');
@@ -435,67 +435,66 @@ function rLesen(){
   if(!c)return;
   let texts=getLesenTexts();
   let lvlForGen=selLevel==='all'?'A1':selLevel;
+
+  // If no texts at all, show loading spinner and kick off generation
   if(!texts.length){
-    c.innerHTML=`<div style="text-align:center;padding:40px">
-      <div style="font-size:40px;margin-bottom:12px">📄</div>
-      <div style="font-size:18px;font-weight:700;margin-bottom:8px">No texts for this level yet</div>
-      <div style="font-size:13px;color:var(--txt2);margin-bottom:20px">Generate a fresh ${lvlForGen} reading passage with AI</div>
-      <button class="btn-next" id="lesen-gen-btn" onclick="lesenGenAI('${lvlForGen}')">✨ Generate ${lvlForGen} text</button>
-    </div>`;
+    c.innerHTML='<div style="text-align:center;padding:60px"><span class="spinner" style="width:22px;height:22px;border-width:3px;margin:0 auto;display:block;margin-bottom:14px"></span><div style="color:var(--txt2);font-size:14px">Loading your first text…</div></div>';
+    genLesenText(lvlForGen).then(()=>rLesen());
     return;
   }
-  let t=texts[lesenSt.idx%texts.length];
-  let lvlBadge='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:'+(t.lvl==='A1'?'rgba(45,212,167,0.16)':'rgba(96,165,250,0.16)')+';color:'+(t.lvl==='A1'?'#2dd4a7':'#93c5fd')+'">'+t.lvl+'</span>';
-  let progress=(lesenSt.idx%texts.length+1)+' / '+texts.length;
 
-  // Format text — preserve newlines
+  let idx=lesenSt.idx%texts.length;
+  let t=texts[idx];
+  let lvlBadge='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:'+(t.lvl==='A1'?'rgba(45,212,167,0.16)':'rgba(96,165,250,0.16)')+';color:'+(t.lvl==='A1'?'#2dd4a7':'#93c5fd')+'">'+t.lvl+'</span>';
+  let progress=(idx+1)+' / '+texts.length;
   let textHtml=t.text.replace(/\n/g,'<br>');
 
   let questionsHtml='';
   if(lesenSt.checked){
-    // Show results
     let correct=0;
-    questionsHtml=t.questions.map((q,qi)=>{
+    let resultRows=t.questions.map((q,qi)=>{
       let chosen=lesenSt.answers[qi];
       let ok=chosen===q.ans;
       if(ok)correct++;
-      return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:var(--rs);background:'+(ok?'rgba(45,212,167,0.1)':'rgba(244,113,116,0.1)')+';border:1px solid '+(ok?'rgba(45,212,167,0.3)':'rgba(244,113,116,0.3)')+'">'+
-        '<div style="font-size:13px;font-weight:600;margin-bottom:6px">'+(ok?'✓':'✗')+' '+q.q+'</div>'+
-        '<div style="font-size:12px;color:var(--txt2)">Ihre Antwort: <b>'+q.opts[chosen!==undefined?chosen:0]+'</b>'+(ok?'':' → Richtig: <b>'+q.opts[q.ans]+'</b>')+'</div>'+
+      return '<div style="margin-bottom:10px;padding:10px 14px;border-radius:var(--rs);background:'+(ok?'rgba(45,212,167,0.1)':'rgba(244,113,116,0.1)')+';border:1px solid '+(ok?'rgba(45,212,167,0.3)':'rgba(244,113,116,0.3)')+'">'+
+        '<div style="font-size:13px;font-weight:600;margin-bottom:4px">'+(ok?'✓':'✗')+' '+q.q+'</div>'+
+        '<div style="font-size:12px;color:var(--txt2)">Your answer: <b>'+q.opts[chosen!==undefined?chosen:0]+'</b>'+(ok?'':' → Correct: <b>'+q.opts[q.ans]+'</b>')+'</div>'+
         '</div>';
     }).join('');
     lesenSt.score=correct;
+    // Pre-generate next AI text in background silently
+    let nextIdx=lesenSt.idx+1;
+    if(nextIdx>=texts.length&&typeof genLesenText==='function'){
+      genLesenText(lvlForGen); // fire and forget — will be ready by the time user clicks Next
+    }
     questionsHtml='<div style="text-align:center;margin-bottom:16px">'+
       '<div style="font-size:32px">'+(correct===t.questions.length?'🏆':correct>=t.questions.length/2?'👍':'💪')+'</div>'+
-      '<div style="font-size:22px;font-weight:800;margin:6px 0">'+correct+' / '+t.questions.length+' richtig</div>'+
-      '</div>'+questionsHtml+
-      '<button class="btn-next" onclick="lesenSt.idx++;lesenSt.answers=[];lesenSt.checked=false;rLesen()">Nächster Text →</button>'+
-      `<button class="cmp-btn" style="margin-top:10px" onclick="lesenGenAI('${lvlForGen}')">✨ Generate new AI text</button>`;
+      '<div style="font-size:22px;font-weight:800;margin:6px 0">'+correct+' / '+t.questions.length+' correct</div>'+
+      '</div>'+resultRows+
+      '<button class="btn-next" onclick="lesenSt.idx++;lesenSt.answers=[];lesenSt.checked=false;rLesen()">Next Text →</button>';
   } else {
     questionsHtml=t.questions.map((q,qi)=>{
       return '<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:600;margin-bottom:8px">'+(qi+1)+'. '+q.q+'</div>'+
         q.opts.map((o,oi)=>{
           let sel=lesenSt.answers[qi]===oi;
           return '<button onclick="lesenSt.answers['+qi+']='+oi+';rLesen()" style="display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border-radius:var(--rs);border:1.5px solid '+(sel?'var(--green)':'rgba(255,255,255,0.1)')+';background:'+(sel?'rgba(45,212,167,0.14)':'rgba(255,255,255,0.04)')+';color:white;cursor:pointer;font-size:13px;transition:.15s"><span style="font-weight:700;margin-right:8px">'+'ABC'[oi]+'.</span>'+o+'</button>';
-        }).join('')+
-        '</div>';
+        }).join('')+'</div>';
     }).join('');
     let allAnswered=t.questions.every((_,qi)=>lesenSt.answers[qi]!==undefined);
-    questionsHtml+='<button class="btn-next'+(allAnswered?'':' disabled')+'" '+(allAnswered?'onclick="lesenSt.checked=true;rLesen()"':'disabled style="opacity:0.4;cursor:default"')+'>Antworten prüfen ✓</button>';
+    questionsHtml+='<button class="btn-next'+(allAnswered?'':' disabled')+'" '+(allAnswered?'onclick="lesenSt.checked=true;rLesen()"':'disabled style="opacity:0.4;cursor:default"')+'>Check answers ✓</button>';
   }
 
   c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
     '<div style="display:flex;align-items:center;gap:8px">'+lvlBadge+'<span style="font-size:13px;color:var(--txt2)">Text '+progress+'</span></div>'+
-    '<div style="display:flex;gap:6px">'+texts.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===lesenSt.idx%texts.length?'var(--green)':'rgba(255,255,255,0.2)')+'"></div>').join('')+'</div>'+
+    '<div style="display:flex;gap:6px">'+texts.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===idx?'var(--green)':'rgba(255,255,255,0.2)')+'"></div>').join('')+'</div>'+
     '</div>'+
     '<div class="lesen-card">'+
       '<div style="font-size:15px;font-weight:700;margin-bottom:12px">'+t.title+'</div>'+
       '<div style="font-size:14px;line-height:1.7;color:var(--txt2);border-bottom:1px solid var(--bor);padding-bottom:14px;margin-bottom:14px">'+textHtml+'</div>'+
-      '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:12px">Fragen zum Text</div>'+
+      '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:12px">Questions</div>'+
       questionsHtml+
     '</div>';
 }
-
 
 function rGender(){
   let c=document.getElementById('content'),ns=aw().filter(w=>w.art!==null);
@@ -537,19 +536,6 @@ async function toggleKnown(de,val){
   let sm=s2g(de);
   await sb.from('word_progress').upsert({user_id:CU.id,word_de:de,known:val,interval:sm.interval,reps:sm.reps,ef:sm.ef,next_review:sm.next,updated_at:new Date().toISOString()},{onConflict:'user_id,word_de'});
   rBrowse();
-}
-
-// ── AI LESEN GENERATE ────────────────────────────────
-async function lesenGenAI(lvl){
-  let btn=document.getElementById('lesen-gen-btn')||document.querySelector('[onclick*="lesenGenAI"]');
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Generating…';}
-  let result=await genLesenText(lvl||'A1');
-  if(result){
-    // Jump to the newly generated text
-    lesenSt.idx=getLesenTexts().length-1;
-    lesenSt.answers=[];lesenSt.checked=false;
-  }
-  rLesen();
 }
 
 // ── PLAN ─────────────────────────────────────────────
