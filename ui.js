@@ -281,8 +281,12 @@ function rListen(){
     c.innerHTML=statsH()+catH()+`<div class="end-card"><div class="end-emoji">👂</div><div class="end-title">Listening round done!</div><button class="btn-next" onclick="buildListenQ();rListen()">Again ↺</button></div>`;return;
   }
   let item=listenSt.queue[listenSt.idx];
-  let ws=aw();let others=ws.filter(w=>w.de!==item.de);shuf(others);
-  let opts=[item.en,...others.slice(0,3).map(w=>w.en)];shuf(opts);
+  let ws=aw();
+  let sameCat=ws.filter(w=>w.de!==item.de&&w.cat===item.cat);
+  let diffCat=ws.filter(w=>w.de!==item.de&&w.cat!==item.cat);
+  shuf(sameCat);shuf(diffCat);
+  let pool=[...sameCat,...diffCat];
+  let opts=[item.en,...pool.slice(0,3).map(w=>w.en)];shuf(opts);
   let optHtml=opts.map(o=>{
     let cl=listenSt.answered?(o===item.en?'correct':(o===listenSt.chosen?'wrong':'')):'';
     return`<button class="q-opt ${cl}" ${listenSt.answered?'disabled':''} onclick="ansListen('${o.replace(/'/g,"\\'")}','${item.en.replace(/'/g,"\\'")}','${item.de.replace(/'/g,"\\'")}')"><b>${o}</b></button>`;
@@ -336,7 +340,19 @@ function rQuiz(){
   </div>
   <div class="quiz-grid">${opts}</div>${rev}${q.ans?`<button class="btn-next" onclick="nQ()">Next →</button>`:''}`;
 }
-function genQ(ws){let item=quizQueue[quizQIdx++];if(!item)return;let oth=ws.filter(w=>w.de!==item.de);shuf(oth);let opts=[item.en,oth[0].en,oth[1].en,oth[2].en];shuf(opts);quizSt={item,cor:item.en,opts,ans:false,ch:null,typed:'',correct_ans:false};}
+function genQ(ws){
+  let item=quizQueue[quizQIdx++];
+  if(!item)return;
+  // Prefer distractors from the same category so answers aren't obviously wrong
+  let sameCat=ws.filter(w=>w.de!==item.de&&w.cat===item.cat);
+  let diffCat=ws.filter(w=>w.de!==item.de&&w.cat!==item.cat);
+  shuf(sameCat);shuf(diffCat);
+  // Fill up to 3 distractors: same-cat first, then diff-cat
+  let pool=[...sameCat,...diffCat];
+  let opts=[item.en,pool[0].en,pool[1].en,pool[2].en];
+  shuf(opts);
+  quizSt={item,cor:item.en,opts,ans:false,ch:null,typed:'',correct_ans:false};
+}
 function ansQ(o){quizSt.ans=true;quizSt.ch=o;sessionReviewed++;if(o===quizSt.cor){known.add(quizSt.item.de);sessionCorrect++;addXP(XP_RATES.quiz_correct,'quiz');s2r(quizSt.item.de,4);}else{mistakes=[...new Set([...mistakes,quizSt.item.de])].slice(-20);}updAll();rQuiz();}
 function submitType(){
   let inp=document.getElementById('type-ans');if(!inp||quizSt.ans)return;
@@ -401,13 +417,16 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 let lesenSt={idx:0,answers:[],checked:false,score:0};
 
 function getLesenTexts(){
-  if(typeof LESEN_TEXTS==='undefined')return[];
-  return LESEN_TEXTS.filter(t=>selLevel==='all'||(t.lvl||'A1')===selLevel);
+  let base=typeof LESEN_TEXTS!=='undefined'?LESEN_TEXTS:[];
+  // Merge in any AI-generated texts from this session
+  let aiTexts=(typeof lesenGenCache!=='undefined')
+    ?[...(lesenGenCache.A1||[]),...(lesenGenCache.A2||[])]
+    :[];
+  let all=[...base,...aiTexts];
+  return all.filter(t=>selLevel==='all'||(t.lvl||'A1')===selLevel);
 }
 
 function buildLesenSt(){
-  let texts=getLesenTexts();
-  if(!texts.length)return;
   lesenSt={idx:0,answers:[],checked:false,score:0};
 }
 
@@ -415,8 +434,14 @@ function rLesen(){
   let c=document.getElementById('content');
   if(!c)return;
   let texts=getLesenTexts();
+  let lvlForGen=selLevel==='all'?'A1':selLevel;
   if(!texts.length){
-    c.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Keine Lesetexte für dieses Level verfügbar.</div>';
+    c.innerHTML=`<div style="text-align:center;padding:40px">
+      <div style="font-size:40px;margin-bottom:12px">📄</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">No texts for this level yet</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:20px">Generate a fresh ${lvlForGen} reading passage with AI</div>
+      <button class="btn-next" id="lesen-gen-btn" onclick="lesenGenAI('${lvlForGen}')">✨ Generate ${lvlForGen} text</button>
+    </div>`;
     return;
   }
   let t=texts[lesenSt.idx%texts.length];
@@ -444,7 +469,8 @@ function rLesen(){
       '<div style="font-size:32px">'+(correct===t.questions.length?'🏆':correct>=t.questions.length/2?'👍':'💪')+'</div>'+
       '<div style="font-size:22px;font-weight:800;margin:6px 0">'+correct+' / '+t.questions.length+' richtig</div>'+
       '</div>'+questionsHtml+
-      '<button class="btn-next" onclick="lesenSt.idx++;lesenSt.answers=[];lesenSt.checked=false;rLesen()">Nächster Text →</button>';
+      '<button class="btn-next" onclick="lesenSt.idx++;lesenSt.answers=[];lesenSt.checked=false;rLesen()">Nächster Text →</button>'+
+      `<button class="cmp-btn" style="margin-top:10px" onclick="lesenGenAI('${lvlForGen}')">✨ Generate new AI text</button>`;
   } else {
     questionsHtml=t.questions.map((q,qi)=>{
       return '<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:600;margin-bottom:8px">'+(qi+1)+'. '+q.q+'</div>'+
@@ -511,6 +537,19 @@ async function toggleKnown(de,val){
   let sm=s2g(de);
   await sb.from('word_progress').upsert({user_id:CU.id,word_de:de,known:val,interval:sm.interval,reps:sm.reps,ef:sm.ef,next_review:sm.next,updated_at:new Date().toISOString()},{onConflict:'user_id,word_de'});
   rBrowse();
+}
+
+// ── AI LESEN GENERATE ────────────────────────────────
+async function lesenGenAI(lvl){
+  let btn=document.getElementById('lesen-gen-btn')||document.querySelector('[onclick*="lesenGenAI"]');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Generating…';}
+  let result=await genLesenText(lvl||'A1');
+  if(result){
+    // Jump to the newly generated text
+    lesenSt.idx=getLesenTexts().length-1;
+    lesenSt.answers=[];lesenSt.checked=false;
+  }
+  rLesen();
 }
 
 // ── PLAN ─────────────────────────────────────────────

@@ -207,4 +207,35 @@ function togglePlanDay(day,btn){
   if(plan)renderPlanCards(plan,document.getElementById('ai-plan-result'));
 }
 
+// ── AI LESEN GENERATOR ───────────────────────────────
+let lesenGenCache={A1:[],A2:[]};
+let lesenGenLoading=false;
+
+async function genLesenText(lvl){
+  if(lesenGenLoading)return null;
+  lesenGenLoading=true;
+  try{
+    // Grab a small sample of words from the current word set as vocab hints
+    let words=aw();shuf(words);
+    let vocabSample=words.slice(0,20).map(w=>w.de).join(', ');
+    let isA1=lvl==='A1';
+    let prompt=isA1
+      ?`Generate a short German reading text for A1 learners (40-70 words). Use only very basic vocabulary, present tense, simple sentences. Topic: everyday life (family, food, home, time, colors). Include some of these words if natural: ${vocabSample}. After the text, write exactly 3 multiple-choice comprehension questions, each with 3 answer options (A, B, C). Format as JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A1","questions":[{"q":"...","opts":["...","...","..."],"ans":0}]}`
+      :`Generate a short German reading text for A2 learners (80-120 words). Use A2 vocabulary, some past tense (Perfekt), modal verbs OK. Topic: work, travel, shopping, services, health, or leisure. Include some of these words if natural: ${vocabSample}. After the text, write exactly 4 multiple-choice comprehension questions, each with 3 answer options (A, B, C). Format as JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A2","questions":[{"q":"...","opts":["...","...","..."],"ans":0}]}`;
+    let resp=await fetch('https://yngsuxuamhzefkkjsgus.supabase.co/functions/v1/ai-proxy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(authToken||SKEY)},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})
+    });
+    let data=await resp.json();
+    let txt=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    let parsed=JSON.parse(txt);
+    if(parsed&&parsed.text&&parsed.questions){
+      lesenGenCache[lvl].push(parsed);
+      return parsed;
+    }
+    return null;
+  }catch(e){console.warn('lesenGen error:',e);return null;}
+  finally{lesenGenLoading=false;}
+}
 // ── AUTH ─────────────────────────────────────────────
