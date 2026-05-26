@@ -2576,132 +2576,161 @@ font-family:inherit;
    ISLAND MAP
 ═══════════════════════════════════════════════════════ */
 .map-outer{padding:0 0 16px;}
-.map-greeting{
-  font-size:18px;font-weight:600;
-  padding:4px 2px 16px;
-  color:var(--txt2);
-}
+.map-greeting{font-size:18px;font-weight:600;padding:4px 2px 14px;color:var(--txt2);}
 .map-greeting b{color:var(--txt);}
 
 .map-ocean{
   position:relative;
   border-radius:28px;
-  overflow:hidden;
-  background:linear-gradient(180deg,#071428 0%,#0d2550 45%,#071428 100%);
-  min-height:420px;
-  border:1px solid rgba(100,180,255,0.1);
-  display:flex;align-items:center;justify-content:center;
+  overflow:visible;
+  background:linear-gradient(180deg,#061020 0%,#0a1f4a 40%,#061020 100%);
+  height:480px;
+  border:1px solid rgba(100,180,255,0.08);
 }
+@media(max-width:700px){.map-ocean{height:420px;}}
 
 /* Wave layers */
 .map-wave{
-  position:absolute;left:0;right:0;
-  height:70px;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 70'%3E%3Cpath d='M0,35 C200,5 400,65 600,35 C800,5 1000,65 1200,35 L1200,70 L0,70 Z' fill='%23193a6b'/%3E%3C/svg%3E") repeat-x;
-  background-size:600px 70px;
+  position:absolute;left:0;right:0;pointer-events:none;overflow:hidden;
+  height:60px;border-radius:0 0 28px 28px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60'%3E%3Cpath d='M0,30 C200,5 400,55 600,30 C800,5 1000,55 1200,30 L1200,60 L0,60 Z' fill='%23122a5e'/%3E%3C/svg%3E") repeat-x;
+  background-size:600px 60px;
 }
 .mw1{bottom:0;opacity:0.5;animation:mwave 8s linear infinite;}
-.mw2{bottom:8px;opacity:0.3;animation:mwave 12s linear infinite reverse;}
-.mw3{bottom:16px;opacity:0.15;animation:mwave 16s linear infinite;}
+.mw2{bottom:6px;opacity:0.25;animation:mwave 13s linear infinite reverse;}
+.mw3{bottom:12px;opacity:0.12;animation:mwave 18s linear infinite;}
 @keyframes mwave{from{background-position-x:0}to{background-position-x:600px}}
 
-/* Island grid */
-.map-islands{
-  position:relative;z-index:2;
-  display:flex;flex-direction:column;
-  align-items:center;gap:12px;
-  padding:32px 24px;width:100%;
-}
-.map-row{display:flex;justify-content:center;gap:40px;}
-.map-row-2{gap:60px;}
-
-/* Individual island */
+/* ── Individual island ── */
 .isle{
-  display:flex;flex-direction:column;
-  align-items:center;gap:6px;
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;
   cursor:pointer;
   animation:isle-bob 3s ease-in-out infinite;
-  transition:transform .2s ease,filter .2s;
-  position:relative;
-  padding:4px;
+  transition:filter .2s;
 }
-.isle:hover{transform:translateY(-6px) scale(1.06);filter:brightness(1.15);}
-.isle:nth-child(2){animation-delay:0.6s;}
-.isle:nth-child(3){animation-delay:1.2s;}
-.isle:nth-child(4){animation-delay:0.9s;}
+.isle:hover{filter:brightness(1.2);}
+.isle:hover .isle-grass{transform:translateY(-4px);}
+.isle:hover .isle-rock{transform:translateY(-4px);}
+.isle:hover .isle-falls{transform:translateY(-4px);}
 @keyframes isle-bob{
   0%,100%{transform:translateY(0);}
-  50%{transform:translateY(-7px);}
+  50%{transform:translateY(-9px);}
 }
 
-/* Island visual shapes */
-.isle-visual{
-  position:relative;
-  width:90px;height:62px;
-  flex-shrink:0;
-}
-.isle-v-lg{width:110px;height:76px;}
-.isle-v-sm{width:72px;height:50px;}
+/* Scattered positions — natural feel */
+.isle-lernen  {top:6%;  left:50%;transform:translateX(-50%);z-index:4;animation-delay:0s;}
+.isle-woerter {top:40%; left:8%; z-index:3;animation-delay:0.7s;}
+.isle-gemein  {top:36%; right:9%;z-index:3;animation-delay:1.3s;}
+.isle-planen  {top:70%; left:36%;z-index:2;animation-delay:0.4s;}
 
-.isle-sand{
-  position:absolute;bottom:0;left:50%;
-  transform:translateX(-50%);
-  width:90px;height:28px;
-  background:linear-gradient(180deg,#c8973a,#a07628);
-  border-radius:50%;
-  box-shadow:0 6px 20px rgba(0,0,0,0.5),inset 0 -3px 6px rgba(0,0,0,0.2);
-}
-.isle-sand-lg{width:110px;height:34px;}
-.isle-sand-sm{width:72px;height:22px;}
-.isle-sand-warm{background:linear-gradient(180deg,#c4834a,#9a6235);}
+/* ── Island body parts ── */
+.isle-body{position:relative;display:flex;flex-direction:column;align-items:center;}
 
-.isle-green{
-  position:absolute;bottom:16px;left:50%;
-  transform:translateX(-50%);
-  width:72px;height:50px;
-  background:radial-gradient(ellipse at 38% 38%,#2ea84a,#1a6b2c);
-  border-radius:52% 48% 44% 56%;
-  box-shadow:0 -4px 16px rgba(0,0,0,0.35),inset 0 4px 8px rgba(255,255,255,0.08);
+/* Grass top */
+.isle-grass{
+  position:relative;z-index:3;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:52% 48% 46% 54%/58% 62% 38% 42%;
+  background:radial-gradient(ellipse at 38% 36%,#3ec958,#1e7a2e);
+  box-shadow:0 6px 24px rgba(0,0,0,0.55),inset 0 3px 8px rgba(255,255,255,0.1),inset 0 -4px 8px rgba(0,0,0,0.25);
+  transition:transform .25s ease;
 }
-.isle-green-lg{width:88px;height:62px;bottom:20px;}
-.isle-green-sm{width:58px;height:38px;bottom:12px;}
-.isle-green-alt{
-  background:radial-gradient(ellipse at 38% 38%,#2a9e8a,#17634f);
-  border-radius:44% 56% 52% 48%;
-}
-.isle-green-teal{
-  background:radial-gradient(ellipse at 38% 38%,#4a8ac8,#2a5a8c);
-  border-radius:56% 44% 48% 52%;
+.isle-grass-lg{width:104px;height:62px;}
+.isle-grass-md{width:80px;height:48px;}
+.isle-grass-sm{width:60px;height:36px;}
+.isle-grass-lime{background:radial-gradient(ellipse at 38% 36%,#6ecf42,#3a8c1a);}
+.isle-grass-ocean{background:radial-gradient(ellipse at 38% 36%,#3a8fc8,#1e5a8c);}
+.isle-grass-warm{background:radial-gradient(ellipse at 38% 36%,#d4943a,#8c5e1e);}
+
+.isle-tree{
+  position:absolute;font-size:16px;bottom:4px;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,0.6));
 }
 
-.isle-icon-wrap{
-  position:absolute;top:-2px;left:50%;
-  transform:translateX(-50%);
-  font-size:26px;z-index:2;
+.isle-icon-main{
+  font-size:24px;z-index:2;
   filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));
 }
 
-/* Island badge (due count) */
-.isle-badge{
-  position:absolute;top:-10px;right:-6px;
-  background:#ef4444;color:white;
-  font-size:10px;font-weight:800;
-  padding:2px 8px;border-radius:999px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.4);
-  animation:badge-pulse 2s ease infinite;
+/* Rocky base — tapered trapezoid */
+.isle-rock{
+  position:relative;z-index:2;
+  background:linear-gradient(180deg,#7d6a42,#4a3c22);
+  box-shadow:0 4px 14px rgba(0,0,0,0.5);
+  transition:transform .25s ease;
 }
-@keyframes badge-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+.isle-rock-lg{width:88px;height:28px;clip-path:polygon(4% 0%,96% 0%,82% 100%,18% 100%);}
+.isle-rock-md{width:68px;height:22px;clip-path:polygon(4% 0%,96% 0%,82% 100%,18% 100%);}
+.isle-rock-sm{width:50px;height:16px;clip-path:polygon(4% 0%,96% 0%,80% 100%,20% 100%);}
+.isle-rock-dark{background:linear-gradient(180deg,#5a6880,#303848);}
 
+/* Waterfall drips */
+.isle-falls{
+  position:relative;z-index:1;
+  border-radius:0 0 3px 3px;
+  background:linear-gradient(180deg,rgba(130,210,255,0.75),rgba(130,210,255,0));
+  animation:falls-drip 2s ease-in-out infinite;
+  transition:transform .25s ease;
+}
+.isle-falls-l{width:6px;height:22px;margin-left:-30px;}
+.isle-falls-r{width:6px;height:18px;margin-left:30px;margin-top:-20px;animation-delay:0.5s;}
+.isle-falls-c{width:6px;height:18px;}
+@keyframes falls-drip{0%,100%{opacity:0.7;}50%{opacity:1;transform:scaleY(1.08);}}
+
+/* Water shadow reflection */
+.isle-shadow{
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(100,200,255,0.15),transparent 70%);
+  margin:0 auto;
+  animation:shadow-pulse 3s ease-in-out infinite;
+}
+.isle-shadow-lg{width:110px;height:18px;}
+.isle-shadow-md{width:86px;height:14px;}
+.isle-shadow-sm{width:64px;height:10px;}
+@keyframes shadow-pulse{0%,100%{opacity:0.6;}50%{opacity:1;}}
+
+/* Labels */
 .isle-label{
   font-size:13px;font-weight:800;
   color:rgba(255,255,255,0.92);
-  text-shadow:0 1px 6px rgba(0,0,0,0.8);
-  text-align:center;
+  text-shadow:0 1px 6px rgba(0,0,0,0.9);
+  margin-top:2px;text-align:center;
 }
-.isle-sub{
-  font-size:11px;color:rgba(255,255,255,0.45);
-  text-align:center;margin-top:-2px;
+.isle-sub{font-size:11px;color:rgba(255,255,255,0.4);text-align:center;}
+
+/* Badge */
+.isle-badge{
+  position:absolute;top:-12px;right:-8px;z-index:10;
+  background:#ef4444;color:white;
+  font-size:10px;font-weight:800;
+  padding:2px 8px;border-radius:999px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.5);
+  animation:badge-pulse 2s ease infinite;
 }
+@keyframes badge-pulse{0%,100%{transform:scale(1);}60%{transform:scale(1.14);}}
+
+/* ── Floating Map Button (FAB) ── */
+#map-fab{
+  position:fixed;
+  bottom:28px;right:24px;
+  width:54px;height:54px;
+  border-radius:50%;
+  background:rgba(14,28,56,0.9);
+  border:1.5px solid rgba(100,180,255,0.25);
+  color:white;font-size:22px;
+  cursor:pointer;
+  box-shadow:0 4px 24px rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:500;
+  backdrop-filter:blur(12px);
+  transition:transform .2s,box-shadow .2s;
+}
+#map-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(0,0,0,0.6);}
+
+/* Remove bottom nav spacing since navs are gone */
+.page-wrap{padding-bottom:24px!important;}
 
 
 /* ═══════════════════════════════════════════════════════

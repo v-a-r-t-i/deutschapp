@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '6.1.0';
+const APP_VERSION = '6.1.1';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 </div>
 
 <!-- DESKTOP BOTTOM NAV -->
-<nav class="desktop-bottom-nav" id="desktop-bottom-nav">
+<!-- desktop nav removed --><nav style="display:none" class="desktop-bottom-nav" id="desktop-bottom-nav">
   <button class="desk-nav-btn active" id="desk-home" onclick="setTab('home');setMobNav('home')">
     <span class="d-icon">🗺️</span> Map
   </button>
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 </nav>
 
 <!-- MOBILE BOTTOM NAV -->
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+<!-- mobile nav removed --><nav style="display:none" class="mobile-bottom-nav" id="mobile-bottom-nav">
   <button class="mob-nav-btn active" id="mob-home" onclick="setTab('home');setMobNav('home')">
     <span class="mob-icon">🗺️</span>Map
   </button>
@@ -198,6 +198,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     <span class="mob-icon">👥</span>Social
   </button>
 </nav>
+
+<!-- FLOATING MAP BUTTON — visible in all sections except home -->
+<button id="map-fab" onclick="setTab('home')" style="display:none" aria-label="Map">
+  🗺️
+</button>
 
 <!-- TEACHER APP -->
 <div id="teacher-app" style="display:none">

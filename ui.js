@@ -180,6 +180,7 @@ function setTab(t){
     `<div class="mode-pill${tab===t?' active':''}" id="pill-${t}" onclick="setStudyTab('${t}')">${studyLabels[i]}</div>`
   ).join('');
   updAll();
+  updateMapFAB();
   if(t==='home'){rMap();return;}
   if(t==='studyhome'){rStudyHome();return;}
   if(t==='flash'){buildQ();rFlash();return;}
@@ -424,7 +425,7 @@ function rMap(){
   let c=document.getElementById('content');
   if(!c)return;
   let all=aw(),due=all.filter(w=>s2due(w.de)).length;
-  let known_c=all.filter(w=>known.has(w.de)).length;
+  let knownC=all.filter(w=>known.has(w.de)).length;
   let store=getBPStore();
   let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
   let greeting=getGreeting();
@@ -437,60 +438,73 @@ function rMap(){
     <div class="map-wave mw1"></div>
     <div class="map-wave mw2"></div>
     <div class="map-wave mw3"></div>
-    <div class="map-islands">
 
-      <!-- STUDY island — top center, biggest -->
-      <div class="map-row">
-        <div class="isle isle-study" onclick="setTab('studyhome')">
-          <div class="isle-visual isle-v-lg">
-            <div class="isle-sand isle-sand-lg"></div>
-            <div class="isle-green isle-green-lg"></div>
-            <div class="isle-icon-wrap">📖</div>
-          </div>
-          ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
-          <div class="isle-label">Lernen</div>
-          <div class="isle-sub">${known_c} known</div>
+    <!-- LERNEN — top center, largest -->
+    <div class="isle isle-lernen" onclick="setTab('studyhome')">
+      ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
+      <div class="isle-body">
+        <div class="isle-grass isle-grass-lg">
+          <span class="isle-tree" style="left:12px">🌲</span>
+          <span class="isle-tree" style="right:10px;top:6px">🌴</span>
+          <div class="isle-icon-main">📖</div>
         </div>
+        <div class="isle-rock isle-rock-lg"></div>
+        <div class="isle-falls isle-falls-l"></div>
+        <div class="isle-falls isle-falls-r"></div>
       </div>
-
-      <!-- BROWSE + SOCIAL — middle row -->
-      <div class="map-row map-row-2">
-        <div class="isle isle-browse" onclick="setTab('browse')">
-          <div class="isle-visual">
-            <div class="isle-sand"></div>
-            <div class="isle-green isle-green-alt"></div>
-            <div class="isle-icon-wrap" style="font-size:22px">🔍</div>
-          </div>
-          <div class="isle-label">Wörter</div>
-          <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
-        </div>
-        <div class="isle isle-social" onclick="setTab('social')">
-          <div class="isle-visual">
-            <div class="isle-sand isle-sand-warm"></div>
-            <div class="isle-green isle-green-teal"></div>
-            <div class="isle-icon-wrap" style="font-size:22px">👥</div>
-          </div>
-          <div class="isle-label">Gemeinschaft</div>
-          <div class="isle-sub">${weekBP} BP this week</div>
-        </div>
-      </div>
-
-      <!-- PLAN — bottom center, small -->
-      <div class="map-row">
-        <div class="isle isle-plan" onclick="setTab('plan')">
-          <div class="isle-visual isle-v-sm">
-            <div class="isle-sand isle-sand-sm"></div>
-            <div class="isle-green isle-green-sm"></div>
-            <div class="isle-icon-wrap" style="font-size:18px">📅</div>
-          </div>
-          <div class="isle-label">Planen</div>
-          <div class="isle-sub">Study plan</div>
-        </div>
-      </div>
-
+      <div class="isle-shadow isle-shadow-lg"></div>
+      <div class="isle-label">Lernen</div>
+      <div class="isle-sub">${knownC} known</div>
     </div>
+
+    <!-- WÖRTER — left -->
+    <div class="isle isle-woerter" onclick="setTab('browse')">
+      <div class="isle-body">
+        <div class="isle-grass isle-grass-md isle-grass-lime">
+          <span class="isle-tree" style="left:8px;top:2px">🌿</span>
+          <div class="isle-icon-main" style="font-size:20px">🔍</div>
+        </div>
+        <div class="isle-rock isle-rock-md"></div>
+        <div class="isle-falls isle-falls-c"></div>
+      </div>
+      <div class="isle-shadow isle-shadow-md"></div>
+      <div class="isle-label">Wörter</div>
+      <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
+    </div>
+
+    <!-- GEMEINSCHAFT — right -->
+    <div class="isle isle-gemein" onclick="setTab('social')">
+      <div class="isle-body">
+        <div class="isle-grass isle-grass-md isle-grass-ocean">
+          <span class="isle-tree" style="right:6px;top:4px">🪨</span>
+          <div class="isle-icon-main" style="font-size:20px">👥</div>
+        </div>
+        <div class="isle-rock isle-rock-md isle-rock-dark"></div>
+        <div class="isle-falls isle-falls-c"></div>
+      </div>
+      <div class="isle-shadow isle-shadow-md"></div>
+      <div class="isle-label">Gemeinschaft</div>
+      <div class="isle-sub">${weekBP} BP this week</div>
+    </div>
+
+    <!-- PLANEN — bottom, smaller -->
+    <div class="isle isle-planen" onclick="setTab('plan')">
+      <div class="isle-body">
+        <div class="isle-grass isle-grass-sm isle-grass-warm">
+          <div class="isle-icon-main" style="font-size:16px">📅</div>
+        </div>
+        <div class="isle-rock isle-rock-sm"></div>
+        <div class="isle-falls isle-falls-c" style="height:12px"></div>
+      </div>
+      <div class="isle-shadow isle-shadow-sm"></div>
+      <div class="isle-label">Planen</div>
+      <div class="isle-sub">Study plan</div>
+    </div>
+
   </div>
 </div>`;
+
+  updateMapFAB();
 }
 
 function getGreeting(){
@@ -500,6 +514,13 @@ function getGreeting(){
   if(h<21)return'🌆 Guten Abend';
   return'🌙 Gute Nacht';
 }
+
+function updateMapFAB(){
+  let fab=document.getElementById('map-fab');
+  if(!fab)return;
+  fab.style.display=(tab==='home')?'none':'flex';
+}
+
 
 // ── STUDY HOME ────────────────────────────────────────
 function rStudyHome(){
