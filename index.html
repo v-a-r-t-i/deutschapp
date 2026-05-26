@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '6.0.3';
+const APP_VERSION = '6.1.0';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -169,14 +169,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <!-- DESKTOP BOTTOM NAV -->
 <nav class="desktop-bottom-nav" id="desktop-bottom-nav">
-  <button class="desk-nav-btn active" id="desk-study" onclick="setTab(lastStudyTab||'flash');setMobNav('study')">
+  <button class="desk-nav-btn active" id="desk-home" onclick="setTab('home');setMobNav('home')">
+    <span class="d-icon">🗺️</span> Map
+  </button>
+  <button class="desk-nav-btn" id="desk-study" onclick="setTab('studyhome');setMobNav('study')">
     <span class="d-icon">📖</span> Study
   </button>
   <button class="desk-nav-btn" id="desk-browse" onclick="setTab('browse');setMobNav('browse')">
     <span class="d-icon">🔍</span> Browse
-  </button>
-  <button class="desk-nav-btn" id="desk-plan" onclick="setTab('plan');setMobNav('plan')">
-    <span class="d-icon">📅</span> Plan
   </button>
   <button class="desk-nav-btn" id="desk-social" onclick="setTab('social');setMobNav('social')">
     <span class="d-icon">👥</span> Social
@@ -185,14 +185,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="mob-nav-btn active" id="mob-study" onclick="setTab(lastStudyTab||'flash');setMobNav('study')">
+  <button class="mob-nav-btn active" id="mob-home" onclick="setTab('home');setMobNav('home')">
+    <span class="mob-icon">🗺️</span>Map
+  </button>
+  <button class="mob-nav-btn" id="mob-study" onclick="setTab('studyhome');setMobNav('study')">
     <span class="mob-icon">📖</span>Study
   </button>
   <button class="mob-nav-btn" id="mob-browse" onclick="setTab('browse');setMobNav('browse')">
     <span class="mob-icon">🔍</span>Browse
-  </button>
-  <button class="mob-nav-btn" id="mob-plan" onclick="setTab('plan');setMobNav('plan')">
-    <span class="mob-icon">📅</span>Plan
   </button>
   <button class="mob-nav-btn" id="mob-social" onclick="setTab('social');setMobNav('social')">
     <span class="mob-icon">👥</span>Social

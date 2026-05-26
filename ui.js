@@ -38,9 +38,9 @@ function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove()
 
 // ── MOBILE NAV SYNC ───────────────────────────────────
 function setMobNav(tab){
-  let key=['flash','listen','quiz','fill','gender','lesen'].includes(tab)?'study':tab;
-  let mobileMap={study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
-  let desktopMap={study:'desk-study',browse:'desk-browse',plan:'desk-plan',social:'desk-social'};
+  let key=['flash','listen','quiz','fill','gender','lesen','studyhome'].includes(tab)?'study':tab==='home'?'home':tab;
+  let mobileMap={home:'mob-home',study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
+  let desktopMap={home:'desk-home',study:'desk-study',browse:'desk-browse',plan:'desk-plan',social:'desk-social'};
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.desk-nav-btn').forEach(b=>b.classList.remove('active'));
   let mob=document.getElementById(mobileMap[key]);if(mob)mob.classList.add('active');
@@ -158,7 +158,7 @@ function modeToggle(){return`<div class="mode-row"><button class="mode-btn${answ
 
 // ── TABS ─────────────────────────────────────────────
 let lastStudyTab='flash';
-const studyTabs=['flash','listen','quiz','fill','gender','lesen'];
+const studyTabs=['flash','listen','quiz','fill','gender','lesen','studyhome'];
 function setTab(t){
   tab=t;
   localStorage.setItem('app_tab', t);  // persist tab across visits
@@ -172,20 +172,23 @@ function setTab(t){
   });
   // Show/hide study mode pills
   let sm=document.getElementById('study-modes');
-  if(sm)sm.style.display=isStudy?'flex':'none';
+  let showPills=isStudy&&t!=='studyhome'&&t!=='home';
+  if(sm)sm.style.display=showPills?'flex':'none';
   let studyPills=['flash','listen','quiz','fill','gender','lesen'];
   let studyLabels=lang==='kr'?['Flash','Listen','Quiz','Fill-in','Formality','Read']:['Flash','Listen','Quiz','Fill-in','Gender','Lesen'];
   document.getElementById('study-modes').innerHTML=studyPills.map((t,i)=>
     `<div class="mode-pill${tab===t?' active':''}" id="pill-${t}" onclick="setStudyTab('${t}')">${studyLabels[i]}</div>`
   ).join('');
   updAll();
+  if(t==='home'){rMap();return;}
+  if(t==='studyhome'){rStudyHome();return;}
   if(t==='flash'){buildQ();rFlash();return;}
   if(t==='lesen'){if(!lesenSt.started)buildLesenSt();rLesen();return;}
   else if(t==='listen'){buildListenQ();rListen();}
   else if(t==='quiz'){buildQuizQ();quizSt=null;rQuiz();}
   else if(t==='fill'){blankSt=null;rFill();}
   else if(t==='gender'){buildGQ();rGender();}
-  else if(t==='browse')rBrowse();
+  else if(t==='browse'){rBrowseGrid();return;}
   else if(t==='social')rSocial();
   else rPlan();
 }
@@ -414,6 +417,217 @@ function nB(){blankSt=null;rFill();}
 
 // ── GENDER ────────────────────────────────────────────
 function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAns=false;}
+
+
+// ── ISLAND MAP ────────────────────────────────────────
+function rMap(){
+  let c=document.getElementById('content');
+  if(!c)return;
+  let all=aw(),due=all.filter(w=>s2due(w.de)).length;
+  let known_c=all.filter(w=>known.has(w.de)).length;
+  let store=getBPStore();
+  let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
+  let greeting=getGreeting();
+  let name=CP?.display_name||'';
+
+  c.innerHTML=`
+<div class="map-outer">
+  <div class="map-greeting">${greeting}${name?', <b>'+name+'</b>':''}</div>
+  <div class="map-ocean">
+    <div class="map-wave mw1"></div>
+    <div class="map-wave mw2"></div>
+    <div class="map-wave mw3"></div>
+    <div class="map-islands">
+
+      <!-- STUDY island — top center, biggest -->
+      <div class="map-row">
+        <div class="isle isle-study" onclick="setTab('studyhome')">
+          <div class="isle-visual isle-v-lg">
+            <div class="isle-sand isle-sand-lg"></div>
+            <div class="isle-green isle-green-lg"></div>
+            <div class="isle-icon-wrap">📖</div>
+          </div>
+          ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
+          <div class="isle-label">Lernen</div>
+          <div class="isle-sub">${known_c} known</div>
+        </div>
+      </div>
+
+      <!-- BROWSE + SOCIAL — middle row -->
+      <div class="map-row map-row-2">
+        <div class="isle isle-browse" onclick="setTab('browse')">
+          <div class="isle-visual">
+            <div class="isle-sand"></div>
+            <div class="isle-green isle-green-alt"></div>
+            <div class="isle-icon-wrap" style="font-size:22px">🔍</div>
+          </div>
+          <div class="isle-label">Wörter</div>
+          <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
+        </div>
+        <div class="isle isle-social" onclick="setTab('social')">
+          <div class="isle-visual">
+            <div class="isle-sand isle-sand-warm"></div>
+            <div class="isle-green isle-green-teal"></div>
+            <div class="isle-icon-wrap" style="font-size:22px">👥</div>
+          </div>
+          <div class="isle-label">Gemeinschaft</div>
+          <div class="isle-sub">${weekBP} BP this week</div>
+        </div>
+      </div>
+
+      <!-- PLAN — bottom center, small -->
+      <div class="map-row">
+        <div class="isle isle-plan" onclick="setTab('plan')">
+          <div class="isle-visual isle-v-sm">
+            <div class="isle-sand isle-sand-sm"></div>
+            <div class="isle-green isle-green-sm"></div>
+            <div class="isle-icon-wrap" style="font-size:18px">📅</div>
+          </div>
+          <div class="isle-label">Planen</div>
+          <div class="isle-sub">Study plan</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>`;
+}
+
+function getGreeting(){
+  let h=new Date().getHours();
+  if(h<12)return'🌅 Guten Morgen';
+  if(h<17)return'☀️ Guten Tag';
+  if(h<21)return'🌆 Guten Abend';
+  return'🌙 Gute Nacht';
+}
+
+// ── STUDY HOME ────────────────────────────────────────
+function rStudyHome(){
+  let c=document.getElementById('content');
+  if(!c)return;
+  let all=aw(),due=all.filter(w=>s2due(w.de)).length;
+  let known_c=all.filter(w=>known.has(w.de)).length;
+  let streak=streakN||0;
+  let modes=[
+    {id:'flash',icon:'📖',label:'Flash'},
+    {id:'listen',icon:'👂',label:'Listen'},
+    {id:'quiz',icon:'❓',label:'Quiz'},
+    {id:'fill',icon:'✏️',label:'Fill-in'},
+    {id:'gender',icon:'🏷️',label:'Gender'},
+    {id:'lesen',icon:'📄',label:'Lesen'},
+  ];
+  c.innerHTML=`
+<div class="sh-wrap">
+  <button class="sh-back" onclick="setTab('home')">← Map</button>
+
+  <div class="sh-hero">
+    <div class="sh-stat-row">
+      <div class="sh-stat">
+        <div class="sh-num ${due>0?'sh-num-alert':''}">${due}</div>
+        <div class="sh-lbl">due today</div>
+      </div>
+      <div class="sh-divider-v"></div>
+      <div class="sh-stat">
+        <div class="sh-num">${known_c}</div>
+        <div class="sh-lbl">known</div>
+      </div>
+      <div class="sh-divider-v"></div>
+      <div class="sh-stat">
+        <div class="sh-num sh-num-streak">🔥${streak}</div>
+        <div class="sh-lbl">day streak</div>
+      </div>
+    </div>
+    <button class="sh-start-btn" onclick="setTab('${lastStudyTab||'flash'}')">
+      ${due>0?'Start Review ('+due+' due)':'Start Studying →'}
+    </button>
+  </div>
+
+  <div class="sh-section-lbl">Choose a mode</div>
+  <div class="sh-modes">
+    ${modes.map(m=>`<button class="sh-mode-btn${(lastStudyTab||'flash')===m.id?' sh-mode-active':''}" onclick="setTab('${m.id}')">
+      <span class="sh-mode-icon">${m.icon}</span>
+      <span class="sh-mode-name">${m.label}</span>
+    </button>`).join('')}
+  </div>
+
+  <div class="sh-section-lbl" style="margin-top:20px">Category</div>
+  ${catH()}
+</div>`;
+}
+
+// ── BROWSE GRID (category cards) ─────────────────────
+function rBrowseGrid(){
+  let c=document.getElementById('content');
+  if(!c)return;
+  let cats=Object.keys(DATA);
+  let total=0,knownTotal=0;
+  cats.forEach(cat=>{let p=cp(cat);total+=p.t;knownTotal+=p.k;});
+  let overallPct=total?Math.round(knownTotal/total*100):0;
+  c.innerHTML=`
+<div class="bg-wrap">
+  <button class="sh-back" onclick="setTab('home')">← Map</button>
+  <div class="bg-header">
+    <div>
+      <div style="font-size:20px;font-weight:800">Wörter</div>
+      <div style="font-size:13px;color:var(--txt2)">${allW().length} words · ${overallPct}% known · Goethe A1/A2</div>
+    </div>
+    <div class="bg-level-toggle">${levelH()}</div>
+  </div>
+  <div class="bg-grid">
+    ${cats.map(cat=>{
+      let p=cp(cat);
+      let pct=p.t?Math.round(p.k/p.t*100):0;
+      let col=pct===100?'var(--green)':pct>50?'#60a5fa':pct>0?'#f59e0b':'rgba(255,255,255,0.2)';
+      return `<div class="bg-card" onclick="openCatBrowse('${cat}')">
+        <div class="bg-card-top">
+          <div class="bg-cat-name">${cat}</div>
+          <div class="bg-pct" style="color:${col}">${pct}%</div>
+        </div>
+        <div class="bg-bar"><div class="bg-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="bg-card-sub">${p.k} / ${p.t} known</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div id="cat-browse-detail"></div>
+</div>`;
+}
+
+function openCatBrowse(cat){
+  let detail=document.getElementById('cat-browse-detail');
+  if(!detail)return;
+  // Toggle - if already open for this cat, close it
+  if(detail.dataset.cat===cat&&detail.style.display!=='none'){
+    detail.style.display='none';
+    detail.dataset.cat='';
+    return;
+  }
+  detail.dataset.cat=cat;
+  detail.style.display='block';
+  // Scroll to it
+  setTimeout(()=>detail.scrollIntoView({behavior:'smooth',block:'start'}),50);
+  // Render word list for this category
+  let ws=(DATA[cat]||[]).filter(lvlOk);
+  let html=`<div class="bg-detail">
+    <div class="bg-detail-hdr">${cat} <button onclick="document.getElementById('cat-browse-detail').style.display='none'" style="float:right;background:none;border:none;color:var(--txt3);cursor:pointer;font-size:18px">✕</button></div>
+    ${ws.map(item=>{
+      let k=known.has(item.de),artS=item.art?`<span class="lw-art">${item.art}</span>`:'';
+      let lvlBadge=`<span class="lw-lvl lw-lvl-${item.lvl||'A1'}">${item.lvl||'A1'}</span>`;
+      return `<div class="bg-word">
+        <div class="bg-word-left">
+          <button class="psb" onclick="speak('${item.de.replace(/'/g,"\\'")}',this)">🔊</button>
+          ${artS}<span class="lw-de">${item.de}</span>
+          <span class="lw-en">— ${item.en}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${lvlBadge}
+          <button class="bg-known-btn${k?' bg-known-active':''}" onclick="toggleKnown('${item.de}',${!k})">${k?'✓':''}</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+  detail.innerHTML=html;
+}
+
 
 // ── LESEN MODE ───────────────────────────────────────
 let lesenSt={idx:0,answers:[],checked:false,score:0,started:false};
