@@ -39,43 +39,43 @@ const LESEN_TEXTS = [
     ]
   },
   {
-    id:'l3', lvl:'A2', title:'Maria – Bäckerin aus Leidenschaft',
-    text:'Maria Schneider ist 45 Jahre alt und seit 20 Jahren Bäckerin. Ihr Bäckerladen "Schneiders Backhaus" liegt in der Mitte von Frankfurt. Jeden Morgen steht sie um 4 Uhr auf, um frisches Brot und Kuchen zu backen. "Ich liebe meinen Beruf", sagt Maria, "weil ich den Menschen eine Freude mache." Ihr Spezialrezept – ein Brot mit Walnüssen und Rosinen – ist bei den Kunden besonders beliebt. Am Wochenende kommen manchmal über 200 Kunden in ihr Geschäft. Maria hat auch zwei Auszubildende, denen sie ihre Rezepte beibringt.',
+      id:'l3', lvl:'A2', title:'Der neue Job',
+    text:'Lena Hoffmann hat lange nach einer Stelle gesucht. Sie hat Wirtschaft studiert und wollte eigentlich in einer großen Firma arbeiten. Aber nach vielen Bewerbungen hat sie schließlich eine Stelle in einem kleinen Familienbetrieb in Köln gefunden. Zuerst war sie enttäuscht, weil sie sich etwas anderes vorgestellt hatte. Doch schon nach wenigen Wochen hat sie gemerkt, dass ihr die Arbeit dort sehr gut gefällt. Ihr Chef lässt ihr viel Freiheit bei der Arbeit, und die Kollegen sind hilfsbereit. Das Gehalt ist zwar nicht so hoch wie in einer großen Firma, aber Lena sagt, sie würde die Stelle nicht mehr tauschen wollen.',
     questions:[
-      {q:'Wie lange ist Maria schon Bäckerin?',opts:['10 Jahre','20 Jahre','45 Jahre'],ans:1},
-      {q:'Wann steht Maria jeden Morgen auf?',opts:['Um 4 Uhr','Um 5 Uhr','Um 6 Uhr'],ans:0},
-      {q:'Was ist bei den Kunden besonders beliebt?',opts:['Ein Schokoladenkuchen','Ein Brot mit Walnüssen und Rosinen','Ihr Kaffee'],ans:1},
-      {q:'Was macht Maria mit zwei Auszubildenden?',opts:['Sie lernen Deutsch.','Sie bekommen Geld.','Sie lernen ihre Rezepte.'],ans:2},
+      {q:'Was hat Lena studiert?',opts:['Medizin','Wirtschaft','Informatik'],ans:1},
+      {q:'Warum war Lena am Anfang enttäuscht?',opts:['Weil das Gehalt zu niedrig war.','Weil die Kollegen unfreundlich waren.','Weil sie sich eine andere Stelle vorgestellt hatte.'],ans:2},
+      {q:'Was schätzt Lena an ihrer neuen Stelle besonders?',opts:['Das hohe Gehalt und die guten Arbeitszeiten.','Die Freiheit bei der Arbeit und die netten Kollegen.','Die Nähe zu ihrer Familie in Köln.'],ans:1},
+      {q:'Was denkt Lena heute über ihren Job?',opts:['Sie sucht immer noch nach etwas Besserem.','Sie möchte bald in eine große Firma wechseln.','Sie ist zufrieden und möchte bleiben.'],ans:2},
     ]
   },
   {
-    id:'l4', lvl:'A2', title:'Kaufhaus Mitte – Übersicht',
-    text:'Kaufhaus Mitte – Ihre Einkaufsmöglichkeiten\n\n3. Etage: Elektrogeräte, Computer, Handys, Sportkleidung\n2. Etage: Herrenmode, Möbel, Lampen, Teppiche\n1. Etage: Damenmode, Kinderkleidung, Schuhe, Küchenzubehör\nErdgeschoss: Uhren, Parfüm, Schreibwaren, Information\nUntergeschoss: Supermarkt, Bäcker, Reisebüro, Geldautomat, Toiletten',
+    id:'l4', lvl:'A2', title:'Umzug in eine neue Stadt',
+    text:'Jonas Weber ist vor sechs Monaten von München nach Hamburg gezogen, weil seine Freundin dort eine Stelle als Ärztin bekommen hat. Den Umzug hat er lange geplant, aber trotzdem war der Anfang schwer. In München hatte er viele Freunde und einen Job, den er mochte. In Hamburg musste er von vorne anfangen. Er hat sich zunächst sehr allein gefühlt, besonders weil er niemanden kannte. Nach drei Monaten hat er aber durch einen Sportverein neue Leute kennengelernt. Inzwischen gefällt ihm Hamburg gut, obwohl er München noch manchmal vermisst. Er hat auch eine neue Stelle als Grafiker gefunden und sagt, die Stadt habe ihn positiv überrascht.',
     questions:[
-      {q:'Sie brauchen einen neuen Laptop. In welche Etage gehen Sie?',opts:['1. Etage','2. Etage','3. Etage'],ans:2},
-      {q:'Wo finden Sie den Geldautomaten?',opts:['Erdgeschoss','Untergeschoss','1. Etage'],ans:1},
-      {q:'Sie suchen Schuhe für Ihre Tochter. Wo gehen Sie hin?',opts:['1. Etage','2. Etage','3. Etage'],ans:0},
-      {q:'Wo ist die Information?',opts:['Erdgeschoss','Untergeschoss','1. Etage'],ans:0},
+      {q:'Warum ist Jonas nach Hamburg gezogen?',opts:['Er hat dort einen besseren Job gefunden.','Seine Freundin hat dort eine Stelle bekommen.','Er wollte schon immer in Hamburg leben.'],ans:1},
+      {q:'Was war für Jonas in den ersten Monaten am schwersten?',opts:['Er hat keine Wohnung gefunden.','Er hat seine Stelle in München verloren.','Er kannte niemanden in der neuen Stadt.'],ans:2},
+      {q:'Wie hat Jonas neue Freunde in Hamburg gefunden?',opts:['Durch seine Arbeit als Grafiker.','Durch einen Sportverein.','Durch die Freunde seiner Freundin.'],ans:1},
+      {q:'Was stimmt über Jonas heute?',opts:['Er denkt darüber nach, wieder nach München zu ziehen.','Er vermisst München nie.','Er hat Arbeit gefunden und fühlt sich wohler.'],ans:2},
     ]
   },
   {
-    id:'l5', lvl:'A2', title:'E-Mail von Klaus',
-    text:'Von: Klaus Bauer\nAn: Sarah Müller\nBetreff: Unser Treffen am Samstag\n\nHallo Sarah!\n\nWie geht es dir? Ich hoffe, alles ist gut bei dir.\n\nIch wollte kurz wegen Samstag schreiben. Wir hatten geplant, um 14 Uhr ins Kino zu gehen, aber leider muss ich absagen. Meine Mutter ist krank und ich muss sie im Krankenhaus besuchen. Können wir das Treffen auf Sonntag verschieben? Am Sonntag bin ich ab 15 Uhr frei. Wir könnten auch in ein Café gehen statt ins Kino, wenn du möchtest.\n\nTut mir leid für die Änderung! Bitte schreib mir zurück.\n\nViele Grüße\nKlaus',
+    id:'l5', lvl:'A2', title:'Der Tauschmarkt',
+    text:'Seit zwei Jahren organisiert Marta Blum jeden ersten Samstag im Monat einen Tauschmarkt in ihrem Stadtteil. Die Idee hatte sie, weil sie einmal einen alten Kinderwagen verschenken wollte und niemanden kannte, der ihn gebrauchen konnte. Auf dem Markt kann man Dinge mitbringen, die man nicht mehr braucht, und sie gegen andere Sachen tauschen oder einfach verschenken. Es gibt keine Preise – alles ist kostenlos. Marta hat festgestellt, dass besonders Kleidung, Bücher und Küchengeräte sehr gefragt sind. Inzwischen kommen jeden Monat zwischen 80 und 150 Personen. Marta freut sich, dass der Markt so beliebt geworden ist, aber sie sagt auch, dass die Organisation viel Zeit kostet.',
     questions:[
-      {q:'Warum sagt Klaus das Treffen ab?',opts:['Er ist krank.','Seine Mutter ist krank.','Er muss arbeiten.'],ans:1},
-      {q:'Wann war das Treffen ursprünglich geplant?',opts:['Samstag um 14 Uhr','Sonntag um 15 Uhr','Samstag um 15 Uhr'],ans:0},
-      {q:'Was schlägt Klaus als Alternative vor?',opts:['Ein Restaurant','Ein Café','Ein Museum'],ans:1},
-      {q:'Wann ist Klaus am Sonntag frei?',opts:['Ab 13 Uhr','Ab 14 Uhr','Ab 15 Uhr'],ans:2},
+      {q:'Warum hat Marta den Tauschmarkt gegründet?',opts:['Weil sie Geld verdienen wollte.','Weil sie einen alten Kinderwagen loswerden wollte und keine Möglichkeit fand.','Weil die Stadt sie darum gebeten hat.'],ans:1},
+      {q:'Was kann man auf dem Tauschmarkt machen?',opts:['Nur kaufen und verkaufen.','Dinge tauschen oder verschenken, ohne zu bezahlen.','Neue Produkte von lokalen Firmen kaufen.'],ans:1},
+      {q:'Was wird auf dem Markt am meisten nachgefragt?',opts:['Möbel, Fahrräder und Spielzeug.','Elektronik und Sportartikel.','Kleidung, Bücher und Küchengeräte.'],ans:2},
+      {q:'Was findet Marta an der Organisation schwierig?',opts:['Die Leute kommen nicht regelmäßig.','Es kostet sehr viel Zeit.','Es ist schwer, einen guten Ort zu finden.'],ans:1},
     ]
   },
   {
-    id:'l6', lvl:'A2', title:'Stadtbibliothek Neustadt – Information',
-    text:'Willkommen in der Stadtbibliothek Neustadt!\n\nÖffnungszeiten:\nMo – Fr: 9:00 – 19:00 Uhr\nSa: 10:00 – 15:00 Uhr\nSo: geschlossen\n\nSie können bis zu 5 Bücher für 3 Wochen ausleihen. Für Kinder bis 14 Jahre ist die Nutzung kostenlos. Erwachsene zahlen 20€ pro Jahr. Zeitschriften können Sie nur im Lesesaal lesen, nicht ausleihen. Wir haben auch WLAN und Computerarbeitsplätze – diese sind kostenlos für alle Mitglieder.',
+    id:'l6', lvl:'A2', title:'Brieffreundschaft über Grenzen',
+    text:'Als Kind hatte Fatima Yildiz eine Brieffreundschaft mit einem Mädchen aus Frankreich. Die beiden haben sich über ihre Schule, ihre Hobbys und ihre Familien geschrieben. Irgendwann haben sie aufgehört, weil das Leben immer voller wurde. Vor einem Jahr hat Fatima durch Zufall eine alte Brief-Box gefunden und darin alle Briefe wiederentdeckt. Sie hat ihrer alten Freundin Claire eine E-Mail geschickt – und Claire hat sofort geantwortet. Heute schreiben sie sich regelmäßig, aber diesmal auf Englisch, weil Fatimas Französisch eingerostet ist und Claires Deutsch nie gut war. Letzten Sommer haben sie sich zum ersten Mal seit 25 Jahren persönlich getroffen. Fatima sagt, es war, als ob die Zeit gar nicht vergangen wäre.',
     questions:[
-      {q:'Wie lange darf man Bücher ausleihen?',opts:['2 Wochen','3 Wochen','4 Wochen'],ans:1},
-      {q:'Was kostet die Mitgliedschaft für einen Erwachsenen?',opts:['10€ pro Jahr','20€ pro Jahr','Kostenlos'],ans:1},
-      {q:'Was kann man mit Zeitschriften machen?',opts:['Nur ausleihen','Nur im Lesesaal lesen','Mit nach Hause nehmen'],ans:1},
-      {q:'Wann ist die Bibliothek am Samstag geöffnet?',opts:['9:00 – 19:00','10:00 – 15:00','Nicht geöffnet'],ans:1},
+      {q:'Warum haben Fatima und Claire als Kinder aufgehört zu schreiben?',opts:['Weil sie sich gestritten haben.','Weil sie keine Zeit mehr hatten.','Weil die Post zu teuer wurde.'],ans:1},
+      {q:'Wie hat Fatima den Kontakt wiederhergestellt?',opts:['Sie hat Claire auf einer Reise nach Frankreich getroffen.','Sie hat eine alte Brief-Box gefunden und Claire eine E-Mail geschickt.','Sie hat Claires Adresse über das Internet gesucht.'],ans:1},
+      {q:'In welcher Sprache schreiben sich die beiden heute?',opts:['Auf Deutsch, weil Claire gut Deutsch spricht.','Auf Französisch, weil Fatima es noch immer kann.','Auf Englisch, weil keine von beiden die Sprache der anderen gut beherrscht.'],ans:2},
+      {q:'Was sagt Fatima über das Wiedersehen nach 25 Jahren?',opts:['Es war seltsam, weil sie sich kaum wiedererkannt haben.','Es fühlte sich an, als wäre keine Zeit vergangen.','Sie waren beide enttäuscht, weil die Freundschaft sich verändert hatte.'],ans:1},
     ]
   },
 ];
