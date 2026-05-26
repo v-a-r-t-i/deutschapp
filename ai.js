@@ -215,17 +215,23 @@ async function genLesenText(lvl){
   if(lesenGenLoading)return null;
   lesenGenLoading=true;
   try{
-    // Grab a small sample of words from the current word set as vocab hints
     let words=aw();shuf(words);
-    let vocabSample=words.slice(0,20).map(w=>w.de).join(', ');
+    let vocabSample=words.slice(0,15).map(w=>w.de).join(', ');
     let isA1=lvl==='A1';
+    // Topics pool to rotate so texts feel varied
+    let a1Topics=['a café or restaurant notice','a short personal introduction','a simple schedule or timetable','a brief email about weekend plans','a notice about opening hours'];
+    let a2Topics=['a newspaper interview with a local professional','an email about a job or internship','a short article about travel or a trip','a notice about a community event or service','a personal blog post about a life change or experience'];
+    let topics=isA1?a1Topics:a2Topics;
+    let topic=topics[Math.floor(Math.random()*topics.length)];
+
     let prompt=isA1
-      ?`Generate a short German reading text for A1 learners (40-70 words). Use only very basic vocabulary, present tense, simple sentences. Topic: everyday life (family, food, home, time, colors). Include some of these words if natural: ${vocabSample}. After the text, write exactly 3 multiple-choice comprehension questions, each with 3 answer options (A, B, C). Format as JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A1","questions":[{"q":"...","opts":["...","...","..."],"ans":0}]}`
-      :`Generate a short German reading text for A2 learners (80-120 words). Use A2 vocabulary, some past tense (Perfekt), modal verbs OK. Topic: work, travel, shopping, services, health, or leisure. Include some of these words if natural: ${vocabSample}. After the text, write exactly 4 multiple-choice comprehension questions, each with 3 answer options (A, B, C). Format as JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A2","questions":[{"q":"...","opts":["...","...","..."],"ans":0}]}`;
+      ?`Write a short German reading text for Goethe A1 learners. Format: ${topic}. Length: 50-80 words. Use only present tense, simple vocabulary, short sentences. The text should feel like real A1 exam material (Goethe-Institut style). Write 3 comprehension questions. Each question has exactly 3 options (A, B, C). One option is clearly correct from the text, the other two are plausible but wrong. Return JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A1","questions":[{"q":"...","opts":["A: ...","B: ...","C: ..."],"ans":0}]}`
+      :`Write a German reading text for Goethe A2 learners. Format: ${topic}. Length: 120-180 words. Use Perfekt (past tense), modal verbs, subordinate clauses (weil, dass, wenn). Vocabulary should be B1-edge — challenging but within A2 reach. The text should feel like real Goethe A2 exam material — not a word list or simple notice, but a real connected text like the Stefan Berger interview style. Write 4 comprehension questions. Each has 3 options (A, B, C). The correct answer must require careful reading — make wrong options plausible. Return JSON only, no markdown:\n{"title":"...","text":"...","lvl":"A2","questions":[{"q":"...","opts":["A: ...","B: ...","C: ..."],"ans":0}]}`;
+
     let resp=await fetch('https://yngsuxuamhzefkkjsgus.supabase.co/functions/v1/ai-proxy',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+(authToken||SKEY)},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:600,messages:[{role:'user',content:prompt}]})
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,messages:[{role:'user',content:prompt}]})
     });
     let data=await resp.json();
     let txt=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();

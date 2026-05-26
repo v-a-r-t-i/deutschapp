@@ -443,6 +443,11 @@ function rLesen(){
     return;
   }
 
+  let lesenLvlToggle='<div style="display:flex;gap:6px">'+
+    [['all','Alle'],['A1','A1'],['A2','A2']].map(([v,l])=>
+      '<button onclick="selLevel=\''+v+'\';lesenSt.idx=0;lesenSt.answers=[];lesenSt.checked=false;saveLocalCache();rLesen()" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;border:1.5px solid '+(selLevel===v?'var(--green)':'rgba(255,255,255,0.12)')+';background:'+(selLevel===v?'rgba(45,212,167,0.15)':'transparent')+';color:'+(selLevel===v?'var(--green)':'var(--txt2)')+';cursor:pointer">'+l+'</button>'
+    ).join('')+'</div>';
+
   let idx=lesenSt.idx%texts.length;
   let t=texts[idx];
   let lvlBadge='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:'+(t.lvl==='A1'?'rgba(45,212,167,0.16)':'rgba(96,165,250,0.16)')+';color:'+(t.lvl==='A1'?'#2dd4a7':'#93c5fd')+'">'+t.lvl+'</span>';
@@ -486,7 +491,7 @@ function rLesen(){
 
   c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
     '<div style="display:flex;align-items:center;gap:8px">'+lvlBadge+'<span style="font-size:13px;color:var(--txt2)">Text '+progress+'</span></div>'+
-    '<div style="display:flex;gap:6px">'+texts.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===idx?'var(--green)':'rgba(255,255,255,0.2)')+'"></div>').join('')+'</div>'+
+    lesenLvlToggle+
     '</div>'+
     '<div class="lesen-card">'+
       '<div style="font-size:15px;font-weight:700;margin-bottom:12px">'+t.title+'</div>'+
