@@ -2540,3 +2540,20 @@ font-family:inherit;
 .lw-lvl{font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;letter-spacing:0.3px;}
 .lw-lvl-A1{background:rgba(72,199,142,0.16);color:#48c78e;}
 .lw-lvl-A2{background:rgba(96,165,250,0.16);color:#60a5fa;}
+
+/* ── LESEN MODE ── */
+.lesen-card{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:24px;
+  padding:24px 22px;
+}
+.btn-next{
+  width:100%;padding:14px;margin-top:16px;
+  border:none;border-radius:var(--r);
+  background:var(--green);color:#0a0e1a;
+  font-size:15px;font-weight:800;cursor:pointer;
+  transition:.18s ease;
+}
+.btn-next:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-next.disabled{background:rgba(255,255,255,0.08);color:var(--txt3);cursor:default;transform:none;}

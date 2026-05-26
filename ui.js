@@ -38,7 +38,7 @@ function closeModal(){let m=document.getElementById('app-modal');if(m)m.remove()
 
 // ── MOBILE NAV SYNC ───────────────────────────────────
 function setMobNav(tab){
-  let key=['flash','listen','quiz','fill','gender'].includes(tab)?'study':tab;
+  let key=['flash','listen','quiz','fill','gender','lesen'].includes(tab)?'study':tab;
   let mobileMap={study:'mob-study',browse:'mob-browse',plan:'mob-plan',social:'mob-social'};
   let desktopMap={study:'desk-study',browse:'desk-browse',plan:'desk-plan',social:'desk-social'};
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
@@ -46,7 +46,7 @@ function setMobNav(tab){
   let mob=document.getElementById(mobileMap[key]);if(mob)mob.classList.add('active');
   let desk=document.getElementById(desktopMap[key]);if(desk)desk.classList.add('active');
   // Sync mobile mode label and sheet active state
-  let modeLabels={flash:'📖 Flash',listen:'👂 Listen',quiz:'❓ Quiz',fill:'✏️ Fill-in',gender:'🏷️ Gender'};
+  let modeLabels={flash:'📖 Flash',listen:'👂 Listen',quiz:'❓ Quiz',fill:'✏️ Fill-in',gender:'🏷️ Gender',lesen:'📄 Lesen'};
   let lbl=document.getElementById('mob-mode-label');
   if(lbl&&modeLabels[tab])lbl.textContent=modeLabels[tab];
   document.querySelectorAll('.mode-sheet-btn').forEach(b=>b.classList.remove('active'));
@@ -178,6 +178,7 @@ function setTab(t){
   ).join('');
   updAll();
   if(t==='flash'){buildQ();rFlash();}
+  if(t==='lesen'){buildLesenSt();rLesen();return;}
   else if(t==='listen'){buildListenQ();rListen();}
   else if(t==='quiz'){buildQuizQ();quizSt=null;rQuiz();}
   else if(t==='fill'){blankSt=null;rFill();}
@@ -374,6 +375,81 @@ function nB(){blankSt=null;rFill();}
 
 // ── GENDER ────────────────────────────────────────────
 function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAns=false;}
+
+// ── LESEN MODE ───────────────────────────────────────
+let lesenSt={idx:0,answers:[],checked:false,score:0};
+
+function getLesenTexts(){
+  if(typeof LESEN_TEXTS==='undefined')return[];
+  return LESEN_TEXTS.filter(t=>selLevel==='all'||(t.lvl||'A1')===selLevel);
+}
+
+function buildLesenSt(){
+  let texts=getLesenTexts();
+  if(!texts.length)return;
+  lesenSt={idx:0,answers:[],checked:false,score:0};
+}
+
+function rLesen(){
+  let c=document.getElementById('content');
+  if(!c)return;
+  let texts=getLesenTexts();
+  if(!texts.length){
+    c.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Keine Lesetexte für dieses Level verfügbar.</div>';
+    return;
+  }
+  let t=texts[lesenSt.idx%texts.length];
+  let lvlBadge='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:'+(t.lvl==='A1'?'rgba(45,212,167,0.16)':'rgba(96,165,250,0.16)')+';color:'+(t.lvl==='A1'?'#2dd4a7':'#93c5fd')+'">'+t.lvl+'</span>';
+  let progress=(lesenSt.idx%texts.length+1)+' / '+texts.length;
+
+  // Format text — preserve newlines
+  let textHtml=t.text.replace(/\n/g,'<br>');
+
+  let questionsHtml='';
+  if(lesenSt.checked){
+    // Show results
+    let correct=0;
+    questionsHtml=t.questions.map((q,qi)=>{
+      let chosen=lesenSt.answers[qi];
+      let ok=chosen===q.ans;
+      if(ok)correct++;
+      return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:var(--rs);background:'+(ok?'rgba(45,212,167,0.1)':'rgba(244,113,116,0.1)')+';border:1px solid '+(ok?'rgba(45,212,167,0.3)':'rgba(244,113,116,0.3)')+'">'+
+        '<div style="font-size:13px;font-weight:600;margin-bottom:6px">'+(ok?'✓':'✗')+' '+q.q+'</div>'+
+        '<div style="font-size:12px;color:var(--txt2)">Ihre Antwort: <b>'+q.opts[chosen!==undefined?chosen:0]+'</b>'+(ok?'':' → Richtig: <b>'+q.opts[q.ans]+'</b>')+'</div>'+
+        '</div>';
+    }).join('');
+    lesenSt.score=correct;
+    questionsHtml='<div style="text-align:center;margin-bottom:16px">'+
+      '<div style="font-size:32px">'+(correct===t.questions.length?'🏆':correct>=t.questions.length/2?'👍':'💪')+'</div>'+
+      '<div style="font-size:22px;font-weight:800;margin:6px 0">'+correct+' / '+t.questions.length+' richtig</div>'+
+      '</div>'+questionsHtml+
+      '<button class="btn-next" onclick="lesenSt.idx++;lesenSt.answers=[];lesenSt.checked=false;rLesen()">Nächster Text →</button>';
+  } else {
+    questionsHtml=t.questions.map((q,qi)=>{
+      return '<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:600;margin-bottom:8px">'+(qi+1)+'. '+q.q+'</div>'+
+        q.opts.map((o,oi)=>{
+          let sel=lesenSt.answers[qi]===oi;
+          return '<button onclick="lesenSt.answers['+qi+']='+oi+';rLesen()" style="display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border-radius:var(--rs);border:1.5px solid '+(sel?'var(--green)':'rgba(255,255,255,0.1)')+';background:'+(sel?'rgba(45,212,167,0.14)':'rgba(255,255,255,0.04)')+';color:white;cursor:pointer;font-size:13px;transition:.15s"><span style="font-weight:700;margin-right:8px">'+'ABC'[oi]+'.</span>'+o+'</button>';
+        }).join('')+
+        '</div>';
+    }).join('');
+    let allAnswered=t.questions.every((_,qi)=>lesenSt.answers[qi]!==undefined);
+    questionsHtml+='<button class="btn-next'+(allAnswered?'':' disabled')+'" '+(allAnswered?'onclick="lesenSt.checked=true;rLesen()"':'disabled style="opacity:0.4;cursor:default"')+'>Antworten prüfen ✓</button>';
+  }
+
+  c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+    '<div style="display:flex;align-items:center;gap:8px">'+lvlBadge+'<span style="font-size:13px;color:var(--txt2)">Text '+progress+'</span></div>'+
+    '<div style="display:flex;gap:6px">'+texts.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===lesenSt.idx%texts.length?'var(--green)':'rgba(255,255,255,0.2)')+'"></div>').join('')+'</div>'+
+    '</div>'+
+    '<div class="lesen-card">'+
+      '<div style="font-size:15px;font-weight:700;margin-bottom:12px">'+t.title+'</div>'+
+      '<div style="font-size:14px;line-height:1.7;color:var(--txt2);border-bottom:1px solid var(--bor);padding-bottom:14px;margin-bottom:14px">'+textHtml+'</div>'+
+      '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:12px">Fragen zum Text</div>'+
+      questionsHtml+
+    '</div>';
+}
+
+
 function rGender(){
   let c=document.getElementById('content'),ns=aw().filter(w=>w.art!==null);
   if(!ns.length){c.innerHTML=statsH()+'<div class="end-card"><div class="end-title">No nouns in selection</div></div>';return;}
