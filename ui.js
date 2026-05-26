@@ -420,6 +420,46 @@ function nB(){blankSt=null;rFill();}
 function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAns=false;}
 
 
+
+// ── SVG ISLAND BUILDER ───────────────────────────────
+function svgIsle(w,gc,gd,rc,rd,trees,icon,iconSz){
+  let h=Math.round(w*0.52);
+  let gx=w/2, gy=Math.round(h*0.38);
+  let grx=Math.round(w*0.42), gry=Math.round(h*0.22);
+  let rh=Math.round(h*0.62);
+  let treeHtml=trees.map(t=>`<span style="position:absolute;top:${t.y}px;left:${t.x}px;font-size:${t.s||14}px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));z-index:4;pointer-events:none">${t.e}</span>`).join('');
+
+  let p=`M${(w*.10).toFixed(1)},${gy}
+    L${(w*.90).toFixed(1)},${gy}
+    C${(w*.88).toFixed(1)},${(gy+rh*.28).toFixed(1)} ${(w*.82).toFixed(1)},${(gy+rh*.38).toFixed(1)} ${(w*.77).toFixed(1)},${(gy+rh*.33).toFixed(1)}
+    C${(w*.71).toFixed(1)},${(gy+rh*.26).toFixed(1)} ${(w*.67).toFixed(1)},${(gy+rh*.68).toFixed(1)} ${(w*.61).toFixed(1)},${(gy+rh*.60).toFixed(1)}
+    C${(w*.55).toFixed(1)},${(gy+rh*.52).toFixed(1)} ${(w*.50).toFixed(1)},${(gy+rh*.88).toFixed(1)} ${(w*.44).toFixed(1)},${(gy+rh*.80).toFixed(1)}
+    C${(w*.38).toFixed(1)},${(gy+rh*.72).toFixed(1)} ${(w*.32).toFixed(1)},${(gy+rh*.60).toFixed(1)} ${(w*.26).toFixed(1)},${(gy+rh*.72).toFixed(1)}
+    C${(w*.20).toFixed(1)},${(gy+rh*.84).toFixed(1)} ${(w*.14).toFixed(1)},${(gy+rh*.44).toFixed(1)} ${(w*.10).toFixed(1)},${gy} Z`;
+
+  let totalH=h+34;
+  let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}" xmlns="http://www.w3.org/2000/svg" style="display:block">
+    <path d="${p}" fill="${rc}"/>
+    <path d="M${(w*.10).toFixed(1)},${gy} L${(w*.90).toFixed(1)},${gy} L${(w*.87).toFixed(1)},${(gy+rh*.22).toFixed(1)} L${(w*.13).toFixed(1)},${(gy+rh*.20).toFixed(1)} Z" fill="${rd}" opacity="0.45"/>
+    <rect x="${(w*.22).toFixed(1)}" y="${(gy+rh*.62).toFixed(1)}" width="5" height="${(h*.28).toFixed(1)}" rx="2.5" fill="rgba(160,228,255,0.82)"/>
+    <rect x="${(w*.47).toFixed(1)}" y="${(gy+rh*.75).toFixed(1)}" width="4" height="${(h*.20).toFixed(1)}" rx="2" fill="rgba(160,228,255,0.62)"/>
+    <rect x="${(w*.71).toFixed(1)}" y="${(gy+rh*.58).toFixed(1)}" width="5" height="${(h*.26).toFixed(1)}" rx="2.5" fill="rgba(160,228,255,0.72)"/>
+    <ellipse cx="${(w*.225).toFixed(1)}" cy="${(h+22).toFixed(1)}" rx="10" ry="4" fill="rgba(160,228,255,0.18)"/>
+    <ellipse cx="${(w*.715).toFixed(1)}" cy="${(h+20).toFixed(1)}" rx="9" ry="3.5" fill="rgba(160,228,255,0.15)"/>
+    <ellipse cx="${gx}" cy="${gy}" rx="${grx}" ry="${gry}" fill="${gc}"/>
+    <ellipse cx="${(gx-w*.08).toFixed(1)}" cy="${(gy-gry*.38).toFixed(1)}" rx="${(grx*.52).toFixed(1)}" ry="${(gry*.42).toFixed(1)}" fill="rgba(255,255,255,0.14)"/>
+    <ellipse cx="${gx}" cy="${(gy+gry*.52).toFixed(1)}" rx="${(grx*.86).toFixed(1)}" ry="${(gry*.52).toFixed(1)}" fill="${gd}" opacity="0.38"/>
+    <ellipse cx="${gx}" cy="${(totalH-4).toFixed(1)}" rx="${(grx*.85).toFixed(1)}" ry="7" fill="rgba(100,200,255,0.09)"/>
+  </svg>`;
+
+  return `<div style="position:relative;width:${w}px;display:inline-block">
+    ${svg}
+    <div style="position:absolute;top:${(gy-iconSz/2-2).toFixed(0)}px;left:50%;transform:translateX(-50%);font-size:${iconSz}px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.85));z-index:5;pointer-events:none">${icon}</div>
+    ${treeHtml}
+  </div>`;
+}
+
+
 // ── ISLAND MAP ────────────────────────────────────────
 function rMap(){
   let c=document.getElementById('content');
@@ -431,81 +471,55 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
+  // Build islands
+  let lernen=svgIsle(188,'#3db84e','#1c7230','#7a6438','#4a3820',
+    [{x:28,y:18,e:'🌲',s:17},{x:138,y:14,e:'🌴',s:15}],'📖',28);
+  let woerter=svgIsle(148,'#72cc38','#3e8416','#7c6a3a','#4a3c20',
+    [{x:18,y:20,e:'🌿',s:13}],'🔍',22);
+  let gemein=svgIsle(152,'#3a90c8','#1a5888','#4e5e78','#2e3848',
+    [{x:120,y:18,e:'🪨',s:12}],'👥',22);
+  let planen=svgIsle(116,'#d49038','#8a5c18','#7a6238','#4a3a1c',
+    [],'📅',18);
+
   c.innerHTML=`
 <div class="map-outer">
   <div class="map-greeting">${greeting}${name?', <b>'+name+'</b>':''}</div>
   <div class="map-ocean">
-    <div class="map-wave mw1"></div>
-    <div class="map-wave mw2"></div>
-    <div class="map-wave mw3"></div>
+    <div class="map-wave mw1"></div><div class="map-wave mw2"></div><div class="map-wave mw3"></div>
+    <div class="map-scatter">
 
-    <!-- LERNEN — top center, largest -->
-    <div class="isle isle-lernen" onclick="setTab('studyhome')">
-      ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
-      <div class="isle-body">
-        <div class="isle-grass isle-grass-lg">
-          <span class="isle-tree" style="left:12px">🌲</span>
-          <span class="isle-tree" style="right:10px;top:6px">🌴</span>
-          <div class="isle-icon-main">📖</div>
-        </div>
-        <div class="isle-rock isle-rock-lg"></div>
-        <div class="isle-falls isle-falls-l"></div>
-        <div class="isle-falls isle-falls-r"></div>
+      <div class="isle isle-lernen" onclick="setTab('studyhome')">
+        ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
+        ${lernen}
+        <div class="isle-label">Lernen</div>
+        <div class="isle-sub">${knownC} known</div>
       </div>
-      <div class="isle-shadow isle-shadow-lg"></div>
-      <div class="isle-label">Lernen</div>
-      <div class="isle-sub">${knownC} known</div>
-    </div>
 
-    <!-- WÖRTER — left -->
-    <div class="isle isle-woerter" onclick="setTab('browse')">
-      <div class="isle-body">
-        <div class="isle-grass isle-grass-md isle-grass-lime">
-          <span class="isle-tree" style="left:8px;top:2px">🌿</span>
-          <div class="isle-icon-main" style="font-size:20px">🔍</div>
-        </div>
-        <div class="isle-rock isle-rock-md"></div>
-        <div class="isle-falls isle-falls-c"></div>
+      <div class="isle isle-woerter" onclick="setTab('browse')">
+        ${woerter}
+        <div class="isle-label">Wörter</div>
+        <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
       </div>
-      <div class="isle-shadow isle-shadow-md"></div>
-      <div class="isle-label">Wörter</div>
-      <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
-    </div>
 
-    <!-- GEMEINSCHAFT — right -->
-    <div class="isle isle-gemein" onclick="setTab('social')">
-      <div class="isle-body">
-        <div class="isle-grass isle-grass-md isle-grass-ocean">
-          <span class="isle-tree" style="right:6px;top:4px">🪨</span>
-          <div class="isle-icon-main" style="font-size:20px">👥</div>
-        </div>
-        <div class="isle-rock isle-rock-md isle-rock-dark"></div>
-        <div class="isle-falls isle-falls-c"></div>
+      <div class="isle isle-gemein" onclick="setTab('social')">
+        ${gemein}
+        <div class="isle-label">Gemeinschaft</div>
+        <div class="isle-sub">${weekBP} BP this week</div>
       </div>
-      <div class="isle-shadow isle-shadow-md"></div>
-      <div class="isle-label">Gemeinschaft</div>
-      <div class="isle-sub">${weekBP} BP this week</div>
-    </div>
 
-    <!-- PLANEN — bottom, smaller -->
-    <div class="isle isle-planen" onclick="setTab('plan')">
-      <div class="isle-body">
-        <div class="isle-grass isle-grass-sm isle-grass-warm">
-          <div class="isle-icon-main" style="font-size:16px">📅</div>
-        </div>
-        <div class="isle-rock isle-rock-sm"></div>
-        <div class="isle-falls isle-falls-c" style="height:12px"></div>
+      <div class="isle isle-planen" onclick="setTab('plan')">
+        ${planen}
+        <div class="isle-label">Planen</div>
+        <div class="isle-sub">Study plan</div>
       </div>
-      <div class="isle-shadow isle-shadow-sm"></div>
-      <div class="isle-label">Planen</div>
-      <div class="isle-sub">Study plan</div>
-    </div>
 
+    </div>
   </div>
 </div>`;
 
   updateMapFAB();
 }
+
 
 function getGreeting(){
   let h=new Date().getHours();
@@ -874,20 +888,28 @@ function rPlan(){
 // ── SOCIAL ────────────────────────────────────────────
 function rSocial(){
   let c=document.getElementById('content');
-  // Race is a hidden route — no tab button, shown when battle/race is active
   if(ranksSubTab==='race'){
     c.innerHTML=rRaceUI();
     if(raceSt&&!raceSt.done&&!raceSt.waiting&&raceSt.startTime){clearTimeout(raceSt&&raceSt.timerOut);setTimeout(startRaceTimer,50);}
     if(!raceSt)loadRaceRoom();
     return;
   }
-  let tabs=[['friends','👥 Friends'],['river','🚤 River'],['battle','⚔️ Battle']];
-  let html='<div class="social-tabs">'+tabs.map(([t,l])=>'<button class="social-tab'+(ranksSubTab===t?' active':'')+'" onclick="ranksSubTab=\''+t+'\';rSocial()">'+l+'</button>').join('')+'</div>';
+  let store=getBPStore();
+  let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
+  let tabs=[['friends','👥','Friends'],['river','🚤','River'],['battle','⚔️','Battle']];
+  let tabHtml='<div class="sc-tabs">'+tabs.map(([t,ic,l])=>{
+    let active=ranksSubTab===t?' active':'';
+    return '<button class="sc-tab'+active+'" onclick="ranksSubTab=\''+t+'\';rSocial()"><span class="sc-tab-icon">'+ic+'</span><span>'+l+'</span></button>';
+  }).join('')+'</div>';
+  let html='<button class="sh-back" onclick="setTab(\'home\')">← Map</button>'+
+    '<div class="sc-hero"><div class="sc-hero-stat"><div class="sc-hero-n">'+weekBP+'</div><div class="sc-hero-l">BP this week</div></div>'+
+    '<div class="sc-hero-stat"><div class="sc-hero-n">'+getDaysUntilReset()+'d</div><div class="sc-hero-l">until reset</div></div></div>'+
+    tabHtml;
   if(ranksSubTab==='river')html+=rRiverUI();
   else if(ranksSubTab==='battle')html+=rBattleUI();
   else html+=rFriendsUI();
   c.innerHTML=html;
-  if(ranksSubTab==='friends'||ranksSubTab==='leaderboard')loadFriends();
+  if(ranksSubTab==='friends')loadFriends();
   if(ranksSubTab==='river')loadRiver();
   if(ranksSubTab==='battle')loadBattle();
 }

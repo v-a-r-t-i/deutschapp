@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '6.1.1';
+const APP_VERSION = '6.1.2';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <!-- FLOATING MAP BUTTON — visible in all sections except home -->
 <button id="map-fab" onclick="setTab('home')" style="display:none" aria-label="Map">
-  🗺️
+  🗺️ <span>Map</span>
 </button>
 
 <!-- TEACHER APP -->
