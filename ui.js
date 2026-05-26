@@ -253,7 +253,7 @@ function revCard(){
   if(ca){
     let item=queue[qIdx];
     let bare=(item.de||'').replace(/^(der|die|das|ein|eine)\s+/i,'').trim();
-    if(bare.length>=8){
+    if(lang==='de'&&bare.length>=8){
       ca.innerHTML=`<button class="cmp-btn" onclick="showCompound('${item.de.replace(/'/g,"\\'")}')">🧩 Break down this word</button>`;
     }else{ca.innerHTML='';}
   }

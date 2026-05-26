@@ -64,18 +64,21 @@ async function loadWords(){
       });
       // Only replace if we got valid data
       if(Object.keys(newData).length>0){
-        // Merge: keep local-only categories and words that Supabase doesn't have yet
-        // (e.g. newly added A2 words, Verbindungswörter, Körper/Gesundheit)
+        // Merge: keep local-only German words not yet synced to Supabase
+        // Skip for Korean — data.js has no Korean content; merging it would
+        // dump all 188 German words into Korean mode.
         let supaWords=new Set();
         Object.keys(newData).forEach(c=>newData[c].forEach(w=>supaWords.add(c+'|'+w.de)));
-        Object.keys(DATA).forEach(cat=>{
-          (DATA[cat]||[]).forEach(w=>{
-            if(!supaWords.has(cat+'|'+w.de)){
-              if(!newData[cat])newData[cat]=[];
-              newData[cat].push(w); // local word not in Supabase — keep it
-            }
+        if(lang==='de'){
+          Object.keys(DATA).forEach(cat=>{
+            (DATA[cat]||[]).forEach(w=>{
+              if(!supaWords.has(cat+'|'+w.de)){
+                if(!newData[cat])newData[cat]=[];
+                newData[cat].push(w);
+              }
+            });
           });
-        });
+        }
         Object.keys(DATA).forEach(k=>delete DATA[k]);
         Object.assign(DATA,newData);
         console.log('Words loaded (Supabase + local merge):',Object.values(DATA).flat().length);
