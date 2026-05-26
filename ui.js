@@ -1031,12 +1031,20 @@ async function loadFriends(){
       let skd=sk.find(x=>x.user_id===fid);
       return {id:fid,name:p?.display_name||fid.slice(0,8),xp:skd?.xp_total||0,streak:skd?.streak_count||0,isMe:false};
     });
-    // Add weekly BP for friends river
+    // Fetch this week's battle_log to get accurate weekly BP for friends
     let myStore=getBPStore();
-    riverUsers.forEach(u=>{u.weekBP=Math.floor((u.xp||0)/10);});
-    riverUsers.push({id:CU.id,name:CP?.display_name||'You',weekBP:Math.max(0,myStore.delta||0),xp:xpTotal,streak:streakN,isMe:true});
-    riverUsers.sort((a,b)=>b.weekBP-a.weekBP);
-    renderRiver(riverUsers,riverWrap,true);
+    let week=getWeekStart();
+    sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake',true).then(battles=>{
+      let weeklyBP={};
+      (battles||[]).forEach(b=>{
+        weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
+        weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+      });
+      riverUsers.forEach(u=>{u.weekBP=Math.max(0,weeklyBP[u.id]||0);});
+      riverUsers.push({id:CU.id,name:CP?.display_name||'You',weekBP:Math.max(0,myStore.delta||0),xp:xpTotal,streak:streakN,isMe:true});
+      riverUsers.sort((a,b)=>b.weekBP-a.weekBP);
+      renderRiver(riverUsers,riverWrap,true);
+    });
   }
 }
 function toggleFriendActions(fid,row){
