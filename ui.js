@@ -495,10 +495,74 @@ function rLesen(){
     '</div>'+
     '<div class="lesen-card">'+
       '<div style="font-size:15px;font-weight:700;margin-bottom:12px">'+t.title+'</div>'+
-      '<div style="font-size:14px;line-height:1.7;color:var(--txt2);border-bottom:1px solid var(--bor);padding-bottom:14px;margin-bottom:14px">'+textHtml+'</div>'+
+      '<div id="lesen-text" style="font-size:14px;line-height:1.9;color:var(--txt2);border-bottom:1px solid var(--bor);padding-bottom:14px;margin-bottom:14px">'+wrapLesenWords(t.text)+'</div>'+
+      '<div id="lesen-tooltip" style="display:none;position:fixed;background:#1e1b2e;border:1px solid rgba(139,92,246,0.4);border-radius:10px;padding:6px 12px;font-size:12px;color:#e9d5ff;pointer-events:none;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.4)"></div>'+
       '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:12px">Questions</div>'+
       questionsHtml+
     '</div>';
+  // Load glossary in background — first from DATA, then AI for unknowns
+  loadLesenGlossary(t);
+}
+
+// ── LESEN WORD TOOLTIPS ───────────────────────────────
+let lesenGlossary={};  // key: lowercase bare word → English meaning
+
+function wrapLesenWords(text){
+  // Wrap each word token in a clickable span; preserve punctuation and newlines
+  return text.replace(/\n/g,'<br>').replace(/([A-Za-zÄÖÜäöüß]+)/g,(word)=>{
+    return `<span class="lw-tip" onclick="showLTip(event,'${word.replace(/'/g,"\\'")}')">${word}</span>`;
+  });
+}
+
+function showLTip(e,word){
+  let tip=document.getElementById('lesen-tooltip');
+  if(!tip)return;
+  let bare=word.toLowerCase().replace(/^(der|die|das|ein|eine|einen|einem|einer|des|dem|den)\s+/i,'');
+  let meaning=lesenGlossary[bare]||lesenGlossary[word.toLowerCase()];
+  if(!meaning){tip.style.display='none';return;}
+  tip.textContent=meaning;
+  tip.style.display='block';
+  tip.style.left=Math.min(e.clientX+12,window.innerWidth-180)+'px';
+  tip.style.top=(e.clientY-36)+'px';
+  clearTimeout(tip._t);
+  tip._t=setTimeout(()=>tip.style.display='none',2200);
+}
+document.addEventListener('click',e=>{
+  if(!e.target.classList.contains('lw-tip')){
+    let tip=document.getElementById('lesen-tooltip');
+    if(tip)tip.style.display='none';
+  }
+});
+
+async function loadLesenGlossary(t){
+  // 1. Build word list from text
+  let words=[...new Set((t.text.match(/[A-Za-zÄÖÜäöüß]+/g)||[]).map(w=>w.toLowerCase()))];
+  // 2. Check DATA first — free and instant
+  let allWords=Object.values(DATA).flat();
+  let dataMap={};
+  allWords.forEach(w=>{dataMap[w.de.toLowerCase()]=w.en;});
+  let found={},missing=[];
+  words.forEach(w=>{
+    if(dataMap[w])found[w]=dataMap[w];
+    else missing.push(w);
+  });
+  // Seed glossary immediately with what we have
+  Object.assign(lesenGlossary,found);
+  // 3. Ask AI for the rest in one shot (skip very short/common words)
+  let toFetch=missing.filter(w=>w.length>3&&!/^(aber|auch|noch|sehr|schon|dann|dass|eine|einer|einen|einem|nicht|sein|sind|wird|wurde|haben|hatte|nach|über|unter|diese|dieser|dieses|wenn|weil|oder|und|mit|von|bei|für|aus|zum|zur|des|dem|den|ihm|ihr|sie|wir|ich|das|der|die|ein|zu)$/.test(w));
+  if(!toFetch.length)return;
+  try{
+    let resp=await fetch('https://yngsuxuamhzefkkjsgus.supabase.co/functions/v1/ai-proxy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(authToken||SKEY)},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,
+        messages:[{role:'user',content:`Translate these German words to English. Return JSON only: {"word":"meaning",...}\nWords: ${toFetch.join(', ')}`}]})
+    });
+    let data=await resp.json();
+    let txt=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    let parsed=JSON.parse(txt);
+    Object.assign(lesenGlossary,parsed);
+  }catch(e){}
 }
 
 function rGender(){

@@ -2046,6 +2046,9 @@ font-family:inherit;
 .phrase-row:last-child{border-bottom:none;}
 .psb{background:rgba(255,255,255,0.06);border:none;color:white;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:13px;flex-shrink:0;transition:.15s ease;}
 /* Compound word breakdown */
+/* Lesen word tooltips */
+.lw-tip{cursor:pointer;border-radius:3px;transition:background .1s;}
+.lw-tip:hover{background:rgba(139,92,246,0.18);color:#e9d5ff;}
 .cmp-btn{width:100%;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.25);color:#c4b5fd;border-radius:14px;padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;transition:.15s ease;margin-top:4px;}
 .cmp-btn:hover{background:rgba(139,92,246,0.22);}
 .compound-box{background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.22);border-radius:16px;padding:14px 16px;margin-top:4px;}
