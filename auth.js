@@ -138,6 +138,8 @@ async function handleSession(session){
         let ub=document.getElementById('user-btn');if(ub)ub.textContent=(CP?.display_name||CU.email)+' ▾';
         loadProg();
         subscribeToChalllenges();
+        // Always start on the map
+        setTimeout(()=>setTab('home'),100);
       }
     }else{
       document.getElementById('loading-screen').style.display='none';

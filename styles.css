@@ -2621,13 +2621,13 @@ font-family:inherit;
 }
 
 /* Scattered positions */
-.isle-lernen  {top:5%;  left:50%;transform:translateX(-50%);z-index:5;animation-delay:0s;}
-.isle-woerter {top:44%; left:5%; z-index:4;animation-delay:0.8s;}
-.isle-gemein  {top:40%; right:6%;z-index:4;animation-delay:1.4s;}
-.isle-planen  {top:70%; left:36%;z-index:3;animation-delay:0.4s;}
+.isle-lernen  {top:3%;  left:50%;transform:translateX(-50%);z-index:5;animation-delay:0s;}
+.isle-woerter {top:42%; left:3%; z-index:4;animation-delay:0.8s;}
+.isle-gemein  {top:38%; right:3%;z-index:4;animation-delay:1.4s;}
+.isle-planen  {bottom:4%;left:38%;z-index:3;animation-delay:0.4s;}
 /* hover states must re-apply transform including translateX */
-.isle-lernen:hover{transform:translateX(-50%) translateY(-6px) scale(1.05);}
-.isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{transform:translateY(-6px) scale(1.05);}
+.isle-lernen:hover{transform:translateX(-50%) translateY(-6px) scale(1.04);}
+.isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{transform:translateY(-6px) scale(1.04);}
 
 /* Waterfall animation */
 .map-scatter svg rect[fill="rgba(160,228,255,0.82)"],
@@ -2665,29 +2665,28 @@ font-family:inherit;
 /* ── Floating Map Button ── */
 #map-fab{
   position:fixed;
-  bottom:24px;left:24px;
+  bottom:28px;left:28px;
   width:auto;
-  padding:12px 20px;
+  padding:14px 26px;
   border-radius:999px;
-  background:rgba(10,20,48,0.92);
-  border:1.5px solid rgba(100,180,255,0.2);
-  color:rgba(255,255,255,0.85);
-  font-size:14px;font-weight:700;
+  background:rgba(10,20,48,0.94);
+  border:2px solid rgba(100,180,255,0.25);
+  color:white;
+  font-size:16px;font-weight:800;
   letter-spacing:-0.01em;
   cursor:pointer;
-  box-shadow:0 4px 24px rgba(0,0,0,0.5);
+  box-shadow:0 6px 28px rgba(0,0,0,0.55),0 0 0 1px rgba(100,180,255,0.1);
   display:none;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:10px;
   z-index:500;
-  backdrop-filter:blur(16px);
-  transition:transform .2s,box-shadow .2s,background .2s;
+  backdrop-filter:blur(20px);
+  transition:transform .2s,box-shadow .2s;
 }
 #map-fab:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 30px rgba(0,0,0,0.6);
-  background:rgba(15,30,70,0.96);
+  transform:translateY(-3px);
+  box-shadow:0 10px 36px rgba(0,0,0,0.65),0 0 0 1px rgba(100,180,255,0.2);
 }
 
 /* Remove old bottom nav padding */

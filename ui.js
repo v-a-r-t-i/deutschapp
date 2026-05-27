@@ -422,39 +422,108 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 
 
 // ── SVG ISLAND BUILDER ───────────────────────────────
-function svgIsle(w,gc,gd,rc,rd,trees,icon,iconSz){
-  let h=Math.round(w*0.52);
-  let gx=w/2, gy=Math.round(h*0.38);
-  let grx=Math.round(w*0.42), gry=Math.round(h*0.22);
-  let rh=Math.round(h*0.62);
-  let treeHtml=trees.map(t=>`<span style="position:absolute;top:${t.y}px;left:${t.x}px;font-size:${t.s||14}px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8));z-index:4;pointer-events:none">${t.e}</span>`).join('');
+// Craftpix-style: thick body, visible sides, overhanging grass, waterfalls
+function svgIsle(cfg){
+  let {w=180,grassColor='#3db84e',grassEdge='#256e2e',bodyTop='#8b7355',bodyMid='#6b5635',bodyBot='#4a3820',grassW,grassH,bodyHeight,trees=[],icon='📖',iconSz=26}=cfg;
+  grassW = grassW||(w*0.92);
+  grassH = grassH||(w*0.25);
+  bodyHeight = bodyHeight||(w*0.42);
+  let cx=w/2;
+  let grassY=grassH*0.5+4; // center of grass ellipse
+  let bodyTopY=grassY+grassH*0.38; // where body starts (under grass)
+  let bodyBotW=w*0.32;
+  let bodyBotY=bodyTopY+bodyHeight;
+  let totalH=bodyBotY+30;
 
-  let p=`M${(w*.10).toFixed(1)},${gy}
-    L${(w*.90).toFixed(1)},${gy}
-    C${(w*.88).toFixed(1)},${(gy+rh*.28).toFixed(1)} ${(w*.82).toFixed(1)},${(gy+rh*.38).toFixed(1)} ${(w*.77).toFixed(1)},${(gy+rh*.33).toFixed(1)}
-    C${(w*.71).toFixed(1)},${(gy+rh*.26).toFixed(1)} ${(w*.67).toFixed(1)},${(gy+rh*.68).toFixed(1)} ${(w*.61).toFixed(1)},${(gy+rh*.60).toFixed(1)}
-    C${(w*.55).toFixed(1)},${(gy+rh*.52).toFixed(1)} ${(w*.50).toFixed(1)},${(gy+rh*.88).toFixed(1)} ${(w*.44).toFixed(1)},${(gy+rh*.80).toFixed(1)}
-    C${(w*.38).toFixed(1)},${(gy+rh*.72).toFixed(1)} ${(w*.32).toFixed(1)},${(gy+rh*.60).toFixed(1)} ${(w*.26).toFixed(1)},${(gy+rh*.72).toFixed(1)}
-    C${(w*.20).toFixed(1)},${(gy+rh*.84).toFixed(1)} ${(w*.14).toFixed(1)},${(gy+rh*.44).toFixed(1)} ${(w*.10).toFixed(1)},${gy} Z`;
+  // Grass rim — slightly smaller ellipse at bodyTopY gives 3D depth of grass
+  let rimRx=grassW*0.5-3;
+  let rimRy=grassH*0.5-2;
 
-  let totalH=h+34;
-  let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}" xmlns="http://www.w3.org/2000/svg" style="display:block">
-    <path d="${p}" fill="${rc}"/>
-    <path d="M${(w*.10).toFixed(1)},${gy} L${(w*.90).toFixed(1)},${gy} L${(w*.87).toFixed(1)},${(gy+rh*.22).toFixed(1)} L${(w*.13).toFixed(1)},${(gy+rh*.20).toFixed(1)} Z" fill="${rd}" opacity="0.45"/>
-    <rect x="${(w*.22).toFixed(1)}" y="${(gy+rh*.62).toFixed(1)}" width="5" height="${(h*.28).toFixed(1)}" rx="2.5" fill="rgba(160,228,255,0.82)"/>
-    <rect x="${(w*.47).toFixed(1)}" y="${(gy+rh*.75).toFixed(1)}" width="4" height="${(h*.20).toFixed(1)}" rx="2" fill="rgba(160,228,255,0.62)"/>
-    <rect x="${(w*.71).toFixed(1)}" y="${(gy+rh*.58).toFixed(1)}" width="5" height="${(h*.26).toFixed(1)}" rx="2.5" fill="rgba(160,228,255,0.72)"/>
-    <ellipse cx="${(w*.225).toFixed(1)}" cy="${(h+22).toFixed(1)}" rx="10" ry="4" fill="rgba(160,228,255,0.18)"/>
-    <ellipse cx="${(w*.715).toFixed(1)}" cy="${(h+20).toFixed(1)}" rx="9" ry="3.5" fill="rgba(160,228,255,0.15)"/>
-    <ellipse cx="${gx}" cy="${gy}" rx="${grx}" ry="${gry}" fill="${gc}"/>
-    <ellipse cx="${(gx-w*.08).toFixed(1)}" cy="${(gy-gry*.38).toFixed(1)}" rx="${(grx*.52).toFixed(1)}" ry="${(gry*.42).toFixed(1)}" fill="rgba(255,255,255,0.14)"/>
-    <ellipse cx="${gx}" cy="${(gy+gry*.52).toFixed(1)}" rx="${(grx*.86).toFixed(1)}" ry="${(gry*.52).toFixed(1)}" fill="${gd}" opacity="0.38"/>
-    <ellipse cx="${gx}" cy="${(totalH-4).toFixed(1)}" rx="${(grx*.85).toFixed(1)}" ry="7" fill="rgba(100,200,255,0.09)"/>
+  // Body side polygon — trapezoidal with organic variations
+  let bL=(w-grassW)/2+2;
+  let bR=w-bL;
+  let nL=(w-bodyBotW)/2;
+  let nR=w-nL;
+  let m1Y=bodyTopY+bodyHeight*0.35;
+  let m2Y=bodyTopY+bodyHeight*0.7;
+  let bodyPath=`M${bL.toFixed(1)},${bodyTopY.toFixed(1)} L${bR.toFixed(1)},${bodyTopY.toFixed(1)}`
+    +` C${(bR+4).toFixed(1)},${m1Y.toFixed(1)} ${(nR+6).toFixed(1)},${m2Y.toFixed(1)} ${nR.toFixed(1)},${bodyBotY.toFixed(1)}`
+    +` L${nL.toFixed(1)},${bodyBotY.toFixed(1)}`
+    +` C${(nL-6).toFixed(1)},${m2Y.toFixed(1)} ${(bL-4).toFixed(1)},${m1Y.toFixed(1)} ${bL.toFixed(1)},${bodyTopY.toFixed(1)} Z`;
+
+  // Striation lines on body (layer effect)
+  let stria='';
+  for(let i=1;i<=3;i++){
+    let py=bodyTopY+bodyHeight*(i/4.5);
+    let frac=i/4.5;
+    let lx=bL+(nL-bL)*frac*0.9;
+    let rx=bR+(nR-bR)*frac*0.9;
+    stria+=`<line x1="${(lx+4).toFixed(1)}" y1="${py.toFixed(1)}" x2="${(rx-4).toFixed(1)}" y2="${py.toFixed(1)}" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>`;
+  }
+
+  // Waterfalls — hanging from bottom third of body
+  let wfW=5, wfH=bodyHeight*0.38;
+  let wf1X=nL+(nR-nL)*0.18;
+  let wf2X=nL+(nR-nL)*0.50;
+  let wf3X=nL+(nR-nL)*0.80;
+  let wfY=bodyBotY-wfH*0.3;
+
+  // Splash pools at base
+  let splashY=bodyBotY+wfH+4;
+
+  // Trees — positioned on grass
+  let treeHtml=trees.map(t=>`<span style="position:absolute;top:${t.y}px;left:${t.x}px;font-size:${t.s||15}px;z-index:6;pointer-events:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.9))">${t.e}</span>`).join('');
+
+  let svg=`<svg viewBox="0 0 ${w} ${totalH.toFixed(0)}" width="${w}" height="${totalH.toFixed(0)}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+    <defs>
+      <linearGradient id="body${w}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${bodyTop}"/>
+        <stop offset="55%" stop-color="${bodyMid}"/>
+        <stop offset="100%" stop-color="${bodyBot}"/>
+      </linearGradient>
+      <linearGradient id="wfall${w}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(140,220,255,0.9)"/>
+        <stop offset="100%" stop-color="rgba(100,190,255,0)"/>
+      </linearGradient>
+      <linearGradient id="gside${w}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${grassEdge}"/>
+        <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Waterfall streams behind body -->
+    <rect x="${(wf1X-wfW/2).toFixed(1)}" y="${wfY.toFixed(1)}" width="${wfW}" height="${wfH.toFixed(1)}" rx="2.5" fill="url(#wfall${w})" opacity="0.85"/>
+    <rect x="${(wf2X-wfW/2).toFixed(1)}" y="${(wfY+wfH*.06).toFixed(1)}" width="${(wfW-1).toFixed(1)}" height="${(wfH*.88).toFixed(1)}" rx="2" fill="url(#wfall${w})" opacity="0.65"/>
+    <rect x="${(wf3X-wfW/2).toFixed(1)}" y="${(wfY+wfH*.04).toFixed(1)}" width="${wfW}" height="${(wfH*.92).toFixed(1)}" rx="2.5" fill="url(#wfall${w})" opacity="0.78"/>
+
+    <!-- Splash pools -->
+    <ellipse cx="${wf1X.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="9" ry="3.5" fill="rgba(130,210,255,0.22)"/>
+    <ellipse cx="${wf2X.toFixed(1)}" cy="${(splashY+2).toFixed(1)}" rx="7" ry="2.8" fill="rgba(130,210,255,0.16)"/>
+    <ellipse cx="${wf3X.toFixed(1)}" cy="${(splashY+1).toFixed(1)}" rx="9" ry="3.5" fill="rgba(130,210,255,0.20)"/>
+
+    <!-- Body -->
+    <path d="${bodyPath}" fill="url(#body${w})"/>
+    <!-- Body left shadow -->
+    <path d="M${bL.toFixed(1)},${bodyTopY.toFixed(1)} C${(bL-4).toFixed(1)},${(bodyTopY+bodyHeight*.5).toFixed(1)} ${(nL-6).toFixed(1)},${(bodyTopY+bodyHeight*.9).toFixed(1)} ${nL.toFixed(1)},${bodyBotY.toFixed(1)} L${(nL+bodyBotW*.18).toFixed(1)},${bodyBotY.toFixed(1)} C${(nL+bodyBotW*.1).toFixed(1)},${(bodyTopY+bodyHeight*.9).toFixed(1)} ${(bL+w*.08).toFixed(1)},${(bodyTopY+bodyHeight*.5).toFixed(1)} ${(bL+w*.08).toFixed(1)},${bodyTopY.toFixed(1)} Z" fill="rgba(0,0,0,0.22)"/>
+    ${stria}
+
+    <!-- Grass top — wide overhanging ellipse -->
+    <!-- Grass front edge (3D depth) -->
+    <ellipse cx="${cx}" cy="${(grassY+grassH*0.25).toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.38).toFixed(1)}" fill="${grassEdge}"/>
+    <!-- Main grass surface -->
+    <ellipse cx="${cx}" cy="${grassY.toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.5).toFixed(1)}" fill="${grassColor}"/>
+    <!-- Grass highlight -->
+    <ellipse cx="${(cx-grassW*0.12).toFixed(1)}" cy="${(grassY-grassH*0.22).toFixed(1)}" rx="${(grassW*0.3).toFixed(1)}" ry="${(grassH*0.22).toFixed(1)}" fill="rgba(255,255,255,0.14)"/>
+    <!-- Grass dark edge rim -->
+    <ellipse cx="${cx}" cy="${grassY.toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.5).toFixed(1)}" fill="none" stroke="${grassEdge}" stroke-width="2.5"/>
+
+    <!-- Water reflection shadow -->
+    <ellipse cx="${cx}" cy="${(totalH-3).toFixed(1)}" rx="${(w*0.38).toFixed(1)}" ry="6" fill="rgba(80,160,255,0.10)"/>
   </svg>`;
 
   return `<div style="position:relative;width:${w}px;display:inline-block">
     ${svg}
-    <div style="position:absolute;top:${(gy-iconSz/2-2).toFixed(0)}px;left:50%;transform:translateX(-50%);font-size:${iconSz}px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.85));z-index:5;pointer-events:none">${icon}</div>
+    <div style="position:absolute;top:${(grassY-iconSz/2).toFixed(0)}px;left:50%;transform:translateX(-50%);font-size:${iconSz}px;z-index:8;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))">${icon}</div>
     ${treeHtml}
   </div>`;
 }
@@ -471,15 +540,14 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  // Build islands
-  let lernen=svgIsle(188,'#3db84e','#1c7230','#7a6438','#4a3820',
-    [{x:28,y:18,e:'🌲',s:17},{x:138,y:14,e:'🌴',s:15}],'📖',28);
-  let woerter=svgIsle(148,'#72cc38','#3e8416','#7c6a3a','#4a3c20',
-    [{x:18,y:20,e:'🌿',s:13}],'🔍',22);
-  let gemein=svgIsle(152,'#3a90c8','#1a5888','#4e5e78','#2e3848',
-    [{x:120,y:18,e:'🪨',s:12}],'👥',22);
-  let planen=svgIsle(116,'#d49038','#8a5c18','#7a6238','#4a3a1c',
-    [],'📅',18);
+  let lernen=svgIsle({w:196,grassColor:'#40c453',grassEdge:'#237a2e',bodyTop:'#8a7248',bodyMid:'#6b5630',bodyBot:'#4a3818',
+    trees:[{x:22,y:0,e:'🌲',s:18},{x:146,y:2,e:'🌴',s:16}],icon:'📖',iconSz:28});
+  let woerter=svgIsle({w:155,grassColor:'#6ecf35',grassEdge:'#3c8010',bodyTop:'#7c6a38',bodyMid:'#5e5020',bodyBot:'#3c3010',
+    trees:[{x:16,y:4,e:'🌿',s:14}],icon:'🔍',iconSz:22});
+  let gemein=svgIsle({w:158,grassColor:'#3e96d4',grassEdge:'#1e5e8c',bodyTop:'#4e5e78',bodyMid:'#323e52',bodyBot:'#1e2635',
+    trees:[{x:124,y:2,e:'🪨',s:12}],icon:'👥',iconSz:22});
+  let planen=svgIsle({w:122,grassColor:'#d4943a',grassEdge:'#8a5e18',bodyTop:'#7a6238',bodyMid:'#5a4422',bodyBot:'#3c2c10',
+    trees:[],icon:'📅',iconSz:18});
 
   c.innerHTML=`
 <div class="map-outer">
