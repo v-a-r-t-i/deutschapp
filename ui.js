@@ -426,87 +426,88 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 function svgIsle(cfg){
   let {w=180,decoration='',badgeHtml=''}=cfg;
   let cx=w/2;
-  let grassRx=w*0.44, grassRy=w*0.17;
-  let grassCy=w*0.26;
-  let bodyTopY=grassCy+grassRy*0.55;
-  let bodyW=w*0.88, bodyBotW=w*0.30;
+
+  // Flat flying-saucer grass (key to matching reference)
+  let grassRx=w*0.44, grassRy=w*0.09;
+  let grassCy=w*0.18;
+
+  // Wider-bottom body (avoids inverted-cone look)
+  let bodyTopY=grassCy+grassRy*0.5;
+  let bodyW=w*0.86, bodyBotW=w*0.44;
   let bL=(w-bodyW)/2, bR=w-bL;
   let nL=(w-bodyBotW)/2, nR=w-nL;
-  let bodyH=w*0.50;
+  let bodyH=w*0.46;
   let bodyBotY=bodyTopY+bodyH;
-  let totalH=bodyBotY+w*0.20;
-  let bm1Y=bodyTopY+bodyH*0.38, bm2Y=bodyTopY+bodyH*0.74;
+  let totalH=bodyBotY+w*0.18;
+  let bm1Y=bodyTopY+bodyH*0.40, bm2Y=bodyTopY+bodyH*0.76;
 
   let bodyPath=`M${bL.toFixed(1)},${bodyTopY.toFixed(1)} L${bR.toFixed(1)},${bodyTopY.toFixed(1)}`
-    +` C${(bR+3).toFixed(1)},${bm1Y.toFixed(1)} ${(nR+5).toFixed(1)},${bm2Y.toFixed(1)} ${nR.toFixed(1)},${bodyBotY.toFixed(1)}`
+    +` C${(bR+2).toFixed(1)},${bm1Y.toFixed(1)} ${(nR+4).toFixed(1)},${bm2Y.toFixed(1)} ${nR.toFixed(1)},${bodyBotY.toFixed(1)}`
     +` L${nL.toFixed(1)},${bodyBotY.toFixed(1)}`
-    +` C${(nL-5).toFixed(1)},${bm2Y.toFixed(1)} ${(bL-3).toFixed(1)},${bm1Y.toFixed(1)} ${bL.toFixed(1)},${bodyTopY.toFixed(1)} Z`;
+    +` C${(nL-4).toFixed(1)},${bm2Y.toFixed(1)} ${(bL-2).toFixed(1)},${bm1Y.toFixed(1)} ${bL.toFixed(1)},${bodyTopY.toFixed(1)} Z`;
 
-  // Striation lines
-  let stria='';
-  for(let i=1;i<=3;i++){
-    let frac=i/4.2;
-    let py=bodyTopY+bodyH*frac;
-    let lx=bL+(nL-bL)*frac*0.85;
-    let rx=bR+(nR-bR)*frac*0.85;
-    stria+=`<line x1="${(lx+5).toFixed(1)}" y1="${py.toFixed(1)}" x2="${(rx-5).toFixed(1)}" y2="${py.toFixed(1)}" stroke="rgba(0,0,0,0.13)" stroke-width="1"/>`;
-  }
+  // Distinct horizontal rock bands (pixel-art geological strata)
+  let b0=bodyTopY, bH=bodyH;
+  let rockBands=`
+    <rect x="0" y="${b0.toFixed(1)}"                    width="${w}" height="${(bH*0.21).toFixed(1)}" fill="#d2b472"/>
+    <rect x="0" y="${(b0+bH*0.21).toFixed(1)}"          width="${w}" height="${(bH*0.19).toFixed(1)}" fill="#ba9450"/>
+    <rect x="0" y="${(b0+bH*0.40).toFixed(1)}"          width="${w}" height="${(bH*0.20).toFixed(1)}" fill="#a07838"/>
+    <rect x="0" y="${(b0+bH*0.60).toFixed(1)}"          width="${w}" height="${(bH*0.20).toFixed(1)}" fill="#886030"/>
+    <rect x="0" y="${(b0+bH*0.80).toFixed(1)}"          width="${w}" height="${(bH*0.20).toFixed(1)}" fill="#6a4818"/>`;
 
-  // Waterfall (single centered)
-  let wfW=7, wfH=bodyH*0.52, wfX=cx;
-  let wfY=bodyTopY+bodyH*0.18;
-  let splashY=wfY+wfH+4;
+  // Two waterfalls
+  let wfW=6, wfH=bodyH*0.60;
+  let wf1X=cx-w*0.09, wf2X=cx+w*0.08;
+  let wfY=bodyTopY+bodyH*0.14;
+  let splashY=wfY+wfH+5;
 
-  // White bumpy grass rim (deterministic)
+  // White bumpy rim — FULL perimeter (reference shows bumps all the way around)
   let bumps='';
-  let bumpN=Math.round(w/9);
+  let bumpN=Math.round(w/7);
   for(let i=0;i<=bumpN;i++){
-    let a=Math.PI*(1-(i/bumpN));
-    let bx=cx+grassRx*0.95*Math.cos(a);
-    let by=grassCy+grassRy*0.78*Math.sin(a);
-    let br=5+(i%3===0?2:i%2===0?1:3);
-    bumps+=`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${br}" fill="rgba(255,255,255,0.92)"/>`;
+    let a=(i/bumpN)*2*Math.PI;
+    let bx=cx+grassRx*0.97*Math.cos(a);
+    let by=grassCy+grassRy*0.90*Math.sin(a);
+    let br=4+(i%3===0?2.5:i%2===0?1:3);
+    bumps+=`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${br}" fill="rgba(255,255,255,0.94)"/>`;
   }
 
   let svg=`<svg viewBox="0 0 ${w} ${totalH.toFixed(0)}" width="${w}" height="${totalH.toFixed(0)}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
     <defs>
-      <linearGradient id="ibody${w}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#c8aa72"/>
-        <stop offset="58%" stop-color="#a08040"/>
-        <stop offset="100%" stop-color="#6a5228"/>
-      </linearGradient>
+      <clipPath id="bc${w}"><path d="${bodyPath}"/></clipPath>
       <linearGradient id="iwf${w}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="rgba(140,224,255,0.95)"/>
+        <stop offset="0%" stop-color="rgba(150,228,255,0.95)"/>
         <stop offset="100%" stop-color="rgba(100,200,255,0)"/>
       </linearGradient>
     </defs>
-    <!-- Body -->
-    <path d="${bodyPath}" fill="url(#ibody${w})"/>
-    <!-- Body left shadow -->
-    <path d="M${bL.toFixed(1)},${bodyTopY.toFixed(1)} C${(bL-3).toFixed(1)},${bm1Y.toFixed(1)} ${(nL-5).toFixed(1)},${bm2Y.toFixed(1)} ${nL.toFixed(1)},${bodyBotY.toFixed(1)} L${(nL+bodyBotW*0.18).toFixed(1)},${bodyBotY.toFixed(1)} C${(nL+4).toFixed(1)},${bm2Y.toFixed(1)} ${(bL+w*0.07).toFixed(1)},${bm1Y.toFixed(1)} ${(bL+w*0.07).toFixed(1)},${bodyTopY.toFixed(1)} Z" fill="rgba(0,0,0,0.20)"/>
-    ${stria}
-    <!-- Waterfall -->
-    <rect x="${(wfX-wfW/2).toFixed(1)}" y="${wfY.toFixed(1)}" width="${wfW}" height="${wfH.toFixed(1)}" rx="3.5" fill="url(#iwf${w})" opacity="0.92"/>
-    <rect x="${(wfX-wfW/2+wfW*0.7).toFixed(1)}" y="${(wfY+wfH*0.1).toFixed(1)}" width="${(wfW*0.45).toFixed(1)}" height="${(wfH*0.75).toFixed(1)}" rx="2" fill="url(#iwf${w})" opacity="0.50"/>
-    <!-- Splash -->
-    <ellipse cx="${wfX.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="13" ry="4.5" fill="rgba(130,218,255,0.32)"/>
-    <ellipse cx="${wfX.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="7" ry="2.5" fill="rgba(160,230,255,0.50)"/>
-    <!-- Grass edge (3D depth) -->
-    <ellipse cx="${cx}" cy="${(grassCy+grassRy*0.52).toFixed(1)}" rx="${(grassRx*0.97).toFixed(1)}" ry="${(grassRy*0.70).toFixed(1)}" fill="#3a9e8e"/>
+    <!-- Body rock bands clipped to body shape -->
+    <g clip-path="url(#bc${w})">${rockBands}</g>
+    <!-- Left shadow strip -->
+    <path d="M${bL.toFixed(1)},${bodyTopY.toFixed(1)} C${(bL-2).toFixed(1)},${bm1Y.toFixed(1)} ${(nL-4).toFixed(1)},${bm2Y.toFixed(1)} ${nL.toFixed(1)},${bodyBotY.toFixed(1)} L${(nL+bodyBotW*0.15).toFixed(1)},${bodyBotY.toFixed(1)} C${(nL+3).toFixed(1)},${bm2Y.toFixed(1)} ${(bL+w*0.06).toFixed(1)},${bm1Y.toFixed(1)} ${(bL+w*0.06).toFixed(1)},${bodyTopY.toFixed(1)} Z" fill="rgba(0,0,0,0.22)"/>
+    <!-- Waterfalls -->
+    <rect x="${(wf1X-wfW/2).toFixed(1)}" y="${wfY.toFixed(1)}" width="${wfW}" height="${wfH.toFixed(1)}" rx="3" fill="url(#iwf${w})" opacity="0.92"/>
+    <rect x="${(wf2X-wfW/2).toFixed(1)}" y="${(wfY+wfH*0.08).toFixed(1)}" width="${(wfW*0.7).toFixed(1)}" height="${(wfH*0.86).toFixed(1)}" rx="2.5" fill="url(#iwf${w})" opacity="0.62"/>
+    <!-- Splash pools -->
+    <ellipse cx="${wf1X.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="12" ry="4" fill="rgba(130,218,255,0.35)"/>
+    <ellipse cx="${wf2X.toFixed(1)}" cy="${(splashY+1).toFixed(1)}" rx="8" ry="3" fill="rgba(130,218,255,0.25)"/>
+    <!-- Grass underside depth -->
+    <ellipse cx="${cx}" cy="${(grassCy+grassRy*0.62).toFixed(1)}" rx="${(grassRx*0.97).toFixed(1)}" ry="${(grassRy*0.62).toFixed(1)}" fill="#3a9e8e"/>
     <!-- Grass surface -->
     <ellipse cx="${cx}" cy="${grassCy.toFixed(1)}" rx="${grassRx.toFixed(1)}" ry="${grassRy.toFixed(1)}" fill="#5cc4b2"/>
     <!-- Grass highlight -->
-    <ellipse cx="${(cx-grassRx*0.14).toFixed(1)}" cy="${(grassCy-grassRy*0.28).toFixed(1)}" rx="${(grassRx*0.38).toFixed(1)}" ry="${(grassRy*0.36).toFixed(1)}" fill="rgba(255,255,255,0.16)"/>
-    <!-- White bumpy rim -->
+    <ellipse cx="${(cx-grassRx*0.14).toFixed(1)}" cy="${(grassCy-grassRy*0.22).toFixed(1)}" rx="${(grassRx*0.35).toFixed(1)}" ry="${(grassRy*0.42).toFixed(1)}" fill="rgba(255,255,255,0.18)"/>
+    <!-- White bumpy rim (full perimeter) -->
     ${bumps}
-    <!-- Water reflection -->
-    <ellipse cx="${cx}" cy="${(totalH-5).toFixed(1)}" rx="${(w*0.32).toFixed(1)}" ry="5" fill="rgba(120,200,255,0.14)"/>
+    <!-- Water reflection below island -->
+    <ellipse cx="${cx}" cy="${(totalH-4).toFixed(1)}" rx="${(w*0.30).toFixed(1)}" ry="5" fill="rgba(120,200,255,0.15)"/>
   </svg>`;
 
+  // Decoration sits with its bottom on the grass surface
+  let decBottom=(totalH-(grassCy-grassRy*0.4)).toFixed(0);
   return `<div style="position:relative;width:${w}px;display:inline-block">
     ${badgeHtml}
     ${svg}
-    <div style="position:absolute;top:${(grassCy-grassRy*1.6).toFixed(0)}px;left:50%;transform:translateX(-50%);z-index:8;pointer-events:none">${decoration}</div>
+    <div style="position:absolute;bottom:${decBottom}px;left:0;right:0;display:flex;justify-content:center;align-items:flex-end;z-index:8;pointer-events:none">${decoration}</div>
   </div>`;
 }
 
@@ -522,67 +523,103 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  // Decoration: enchanted tree with crystal (Lernen)
-  let decLernen=`<svg width="82" height="88" viewBox="0 0 82 88" xmlns="http://www.w3.org/2000/svg">
-    <path d="M38,86 Q26,70 24,54 Q12,42 22,28" stroke="#8b5e2a" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M38,86 Q40,68 38,52 Q44,36 38,22" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M38,86 Q50,70 52,54 Q62,42 50,30" stroke="#8b5e2a" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M22,28 Q10,22 6,12" stroke="#8b5e2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M38,22 Q34,12 38,4" stroke="#7a5020" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M50,30 Q62,22 66,12" stroke="#8b5e2a" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <circle cx="10" cy="10" r="9" fill="#5cb860"/><circle cx="20" cy="5" r="8" fill="#4da852"/>
-    <circle cx="32" cy="2" r="9" fill="#5cb860"/><circle cx="44" cy="5" r="8" fill="#4da852"/>
-    <circle cx="56" cy="9" r="8" fill="#5cb860"/><circle cx="66" cy="14" r="7" fill="#4da852"/>
-    <circle cx="5" cy="20" r="6" fill="#4da852"/><circle cx="68" cy="22" r="6" fill="#5cb860"/>
-    <polygon points="38,-2 33,8 43,8" fill="#88e8ff" opacity="0.95"/>
-    <polygon points="38,10 33,8 43,8" fill="#44c8f0" opacity="0.9"/>
-    <line x1="38" y1="-2" x2="32" y2="-8" stroke="#a0f0ff" stroke-width="1.5" opacity="0.7"/>
-    <line x1="38" y1="-2" x2="44" y2="-8" stroke="#a0f0ff" stroke-width="1.5" opacity="0.7"/>
+  // Decoration: enchanted twisted tree with blue crystal (Lernen)
+  let decLernen=`<svg width="96" height="100" viewBox="0 0 96 100" xmlns="http://www.w3.org/2000/svg">
+    <!-- Root branches -->
+    <path d="M46,98 Q30,80 28,62 Q14,48 24,32" stroke="#7a5020" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M46,98 Q48,76 45,58 Q52,40 45,24" stroke="#6a4018" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M46,98 Q60,80 62,62 Q74,48 60,34" stroke="#7a5020" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- Side branches -->
+    <path d="M24,32 Q10,24 6,12" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M45,24 Q40,12 44,3" stroke="#6a4018" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M60,34 Q74,24 78,13" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Leaf clusters -->
+    <circle cx="9"  cy="9"  r="10" fill="#5cb860"/><circle cx="20" cy="4"  r="9"  fill="#4da852"/>
+    <circle cx="33" cy="1"  r="10" fill="#5cb860"/><circle cx="46" cy="4"  r="9"  fill="#4da852"/>
+    <circle cx="59" cy="7"  r="9"  fill="#5cb860"/><circle cx="70" cy="11" r="9"  fill="#4da852"/>
+    <circle cx="4"  cy="20" r="7"  fill="#4da852"/><circle cx="80" cy="18" r="7"  fill="#5cb860"/>
+    <circle cx="16" cy="15" r="7"  fill="#68d068"/><circle cx="64" cy="18" r="7"  fill="#68d068"/>
+    <!-- Blue crystal gem -->
+    <polygon points="44,0 38,12 50,12"  fill="#7ae4ff" opacity="0.96"/>
+    <polygon points="44,14 38,12 50,12" fill="#38c4f0" opacity="0.92"/>
+    <line x1="44" y1="0"  x2="36" y2="-7" stroke="#b0f4ff" stroke-width="2" opacity="0.75"/>
+    <line x1="44" y1="0"  x2="52" y2="-7" stroke="#b0f4ff" stroke-width="2" opacity="0.75"/>
+    <line x1="44" y1="0"  x2="44" y2="-9" stroke="#c8f8ff" stroke-width="1.5" opacity="0.6"/>
   </svg>`;
 
-  // Decoration: exotic blue flower (Wörter)
-  let decWoerter=`<svg width="60" height="72" viewBox="0 0 60 72" xmlns="http://www.w3.org/2000/svg">
-    <line x1="30" y1="68" x2="30" y2="38" stroke="#4a9a40" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M30,52 Q14,46 10,36 Q20,36 30,52" fill="#5ab050"/><path d="M30,52 Q46,46 50,36 Q40,36 30,52" fill="#5ab050"/>
-    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(0,30,30)"/>
-    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(45,30,30)"/>
-    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(90,30,30)"/>
-    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(135,30,30)"/>
-    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(22.5,30,30)"/>
-    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(67.5,30,30)"/>
-    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(112.5,30,30)"/>
-    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(157.5,30,30)"/>
-    <circle cx="30" cy="30" r="9" fill="#5868d8"/><circle cx="30" cy="30" r="5.5" fill="#8898f0"/>
+  // Decoration: exotic blue multi-petal flower (Wörter)
+  let decWoerter=`<svg width="72" height="82" viewBox="0 0 72 82" xmlns="http://www.w3.org/2000/svg">
+    <!-- Stem -->
+    <line x1="36" y1="78" x2="36" y2="44" stroke="#3a8a30" stroke-width="4" stroke-linecap="round"/>
+    <!-- Leaves -->
+    <path d="M36,60 Q16,52 12,40 Q24,40 36,60" fill="#5ab050"/>
+    <path d="M36,60 Q56,52 60,40 Q48,40 36,60" fill="#5ab050"/>
+    <!-- Outer petals (8) -->
+    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#2040a0" transform="rotate(0,36,36)"/>
+    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#1e3c9a" transform="rotate(45,36,36)"/>
+    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#2040a0" transform="rotate(90,36,36)"/>
+    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#1e3c9a" transform="rotate(135,36,36)"/>
+    <!-- Inner petals (4) -->
+    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#3050c0" transform="rotate(22.5,36,36)"/>
+    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#2848b8" transform="rotate(67.5,36,36)"/>
+    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#3050c0" transform="rotate(112.5,36,36)"/>
+    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#2848b8" transform="rotate(157.5,36,36)"/>
+    <!-- Center -->
+    <circle cx="36" cy="36" r="10" fill="#4860d0"/>
+    <circle cx="36" cy="36" r="6"  fill="#7888f0"/>
+    <circle cx="36" cy="36" r="2.5" fill="#a0b0ff"/>
   </svg>`;
 
-  // Decoration: angel statue (Gemeinschaft)
-  let decGemein=`<svg width="64" height="78" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg">
-    <path d="M32,28 Q8,22 4,38 Q16,44 32,38" fill="rgba(240,248,255,0.88)" stroke="rgba(190,215,232,0.6)" stroke-width="0.8"/>
-    <path d="M32,28 Q56,22 60,38 Q48,44 32,38" fill="rgba(240,248,255,0.88)" stroke="rgba(190,215,232,0.6)" stroke-width="0.8"/>
-    <path d="M32,30 Q12,26 8,40 Q20,43 32,38" fill="rgba(215,235,250,0.75)"/>
-    <path d="M32,30 Q52,26 56,40 Q44,43 32,38" fill="rgba(215,235,250,0.75)"/>
-    <path d="M25,42 Q22,55 23,72 L41,72 Q42,55 39,42 Z" fill="rgba(238,248,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
-    <line x1="29" y1="46" x2="27" y2="70" stroke="rgba(175,200,222,0.35)" stroke-width="1"/>
-    <line x1="33" y1="46" x2="35" y2="70" stroke="rgba(175,200,222,0.35)" stroke-width="1"/>
-    <path d="M25,45 Q14,48 11,55" stroke="rgba(218,235,250,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-    <path d="M39,45 Q50,48 53,55" stroke="rgba(218,235,250,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-    <circle cx="32" cy="33" r="7.5" fill="rgba(235,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
-    <ellipse cx="32" cy="23" rx="9" ry="2.8" fill="none" stroke="rgba(255,238,160,0.65)" stroke-width="1.8"/>
-    <path d="M25,31 Q23,25 29,22 Q32,18 35,22 Q41,25 39,31" fill="rgba(200,218,234,0.55)"/>
+  // Decoration: angel statue with large spread wings (Gemeinschaft)
+  let decGemein=`<svg width="78" height="88" viewBox="0 0 78 88" xmlns="http://www.w3.org/2000/svg">
+    <!-- Large outer wings -->
+    <path d="M39,32 Q8,24 2,44 Q18,50 39,43"   fill="rgba(238,248,255,0.90)" stroke="rgba(185,212,230,0.5)" stroke-width="0.8"/>
+    <path d="M39,32 Q70,24 76,44 Q60,50 39,43"  fill="rgba(238,248,255,0.90)" stroke="rgba(185,212,230,0.5)" stroke-width="0.8"/>
+    <!-- Inner wing layer -->
+    <path d="M39,35 Q14,29 9,46 Q22,50 39,44"  fill="rgba(212,232,248,0.80)"/>
+    <path d="M39,35 Q64,29 69,46 Q56,50 39,44"  fill="rgba(212,232,248,0.80)"/>
+    <!-- Wing feather lines -->
+    <path d="M39,38 Q22,36 12,46" stroke="rgba(185,212,232,0.40)" stroke-width="1" fill="none"/>
+    <path d="M39,40 Q20,40 10,50" stroke="rgba(185,212,232,0.35)" stroke-width="1" fill="none"/>
+    <path d="M39,38 Q56,36 66,46" stroke="rgba(185,212,232,0.40)" stroke-width="1" fill="none"/>
+    <path d="M39,40 Q58,40 68,50" stroke="rgba(185,212,232,0.35)" stroke-width="1" fill="none"/>
+    <!-- Robe body -->
+    <path d="M29,48 Q26,64 27,84 L51,84 Q52,64 49,48 Z" fill="rgba(236,247,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
+    <!-- Robe folds -->
+    <line x1="34" y1="52" x2="31" y2="82" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
+    <line x1="40" y1="52" x2="42" y2="82" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
+    <!-- Arms outstretched -->
+    <path d="M29,50 Q16,54 12,62" stroke="rgba(216,234,248,0.94)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <path d="M49,50 Q62,54 66,62" stroke="rgba(216,234,248,0.94)" stroke-width="5" stroke-linecap="round" fill="none"/>
+    <!-- Head -->
+    <circle cx="39" cy="38" r="8.5" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
+    <!-- Halo -->
+    <ellipse cx="39" cy="27" rx="10" ry="3" fill="none" stroke="rgba(255,235,140,0.70)" stroke-width="2"/>
+    <!-- Hair -->
+    <path d="M31,36 Q29,28 35,25 Q39,21 43,25 Q49,28 47,36" fill="rgba(195,215,232,0.55)"/>
   </svg>`;
 
-  // Decoration: stone fountain statue (Planen)
-  let decPlanen=`<svg width="54" height="72" viewBox="0 0 54 72" xmlns="http://www.w3.org/2000/svg">
-    <rect x="13" y="58" width="28" height="12" rx="3" fill="rgba(222,234,244,0.92)"/>
-    <rect x="9" y="60" width="36" height="4" rx="1.5" fill="rgba(198,215,230,0.75)"/>
-    <ellipse cx="27" cy="52" rx="15" ry="5" fill="rgba(208,228,244,0.85)" stroke="rgba(178,204,224,0.6)" stroke-width="1"/>
-    <path d="M14,52 Q13,44 27,40 Q41,44 40,52" fill="rgba(208,228,244,0.55)"/>
-    <path d="M21,40 Q19,50 20,58 L34,58 Q35,50 33,40 Z" fill="rgba(236,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
-    <circle cx="27" cy="34" r="6.5" fill="rgba(236,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
-    <path d="M21,43 Q13,40 10,34" stroke="rgba(218,235,250,0.90)" stroke-width="4" stroke-linecap="round" fill="none"/>
-    <path d="M33,43 Q41,40 44,34" stroke="rgba(218,235,250,0.90)" stroke-width="4" stroke-linecap="round" fill="none"/>
-    <path d="M27,27 Q25,22 27,17 Q29,22 27,27" fill="rgba(155,218,255,0.65)"/>
-    <ellipse cx="27" cy="17" rx="4" ry="2" fill="rgba(155,218,255,0.5)"/>
+  // Decoration: stone fountain/statue (Planen)
+  let decPlanen=`<svg width="62" height="80" viewBox="0 0 62 80" xmlns="http://www.w3.org/2000/svg">
+    <!-- Pedestal base -->
+    <rect x="12" y="66" width="38" height="13" rx="3.5" fill="rgba(220,232,243,0.93)"/>
+    <rect x="8"  y="69" width="46" height="4"  rx="2"   fill="rgba(196,213,228,0.75)"/>
+    <!-- Fountain bowl -->
+    <ellipse cx="31" cy="59" rx="18" ry="5.5" fill="rgba(206,226,243,0.88)" stroke="rgba(175,202,222,0.55)" stroke-width="1.2"/>
+    <path d="M15,59 Q14,50 31,46 Q48,50 47,59" fill="rgba(206,226,243,0.55)"/>
+    <!-- Figure body/robe -->
+    <path d="M24,46 Q21,57 22,67 L40,67 Q41,57 38,46 Z" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
+    <!-- Robe folds -->
+    <line x1="28" y1="49" x2="26" y2="65" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
+    <line x1="33" y1="49" x2="35" y2="65" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
+    <!-- Figure head -->
+    <circle cx="31" cy="40" r="7.5" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
+    <!-- Arms raised -->
+    <path d="M24,49 Q14,46 10,39" stroke="rgba(215,234,248,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M38,49 Q48,46 52,39" stroke="rgba(215,234,248,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <!-- Water arc from top -->
+    <path d="M31,32 Q26,24 28,16 Q31,12 34,16 Q36,24 31,32" fill="rgba(148,215,255,0.70)"/>
+    <ellipse cx="31" cy="16" rx="5" ry="2.5" fill="rgba(148,215,255,0.55)"/>
   </svg>`;
 
   let lernen=svgIsle({w:196,decoration:decLernen,
