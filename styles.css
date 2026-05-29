@@ -1323,23 +1323,24 @@ body::before{
 }
 @keyframes anim-flower{to{background-position-x:-768px;}}
 
-/* Angel statue: 10×96px frames, 960×144 sheet */
+/* Angel statue: 6×160px frames, 960×144 sheet — display 96px wide to crop pedestal */
 .sp-angel{
   width:96px;height:144px;
   background:url('sprites/Statues_animation1.png') 0 0 no-repeat;
   image-rendering:pixelated;
-  animation:anim-angel 1.2s steps(10) infinite;
+  animation:anim-angel 1.2s steps(6) infinite;
 }
 @keyframes anim-angel{to{background-position-x:-960px;}}
 
-/* Small statue: 4×76px frames, 304×160 sheet */
+/* Small statue: 8×38px frames, 304×160 sheet — stretched 1.6× wide to 60px */
 .sp-statue{
-  width:76px;height:160px;
+  width:60px;height:160px;
   background:url('sprites/Statues_animation2.png') 0 0 no-repeat;
+  background-size:480px 160px;
   image-rendering:pixelated;
-  animation:anim-statue 1.0s steps(4) infinite;
+  animation:anim-statue 1.0s steps(8) infinite;
 }
-@keyframes anim-statue{to{background-position-x:-304px;}}
+@keyframes anim-statue{to{background-position-x:-480px;}}
 
 
 /* ═══════════════════════════════════════════════════════
