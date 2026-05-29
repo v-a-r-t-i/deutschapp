@@ -502,9 +502,9 @@ function svgIsle(cfg){
     <ellipse cx="${cx}" cy="${(totalH-4).toFixed(1)}" rx="${(w*0.30).toFixed(1)}" ry="5" fill="rgba(120,200,255,0.15)"/>
   </svg>`;
 
-  // Decoration sits with its bottom on the grass surface
-  let decBottom=(totalH-(grassCy-grassRy*0.4)).toFixed(0);
-  return `<div style="position:relative;width:${w}px;display:inline-block">
+  // Sprite bottom sits at the grass surface level
+  let decBottom=(totalH-(grassCy-grassRy)).toFixed(0);
+  return `<div style="position:relative;width:${w}px;display:inline-block;overflow:visible">
     ${badgeHtml}
     ${svg}
     <div style="position:absolute;bottom:${decBottom}px;left:0;right:0;display:flex;justify-content:center;align-items:flex-end;z-index:8;pointer-events:none">${decoration}</div>
@@ -523,104 +523,11 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  // Decoration: enchanted twisted tree with blue crystal (Lernen)
-  let decLernen=`<svg width="96" height="100" viewBox="0 0 96 100" xmlns="http://www.w3.org/2000/svg">
-    <!-- Root branches -->
-    <path d="M46,98 Q30,80 28,62 Q14,48 24,32" stroke="#7a5020" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M46,98 Q48,76 45,58 Q52,40 45,24" stroke="#6a4018" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M46,98 Q60,80 62,62 Q74,48 60,34" stroke="#7a5020" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <!-- Side branches -->
-    <path d="M24,32 Q10,24 6,12" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M45,24 Q40,12 44,3" stroke="#6a4018" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    <path d="M60,34 Q74,24 78,13" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <!-- Leaf clusters -->
-    <circle cx="9"  cy="9"  r="10" fill="#5cb860"/><circle cx="20" cy="4"  r="9"  fill="#4da852"/>
-    <circle cx="33" cy="1"  r="10" fill="#5cb860"/><circle cx="46" cy="4"  r="9"  fill="#4da852"/>
-    <circle cx="59" cy="7"  r="9"  fill="#5cb860"/><circle cx="70" cy="11" r="9"  fill="#4da852"/>
-    <circle cx="4"  cy="20" r="7"  fill="#4da852"/><circle cx="80" cy="18" r="7"  fill="#5cb860"/>
-    <circle cx="16" cy="15" r="7"  fill="#68d068"/><circle cx="64" cy="18" r="7"  fill="#68d068"/>
-    <!-- Blue crystal gem -->
-    <polygon points="44,0 38,12 50,12"  fill="#7ae4ff" opacity="0.96"/>
-    <polygon points="44,14 38,12 50,12" fill="#38c4f0" opacity="0.92"/>
-    <line x1="44" y1="0"  x2="36" y2="-7" stroke="#b0f4ff" stroke-width="2" opacity="0.75"/>
-    <line x1="44" y1="0"  x2="52" y2="-7" stroke="#b0f4ff" stroke-width="2" opacity="0.75"/>
-    <line x1="44" y1="0"  x2="44" y2="-9" stroke="#c8f8ff" stroke-width="1.5" opacity="0.6"/>
-  </svg>`;
-
-  // Decoration: exotic blue multi-petal flower (Wörter)
-  let decWoerter=`<svg width="72" height="82" viewBox="0 0 72 82" xmlns="http://www.w3.org/2000/svg">
-    <!-- Stem -->
-    <line x1="36" y1="78" x2="36" y2="44" stroke="#3a8a30" stroke-width="4" stroke-linecap="round"/>
-    <!-- Leaves -->
-    <path d="M36,60 Q16,52 12,40 Q24,40 36,60" fill="#5ab050"/>
-    <path d="M36,60 Q56,52 60,40 Q48,40 36,60" fill="#5ab050"/>
-    <!-- Outer petals (8) -->
-    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#2040a0" transform="rotate(0,36,36)"/>
-    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#1e3c9a" transform="rotate(45,36,36)"/>
-    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#2040a0" transform="rotate(90,36,36)"/>
-    <ellipse cx="36" cy="22" rx="7" ry="16" fill="#1e3c9a" transform="rotate(135,36,36)"/>
-    <!-- Inner petals (4) -->
-    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#3050c0" transform="rotate(22.5,36,36)"/>
-    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#2848b8" transform="rotate(67.5,36,36)"/>
-    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#3050c0" transform="rotate(112.5,36,36)"/>
-    <ellipse cx="36" cy="24" rx="5" ry="13" fill="#2848b8" transform="rotate(157.5,36,36)"/>
-    <!-- Center -->
-    <circle cx="36" cy="36" r="10" fill="#4860d0"/>
-    <circle cx="36" cy="36" r="6"  fill="#7888f0"/>
-    <circle cx="36" cy="36" r="2.5" fill="#a0b0ff"/>
-  </svg>`;
-
-  // Decoration: angel statue with large spread wings (Gemeinschaft)
-  let decGemein=`<svg width="78" height="88" viewBox="0 0 78 88" xmlns="http://www.w3.org/2000/svg">
-    <!-- Large outer wings -->
-    <path d="M39,32 Q8,24 2,44 Q18,50 39,43"   fill="rgba(238,248,255,0.90)" stroke="rgba(185,212,230,0.5)" stroke-width="0.8"/>
-    <path d="M39,32 Q70,24 76,44 Q60,50 39,43"  fill="rgba(238,248,255,0.90)" stroke="rgba(185,212,230,0.5)" stroke-width="0.8"/>
-    <!-- Inner wing layer -->
-    <path d="M39,35 Q14,29 9,46 Q22,50 39,44"  fill="rgba(212,232,248,0.80)"/>
-    <path d="M39,35 Q64,29 69,46 Q56,50 39,44"  fill="rgba(212,232,248,0.80)"/>
-    <!-- Wing feather lines -->
-    <path d="M39,38 Q22,36 12,46" stroke="rgba(185,212,232,0.40)" stroke-width="1" fill="none"/>
-    <path d="M39,40 Q20,40 10,50" stroke="rgba(185,212,232,0.35)" stroke-width="1" fill="none"/>
-    <path d="M39,38 Q56,36 66,46" stroke="rgba(185,212,232,0.40)" stroke-width="1" fill="none"/>
-    <path d="M39,40 Q58,40 68,50" stroke="rgba(185,212,232,0.35)" stroke-width="1" fill="none"/>
-    <!-- Robe body -->
-    <path d="M29,48 Q26,64 27,84 L51,84 Q52,64 49,48 Z" fill="rgba(236,247,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
-    <!-- Robe folds -->
-    <line x1="34" y1="52" x2="31" y2="82" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
-    <line x1="40" y1="52" x2="42" y2="82" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
-    <!-- Arms outstretched -->
-    <path d="M29,50 Q16,54 12,62" stroke="rgba(216,234,248,0.94)" stroke-width="5" stroke-linecap="round" fill="none"/>
-    <path d="M49,50 Q62,54 66,62" stroke="rgba(216,234,248,0.94)" stroke-width="5" stroke-linecap="round" fill="none"/>
-    <!-- Head -->
-    <circle cx="39" cy="38" r="8.5" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
-    <!-- Halo -->
-    <ellipse cx="39" cy="27" rx="10" ry="3" fill="none" stroke="rgba(255,235,140,0.70)" stroke-width="2"/>
-    <!-- Hair -->
-    <path d="M31,36 Q29,28 35,25 Q39,21 43,25 Q49,28 47,36" fill="rgba(195,215,232,0.55)"/>
-  </svg>`;
-
-  // Decoration: stone fountain/statue (Planen)
-  let decPlanen=`<svg width="62" height="80" viewBox="0 0 62 80" xmlns="http://www.w3.org/2000/svg">
-    <!-- Pedestal base -->
-    <rect x="12" y="66" width="38" height="13" rx="3.5" fill="rgba(220,232,243,0.93)"/>
-    <rect x="8"  y="69" width="46" height="4"  rx="2"   fill="rgba(196,213,228,0.75)"/>
-    <!-- Fountain bowl -->
-    <ellipse cx="31" cy="59" rx="18" ry="5.5" fill="rgba(206,226,243,0.88)" stroke="rgba(175,202,222,0.55)" stroke-width="1.2"/>
-    <path d="M15,59 Q14,50 31,46 Q48,50 47,59" fill="rgba(206,226,243,0.55)"/>
-    <!-- Figure body/robe -->
-    <path d="M24,46 Q21,57 22,67 L40,67 Q41,57 38,46 Z" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
-    <!-- Robe folds -->
-    <line x1="28" y1="49" x2="26" y2="65" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
-    <line x1="33" y1="49" x2="35" y2="65" stroke="rgba(170,198,220,0.32)" stroke-width="1"/>
-    <!-- Figure head -->
-    <circle cx="31" cy="40" r="7.5" fill="rgba(234,246,255,0.97)" stroke="rgba(192,218,234,0.45)" stroke-width="0.7"/>
-    <!-- Arms raised -->
-    <path d="M24,49 Q14,46 10,39" stroke="rgba(215,234,248,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-    <path d="M38,49 Q48,46 52,39" stroke="rgba(215,234,248,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-    <!-- Water arc from top -->
-    <path d="M31,32 Q26,24 28,16 Q31,12 34,16 Q36,24 31,32" fill="rgba(148,215,255,0.70)"/>
-    <ellipse cx="31" cy="16" rx="5" ry="2.5" fill="rgba(148,215,255,0.55)"/>
-  </svg>`;
+  // Sprite-based decorations from the pixel-art tileset
+  let decLernen='<div class="sp-tree"></div>';
+  let decWoerter='<div class="sp-flower"></div>';
+  let decGemein='<div class="sp-angel"></div>';
+  let decPlanen='<div class="sp-statue"></div>';
 
   let lernen=svgIsle({w:196,decoration:decLernen,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
