@@ -2576,30 +2576,49 @@ font-family:inherit;
    ISLAND MAP
 ═══════════════════════════════════════════════════════ */
 .map-outer{padding:0 0 16px;}
-.map-greeting{font-size:18px;font-weight:600;padding:4px 2px 14px;color:var(--txt2);}
-.map-greeting b{color:var(--txt);}
+.map-greeting{font-size:18px;font-weight:600;padding:4px 2px 14px;color:var(--txt);}
+.map-greeting b{color:var(--acc);}
 
 .map-ocean{
   position:relative;
   border-radius:28px;
   overflow:hidden;
-  background:linear-gradient(180deg,#050e20 0%,#091a3c 45%,#050e20 100%);
+  background:linear-gradient(175deg,#c8d8e8 0%,#b8ccdc 40%,#a8bece 100%);
   height:500px;
-  border:1px solid rgba(100,180,255,0.07);
+  border:1px solid rgba(160,190,215,0.35);
 }
 @media(max-width:700px){.map-ocean{height:440px;}}
 
-/* Wave layers */
-.map-wave{
-  position:absolute;left:0;right:0;pointer-events:none;
-  height:56px;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 56'%3E%3Cpath d='M0,28 C200,4 400,52 600,28 C800,4 1000,52 1200,28 L1200,56 L0,56 Z' fill='%230f2a5a'/%3E%3C/svg%3E") repeat-x;
-  background-size:600px 56px;
+/* Floating rocks scattered in sky */
+.map-wave{display:none;}
+.map-scatter::before{
+  content:'';
+  position:absolute;
+  width:100%;height:100%;
+  background-image:
+    radial-gradient(ellipse 18px 12px at 8% 22%,#7a8898 60%,transparent 100%),
+    radial-gradient(ellipse 11px 8px  at 12% 28%,#6a7888 60%,transparent 100%),
+    radial-gradient(ellipse 14px 10px at 82% 16%,#7a8898 60%,transparent 100%),
+    radial-gradient(ellipse  9px  6px at 78% 23%,#6a7888 60%,transparent 100%),
+    radial-gradient(ellipse 10px  7px at 90% 55%,#7a8898 60%,transparent 100%),
+    radial-gradient(ellipse 22px 14px at 5%  60%,#7a8898 55%,transparent 100%),
+    radial-gradient(ellipse 12px  9px at 9%  68%,#6a7888 55%,transparent 100%);
+  pointer-events:none;
+  opacity:0.7;
 }
-.mw1{bottom:0;opacity:0.55;animation:mwave 8s linear infinite;}
-.mw2{bottom:8px;opacity:0.28;animation:mwave 13s linear infinite reverse;}
-.mw3{bottom:16px;opacity:0.13;animation:mwave 18s linear infinite;}
-@keyframes mwave{from{background-position-x:0}to{background-position-x:600px}}
+/* Soft clouds */
+.map-scatter::after{
+  content:'';
+  position:absolute;
+  width:100%;height:100%;
+  background-image:
+    radial-gradient(ellipse 44px 20px at 20% 12%,rgba(255,255,255,0.55) 60%,transparent 100%),
+    radial-gradient(ellipse 30px 14px at 27% 10%,rgba(255,255,255,0.45) 60%,transparent 100%),
+    radial-gradient(ellipse 36px 16px at 72% 8%,rgba(255,255,255,0.50) 60%,transparent 100%),
+    radial-gradient(ellipse 22px 11px at 78% 11%,rgba(255,255,255,0.40) 60%,transparent 100%),
+    radial-gradient(ellipse 28px 12px at 88% 42%,rgba(255,255,255,0.38) 60%,transparent 100%);
+  pointer-events:none;
+}
 
 /* Scatter container */
 .map-scatter{position:absolute;inset:0;}
@@ -2645,11 +2664,11 @@ font-family:inherit;
 /* Labels */
 .isle-label{
   font-size:14px;font-weight:800;
-  color:rgba(255,255,255,0.92);
-  text-shadow:0 1px 8px rgba(0,0,0,0.95);
+  color:rgba(30,45,62,0.90);
+  text-shadow:0 1px 4px rgba(255,255,255,0.7);
   margin-top:2px;text-align:center;
 }
-.isle-sub{font-size:11px;color:rgba(255,255,255,0.42);text-align:center;margin-top:1px;}
+.isle-sub{font-size:11px;color:rgba(50,70,90,0.60);text-align:center;margin-top:1px;}
 
 /* Due badge */
 .isle-badge{

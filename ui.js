@@ -424,107 +424,89 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 // ── SVG ISLAND BUILDER ───────────────────────────────
 // Craftpix-style: thick body, visible sides, overhanging grass, waterfalls
 function svgIsle(cfg){
-  let {w=180,grassColor='#3db84e',grassEdge='#256e2e',bodyTop='#8b7355',bodyMid='#6b5635',bodyBot='#4a3820',grassW,grassH,bodyHeight,trees=[],icon='📖',iconSz=26}=cfg;
-  grassW = grassW||(w*0.92);
-  grassH = grassH||(w*0.25);
-  bodyHeight = bodyHeight||(w*0.42);
+  let {w=180,decoration='',badgeHtml=''}=cfg;
   let cx=w/2;
-  let grassY=grassH*0.5+4; // center of grass ellipse
-  let bodyTopY=grassY+grassH*0.38; // where body starts (under grass)
-  let bodyBotW=w*0.32;
-  let bodyBotY=bodyTopY+bodyHeight;
-  let totalH=bodyBotY+30;
+  let grassRx=w*0.44, grassRy=w*0.17;
+  let grassCy=w*0.26;
+  let bodyTopY=grassCy+grassRy*0.55;
+  let bodyW=w*0.88, bodyBotW=w*0.30;
+  let bL=(w-bodyW)/2, bR=w-bL;
+  let nL=(w-bodyBotW)/2, nR=w-nL;
+  let bodyH=w*0.50;
+  let bodyBotY=bodyTopY+bodyH;
+  let totalH=bodyBotY+w*0.20;
+  let bm1Y=bodyTopY+bodyH*0.38, bm2Y=bodyTopY+bodyH*0.74;
 
-  // Grass rim — slightly smaller ellipse at bodyTopY gives 3D depth of grass
-  let rimRx=grassW*0.5-3;
-  let rimRy=grassH*0.5-2;
-
-  // Body side polygon — trapezoidal with organic variations
-  let bL=(w-grassW)/2+2;
-  let bR=w-bL;
-  let nL=(w-bodyBotW)/2;
-  let nR=w-nL;
-  let m1Y=bodyTopY+bodyHeight*0.35;
-  let m2Y=bodyTopY+bodyHeight*0.7;
   let bodyPath=`M${bL.toFixed(1)},${bodyTopY.toFixed(1)} L${bR.toFixed(1)},${bodyTopY.toFixed(1)}`
-    +` C${(bR+4).toFixed(1)},${m1Y.toFixed(1)} ${(nR+6).toFixed(1)},${m2Y.toFixed(1)} ${nR.toFixed(1)},${bodyBotY.toFixed(1)}`
+    +` C${(bR+3).toFixed(1)},${bm1Y.toFixed(1)} ${(nR+5).toFixed(1)},${bm2Y.toFixed(1)} ${nR.toFixed(1)},${bodyBotY.toFixed(1)}`
     +` L${nL.toFixed(1)},${bodyBotY.toFixed(1)}`
-    +` C${(nL-6).toFixed(1)},${m2Y.toFixed(1)} ${(bL-4).toFixed(1)},${m1Y.toFixed(1)} ${bL.toFixed(1)},${bodyTopY.toFixed(1)} Z`;
+    +` C${(nL-5).toFixed(1)},${bm2Y.toFixed(1)} ${(bL-3).toFixed(1)},${bm1Y.toFixed(1)} ${bL.toFixed(1)},${bodyTopY.toFixed(1)} Z`;
 
-  // Striation lines on body (layer effect)
+  // Striation lines
   let stria='';
   for(let i=1;i<=3;i++){
-    let py=bodyTopY+bodyHeight*(i/4.5);
-    let frac=i/4.5;
-    let lx=bL+(nL-bL)*frac*0.9;
-    let rx=bR+(nR-bR)*frac*0.9;
-    stria+=`<line x1="${(lx+4).toFixed(1)}" y1="${py.toFixed(1)}" x2="${(rx-4).toFixed(1)}" y2="${py.toFixed(1)}" stroke="rgba(0,0,0,0.18)" stroke-width="1"/>`;
+    let frac=i/4.2;
+    let py=bodyTopY+bodyH*frac;
+    let lx=bL+(nL-bL)*frac*0.85;
+    let rx=bR+(nR-bR)*frac*0.85;
+    stria+=`<line x1="${(lx+5).toFixed(1)}" y1="${py.toFixed(1)}" x2="${(rx-5).toFixed(1)}" y2="${py.toFixed(1)}" stroke="rgba(0,0,0,0.13)" stroke-width="1"/>`;
   }
 
-  // Waterfalls — hanging from bottom third of body
-  let wfW=5, wfH=bodyHeight*0.38;
-  let wf1X=nL+(nR-nL)*0.18;
-  let wf2X=nL+(nR-nL)*0.50;
-  let wf3X=nL+(nR-nL)*0.80;
-  let wfY=bodyBotY-wfH*0.3;
+  // Waterfall (single centered)
+  let wfW=7, wfH=bodyH*0.52, wfX=cx;
+  let wfY=bodyTopY+bodyH*0.18;
+  let splashY=wfY+wfH+4;
 
-  // Splash pools at base
-  let splashY=bodyBotY+wfH+4;
-
-  // Trees — positioned on grass
-  let treeHtml=trees.map(t=>`<span style="position:absolute;top:${t.y}px;left:${t.x}px;font-size:${t.s||15}px;z-index:6;pointer-events:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.9))">${t.e}</span>`).join('');
+  // White bumpy grass rim (deterministic)
+  let bumps='';
+  let bumpN=Math.round(w/9);
+  for(let i=0;i<=bumpN;i++){
+    let a=Math.PI*(1-(i/bumpN));
+    let bx=cx+grassRx*0.95*Math.cos(a);
+    let by=grassCy+grassRy*0.78*Math.sin(a);
+    let br=5+(i%3===0?2:i%2===0?1:3);
+    bumps+=`<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${br}" fill="rgba(255,255,255,0.92)"/>`;
+  }
 
   let svg=`<svg viewBox="0 0 ${w} ${totalH.toFixed(0)}" width="${w}" height="${totalH.toFixed(0)}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
     <defs>
-      <linearGradient id="body${w}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${bodyTop}"/>
-        <stop offset="55%" stop-color="${bodyMid}"/>
-        <stop offset="100%" stop-color="${bodyBot}"/>
+      <linearGradient id="ibody${w}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#c8aa72"/>
+        <stop offset="58%" stop-color="#a08040"/>
+        <stop offset="100%" stop-color="#6a5228"/>
       </linearGradient>
-      <linearGradient id="wfall${w}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="rgba(140,220,255,0.9)"/>
-        <stop offset="100%" stop-color="rgba(100,190,255,0)"/>
-      </linearGradient>
-      <linearGradient id="gside${w}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${grassEdge}"/>
-        <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+      <linearGradient id="iwf${w}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(140,224,255,0.95)"/>
+        <stop offset="100%" stop-color="rgba(100,200,255,0)"/>
       </linearGradient>
     </defs>
-
-    <!-- Waterfall streams behind body -->
-    <rect x="${(wf1X-wfW/2).toFixed(1)}" y="${wfY.toFixed(1)}" width="${wfW}" height="${wfH.toFixed(1)}" rx="2.5" fill="url(#wfall${w})" opacity="0.85"/>
-    <rect x="${(wf2X-wfW/2).toFixed(1)}" y="${(wfY+wfH*.06).toFixed(1)}" width="${(wfW-1).toFixed(1)}" height="${(wfH*.88).toFixed(1)}" rx="2" fill="url(#wfall${w})" opacity="0.65"/>
-    <rect x="${(wf3X-wfW/2).toFixed(1)}" y="${(wfY+wfH*.04).toFixed(1)}" width="${wfW}" height="${(wfH*.92).toFixed(1)}" rx="2.5" fill="url(#wfall${w})" opacity="0.78"/>
-
-    <!-- Splash pools -->
-    <ellipse cx="${wf1X.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="9" ry="3.5" fill="rgba(130,210,255,0.22)"/>
-    <ellipse cx="${wf2X.toFixed(1)}" cy="${(splashY+2).toFixed(1)}" rx="7" ry="2.8" fill="rgba(130,210,255,0.16)"/>
-    <ellipse cx="${wf3X.toFixed(1)}" cy="${(splashY+1).toFixed(1)}" rx="9" ry="3.5" fill="rgba(130,210,255,0.20)"/>
-
     <!-- Body -->
-    <path d="${bodyPath}" fill="url(#body${w})"/>
+    <path d="${bodyPath}" fill="url(#ibody${w})"/>
     <!-- Body left shadow -->
-    <path d="M${bL.toFixed(1)},${bodyTopY.toFixed(1)} C${(bL-4).toFixed(1)},${(bodyTopY+bodyHeight*.5).toFixed(1)} ${(nL-6).toFixed(1)},${(bodyTopY+bodyHeight*.9).toFixed(1)} ${nL.toFixed(1)},${bodyBotY.toFixed(1)} L${(nL+bodyBotW*.18).toFixed(1)},${bodyBotY.toFixed(1)} C${(nL+bodyBotW*.1).toFixed(1)},${(bodyTopY+bodyHeight*.9).toFixed(1)} ${(bL+w*.08).toFixed(1)},${(bodyTopY+bodyHeight*.5).toFixed(1)} ${(bL+w*.08).toFixed(1)},${bodyTopY.toFixed(1)} Z" fill="rgba(0,0,0,0.22)"/>
+    <path d="M${bL.toFixed(1)},${bodyTopY.toFixed(1)} C${(bL-3).toFixed(1)},${bm1Y.toFixed(1)} ${(nL-5).toFixed(1)},${bm2Y.toFixed(1)} ${nL.toFixed(1)},${bodyBotY.toFixed(1)} L${(nL+bodyBotW*0.18).toFixed(1)},${bodyBotY.toFixed(1)} C${(nL+4).toFixed(1)},${bm2Y.toFixed(1)} ${(bL+w*0.07).toFixed(1)},${bm1Y.toFixed(1)} ${(bL+w*0.07).toFixed(1)},${bodyTopY.toFixed(1)} Z" fill="rgba(0,0,0,0.20)"/>
     ${stria}
-
-    <!-- Grass top — wide overhanging ellipse -->
-    <!-- Grass front edge (3D depth) -->
-    <ellipse cx="${cx}" cy="${(grassY+grassH*0.25).toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.38).toFixed(1)}" fill="${grassEdge}"/>
-    <!-- Main grass surface -->
-    <ellipse cx="${cx}" cy="${grassY.toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.5).toFixed(1)}" fill="${grassColor}"/>
+    <!-- Waterfall -->
+    <rect x="${(wfX-wfW/2).toFixed(1)}" y="${wfY.toFixed(1)}" width="${wfW}" height="${wfH.toFixed(1)}" rx="3.5" fill="url(#iwf${w})" opacity="0.92"/>
+    <rect x="${(wfX-wfW/2+wfW*0.7).toFixed(1)}" y="${(wfY+wfH*0.1).toFixed(1)}" width="${(wfW*0.45).toFixed(1)}" height="${(wfH*0.75).toFixed(1)}" rx="2" fill="url(#iwf${w})" opacity="0.50"/>
+    <!-- Splash -->
+    <ellipse cx="${wfX.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="13" ry="4.5" fill="rgba(130,218,255,0.32)"/>
+    <ellipse cx="${wfX.toFixed(1)}" cy="${splashY.toFixed(1)}" rx="7" ry="2.5" fill="rgba(160,230,255,0.50)"/>
+    <!-- Grass edge (3D depth) -->
+    <ellipse cx="${cx}" cy="${(grassCy+grassRy*0.52).toFixed(1)}" rx="${(grassRx*0.97).toFixed(1)}" ry="${(grassRy*0.70).toFixed(1)}" fill="#3a9e8e"/>
+    <!-- Grass surface -->
+    <ellipse cx="${cx}" cy="${grassCy.toFixed(1)}" rx="${grassRx.toFixed(1)}" ry="${grassRy.toFixed(1)}" fill="#5cc4b2"/>
     <!-- Grass highlight -->
-    <ellipse cx="${(cx-grassW*0.12).toFixed(1)}" cy="${(grassY-grassH*0.22).toFixed(1)}" rx="${(grassW*0.3).toFixed(1)}" ry="${(grassH*0.22).toFixed(1)}" fill="rgba(255,255,255,0.14)"/>
-    <!-- Grass dark edge rim -->
-    <ellipse cx="${cx}" cy="${grassY.toFixed(1)}" rx="${(grassW*0.5).toFixed(1)}" ry="${(grassH*0.5).toFixed(1)}" fill="none" stroke="${grassEdge}" stroke-width="2.5"/>
-
-    <!-- Water reflection shadow -->
-    <ellipse cx="${cx}" cy="${(totalH-3).toFixed(1)}" rx="${(w*0.38).toFixed(1)}" ry="6" fill="rgba(80,160,255,0.10)"/>
+    <ellipse cx="${(cx-grassRx*0.14).toFixed(1)}" cy="${(grassCy-grassRy*0.28).toFixed(1)}" rx="${(grassRx*0.38).toFixed(1)}" ry="${(grassRy*0.36).toFixed(1)}" fill="rgba(255,255,255,0.16)"/>
+    <!-- White bumpy rim -->
+    ${bumps}
+    <!-- Water reflection -->
+    <ellipse cx="${cx}" cy="${(totalH-5).toFixed(1)}" rx="${(w*0.32).toFixed(1)}" ry="5" fill="rgba(120,200,255,0.14)"/>
   </svg>`;
 
   return `<div style="position:relative;width:${w}px;display:inline-block">
+    ${badgeHtml}
     ${svg}
-    <div style="position:absolute;top:${(grassY-iconSz/2).toFixed(0)}px;left:50%;transform:translateX(-50%);font-size:${iconSz}px;z-index:8;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.9))">${icon}</div>
-    ${treeHtml}
+    <div style="position:absolute;top:${(grassCy-grassRy*1.6).toFixed(0)}px;left:50%;transform:translateX(-50%);z-index:8;pointer-events:none">${decoration}</div>
   </div>`;
 }
 
@@ -540,14 +522,74 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  let lernen=svgIsle({w:196,grassColor:'#40c453',grassEdge:'#237a2e',bodyTop:'#8a7248',bodyMid:'#6b5630',bodyBot:'#4a3818',
-    trees:[{x:22,y:0,e:'🌲',s:18},{x:146,y:2,e:'🌴',s:16}],icon:'📖',iconSz:28});
-  let woerter=svgIsle({w:155,grassColor:'#6ecf35',grassEdge:'#3c8010',bodyTop:'#7c6a38',bodyMid:'#5e5020',bodyBot:'#3c3010',
-    trees:[{x:16,y:4,e:'🌿',s:14}],icon:'🔍',iconSz:22});
-  let gemein=svgIsle({w:158,grassColor:'#3e96d4',grassEdge:'#1e5e8c',bodyTop:'#4e5e78',bodyMid:'#323e52',bodyBot:'#1e2635',
-    trees:[{x:124,y:2,e:'🪨',s:12}],icon:'👥',iconSz:22});
-  let planen=svgIsle({w:122,grassColor:'#d4943a',grassEdge:'#8a5e18',bodyTop:'#7a6238',bodyMid:'#5a4422',bodyBot:'#3c2c10',
-    trees:[],icon:'📅',iconSz:18});
+  // Decoration: enchanted tree with crystal (Lernen)
+  let decLernen=`<svg width="82" height="88" viewBox="0 0 82 88" xmlns="http://www.w3.org/2000/svg">
+    <path d="M38,86 Q26,70 24,54 Q12,42 22,28" stroke="#8b5e2a" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M38,86 Q40,68 38,52 Q44,36 38,22" stroke="#7a5020" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M38,86 Q50,70 52,54 Q62,42 50,30" stroke="#8b5e2a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M22,28 Q10,22 6,12" stroke="#8b5e2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M38,22 Q34,12 38,4" stroke="#7a5020" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M50,30 Q62,22 66,12" stroke="#8b5e2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="10" cy="10" r="9" fill="#5cb860"/><circle cx="20" cy="5" r="8" fill="#4da852"/>
+    <circle cx="32" cy="2" r="9" fill="#5cb860"/><circle cx="44" cy="5" r="8" fill="#4da852"/>
+    <circle cx="56" cy="9" r="8" fill="#5cb860"/><circle cx="66" cy="14" r="7" fill="#4da852"/>
+    <circle cx="5" cy="20" r="6" fill="#4da852"/><circle cx="68" cy="22" r="6" fill="#5cb860"/>
+    <polygon points="38,-2 33,8 43,8" fill="#88e8ff" opacity="0.95"/>
+    <polygon points="38,10 33,8 43,8" fill="#44c8f0" opacity="0.9"/>
+    <line x1="38" y1="-2" x2="32" y2="-8" stroke="#a0f0ff" stroke-width="1.5" opacity="0.7"/>
+    <line x1="38" y1="-2" x2="44" y2="-8" stroke="#a0f0ff" stroke-width="1.5" opacity="0.7"/>
+  </svg>`;
+
+  // Decoration: exotic blue flower (Wörter)
+  let decWoerter=`<svg width="60" height="72" viewBox="0 0 60 72" xmlns="http://www.w3.org/2000/svg">
+    <line x1="30" y1="68" x2="30" y2="38" stroke="#4a9a40" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M30,52 Q14,46 10,36 Q20,36 30,52" fill="#5ab050"/><path d="M30,52 Q46,46 50,36 Q40,36 30,52" fill="#5ab050"/>
+    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(0,30,30)"/>
+    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(45,30,30)"/>
+    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(90,30,30)"/>
+    <ellipse cx="30" cy="20" rx="6" ry="13" fill="#2a48a8" transform="rotate(135,30,30)"/>
+    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(22.5,30,30)"/>
+    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(67.5,30,30)"/>
+    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(112.5,30,30)"/>
+    <ellipse cx="30" cy="20" rx="5" ry="11" fill="#3858c0" transform="rotate(157.5,30,30)"/>
+    <circle cx="30" cy="30" r="9" fill="#5868d8"/><circle cx="30" cy="30" r="5.5" fill="#8898f0"/>
+  </svg>`;
+
+  // Decoration: angel statue (Gemeinschaft)
+  let decGemein=`<svg width="64" height="78" viewBox="0 0 64 78" xmlns="http://www.w3.org/2000/svg">
+    <path d="M32,28 Q8,22 4,38 Q16,44 32,38" fill="rgba(240,248,255,0.88)" stroke="rgba(190,215,232,0.6)" stroke-width="0.8"/>
+    <path d="M32,28 Q56,22 60,38 Q48,44 32,38" fill="rgba(240,248,255,0.88)" stroke="rgba(190,215,232,0.6)" stroke-width="0.8"/>
+    <path d="M32,30 Q12,26 8,40 Q20,43 32,38" fill="rgba(215,235,250,0.75)"/>
+    <path d="M32,30 Q52,26 56,40 Q44,43 32,38" fill="rgba(215,235,250,0.75)"/>
+    <path d="M25,42 Q22,55 23,72 L41,72 Q42,55 39,42 Z" fill="rgba(238,248,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
+    <line x1="29" y1="46" x2="27" y2="70" stroke="rgba(175,200,222,0.35)" stroke-width="1"/>
+    <line x1="33" y1="46" x2="35" y2="70" stroke="rgba(175,200,222,0.35)" stroke-width="1"/>
+    <path d="M25,45 Q14,48 11,55" stroke="rgba(218,235,250,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <path d="M39,45 Q50,48 53,55" stroke="rgba(218,235,250,0.92)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+    <circle cx="32" cy="33" r="7.5" fill="rgba(235,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
+    <ellipse cx="32" cy="23" rx="9" ry="2.8" fill="none" stroke="rgba(255,238,160,0.65)" stroke-width="1.8"/>
+    <path d="M25,31 Q23,25 29,22 Q32,18 35,22 Q41,25 39,31" fill="rgba(200,218,234,0.55)"/>
+  </svg>`;
+
+  // Decoration: stone fountain statue (Planen)
+  let decPlanen=`<svg width="54" height="72" viewBox="0 0 54 72" xmlns="http://www.w3.org/2000/svg">
+    <rect x="13" y="58" width="28" height="12" rx="3" fill="rgba(222,234,244,0.92)"/>
+    <rect x="9" y="60" width="36" height="4" rx="1.5" fill="rgba(198,215,230,0.75)"/>
+    <ellipse cx="27" cy="52" rx="15" ry="5" fill="rgba(208,228,244,0.85)" stroke="rgba(178,204,224,0.6)" stroke-width="1"/>
+    <path d="M14,52 Q13,44 27,40 Q41,44 40,52" fill="rgba(208,228,244,0.55)"/>
+    <path d="M21,40 Q19,50 20,58 L34,58 Q35,50 33,40 Z" fill="rgba(236,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
+    <circle cx="27" cy="34" r="6.5" fill="rgba(236,246,255,0.96)" stroke="rgba(195,218,235,0.5)" stroke-width="0.6"/>
+    <path d="M21,43 Q13,40 10,34" stroke="rgba(218,235,250,0.90)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M33,43 Q41,40 44,34" stroke="rgba(218,235,250,0.90)" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M27,27 Q25,22 27,17 Q29,22 27,27" fill="rgba(155,218,255,0.65)"/>
+    <ellipse cx="27" cy="17" rx="4" ry="2" fill="rgba(155,218,255,0.5)"/>
+  </svg>`;
+
+  let lernen=svgIsle({w:196,decoration:decLernen,
+    badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
+  let woerter=svgIsle({w:155,decoration:decWoerter});
+  let gemein=svgIsle({w:158,decoration:decGemein});
+  let planen=svgIsle({w:122,decoration:decPlanen});
 
   c.innerHTML=`
 <div class="map-outer">
@@ -557,7 +599,6 @@ function rMap(){
     <div class="map-scatter">
 
       <div class="isle isle-lernen" onclick="setTab('studyhome')">
-        ${due>0?'<div class="isle-badge">'+due+' due</div>':''}
         ${lernen}
         <div class="isle-label">Lernen</div>
         <div class="isle-sub">${knownC} known</div>
