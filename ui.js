@@ -1554,7 +1554,9 @@ async function joinRace(){
   let res=await sbFetch('race_rooms','code=eq.'+code+'&limit=1');
   if(!res?.length){if(s)s.textContent='Room not found. Check the code.';return;}
   let room=res[0];
-  let words=JSON.parse(room.words);
+  let words;
+  try{words=JSON.parse(room.words||'[]');}catch(e){words=[];}
+  if(!words.length){if(s)s.textContent='Invalid room data.';return;}
   raceSt={room,words,idx:0,score:0,startTime:null,done:false,isCreator:false,waiting:true};
   // Show waiting screen, poll for host to start
   raceNav();
