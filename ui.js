@@ -523,17 +523,18 @@ function svgIsle(cfg){
   let cloudEl=mkSpr(_A.cloudSheet,_AD.cloudFW,_AD.cloudFH,_AD.cloudN,clW,clH,4,
     `left:${Math.round((w-clW)/2)}px;top:${Math.round(bodyH-clH*0.3)}px;opacity:0.50;`);
 
-  // SVG for the island body only
-  let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}"
-      xmlns="http://www.w3.org/2000/svg"
-      style="display:block;overflow:visible;image-rendering:pixelated">
-    <image href="${_A.body}" x="0" y="0" width="${w}" height="${bodyH}"
-           preserveAspectRatio="none" style="image-rendering:pixelated"/>
-    <ellipse cx="${cx}" cy="${totalH-3}" rx="${w*0.28}" ry="3.5" fill="rgba(0,0,0,0.10)"/>
-  </svg>`;
+  // Island body as a CSS background-image div (avoids SVG innerHTML data-URI restrictions)
+  let bodyDiv=`<div style="position:absolute;left:0;top:0;width:${w}px;height:${bodyH}px;`
+    +`background-image:url('${_A.body}');background-size:100% 100%;`
+    +`image-rendering:pixelated;"></div>`;
+
+  // Drop shadow div below island
+  let shadowDiv=`<div style="position:absolute;left:${Math.round(w*0.35)}px;top:${bodyH+4}px;`
+    +`width:${Math.round(w*0.30)}px;height:7px;border-radius:50%;`
+    +`background:rgba(0,0,0,0.13);filter:blur(3px);"></div>`;
 
   return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block">`
-    + badgeHtml + svg + decEl + rocks + cloudEl
+    + badgeHtml + bodyDiv + decEl + rocks + cloudEl + shadowDiv
     + `</div>`;
 }function rMap(){
   let c=document.getElementById('content');
