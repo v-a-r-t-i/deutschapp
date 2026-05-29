@@ -424,7 +424,7 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 // ── SVG ISLAND BUILDER ───────────────────────────────
 // Craftpix-style: thick body, visible sides, overhanging grass, waterfalls
 function svgIsle(cfg){
-  let {w=180,decoration='',badgeHtml=''}=cfg;
+  let {w=180,decoration='',badgeHtml='',waterfall=false,wfTag=''}=cfg;
   let cx=w/2;
 
   // Flat flying-saucer grass (key to matching reference)
@@ -500,6 +500,8 @@ function svgIsle(cfg){
     ${bumps}
     <!-- Water reflection below island -->
     <ellipse cx="${cx}" cy="${(totalH-4).toFixed(1)}" rx="${(w*0.30).toFixed(1)}" ry="5" fill="rgba(120,200,255,0.15)"/>
+    <!-- Waterfall overlay -->
+    ${waterfall?`<g transform="translate(${(cx-38).toFixed(0)},${(grassCy+grassRy*0.4).toFixed(0)})">${wfTag}</g>`:""}
   </svg>`;
 
   // Sprite bottom sits at the grass surface level
@@ -529,10 +531,13 @@ function rMap(){
   let decGemein='<div class="sp-angel"></div>';
   let decPlanen='<div class="sp-statue"></div>';
 
-  let lernen=svgIsle({w:196,decoration:decLernen,
+  // Waterfall decoration: overlaid on Lernen and Gemeinschaft after island build
+  let wfTag=`<image href="data:image/png;base64,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" x="0" y="0" width="76" height="54" style="image-rendering:pixelated" opacity="0.88"/>`;
+
+  let lernen=svgIsle({w:196,decoration:decLernen,waterfall:true,wfTag,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
   let woerter=svgIsle({w:155,decoration:decWoerter});
-  let gemein=svgIsle({w:158,decoration:decGemein});
+  let gemein=svgIsle({w:158,decoration:decGemein,waterfall:true,wfTag});
   let planen=svgIsle({w:122,decoration:decPlanen});
 
   c.innerHTML=`
