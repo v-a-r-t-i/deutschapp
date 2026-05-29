@@ -19,7 +19,8 @@ function loadLocalCache(){
   try{
     let raw=localStorage.getItem('cache_'+CU.id);
     if(!raw)return false;
-    let c=JSON.parse(raw);
+    let c;
+    try{c=JSON.parse(raw);}catch(e){localStorage.removeItem('cache_'+CU.id);return false;}
     if(c.known)known=new Set(c.known);
     if(c.sm2)sm2Cache=c.sm2;
     if(c.streakN!==undefined)streakN=c.streakN;
@@ -189,7 +190,8 @@ function addXP(amt,type){
   let newLvl=getLevelInfo(xpTotal);
   if(newLvl.lvl>prevLvl.lvl&&typeof confetti==='function')confetti();
   if(newLvl.lvl>prevLvl.lvl){
-    lp.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--xp);color:#fff;padding:20px 32px;border-radius:var(--r);font-size:18px;font-weight:700;z-index:300;text-align:center;';
+    let lp=document.createElement('div');
+    lp.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--xp);color:#fff;padding:20px 32px;border-radius:var(--r);font-size:18px;font-weight:700;z-index:300;text-align:center;animation:fadeup 2.5s ease forwards';
     lp.innerHTML='⭐ Level Up!<br><span style="font-size:14px;font-weight:400">'+newLvl.name+'</span>';
     document.body.appendChild(lp);
     setTimeout(()=>lp.remove(),2500);
