@@ -422,45 +422,51 @@ function buildGQ(){let ns=aw().filter(w=>w.art!==null);shuf(ns);gQ=ns;gIdx=0;gAn
 
 
 // ── SVG ISLAND BUILDER ───────────────────────────────
-// Body: tileset island sprite (base64, 4.5KB) stretched wide.
-// Decorations: CSS animated sprites from sprites/ folder (URL refs).
-// Waterfall: tileset sprite (base64, 4KB).
+// Body: tileset island sprite stretched wide (base64).
+// Decorations: JS-driven sprite animation (requestAnimationFrame).
+// Waterfall: tileset sprite (base64).
 
 const _BODY = 'data:image/png;base64,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';
 const _WF   = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABYCAYAAAAKsfL4AAALaUlEQVR42u1cbWwUxxl+9m6x7wq+D9vn3Lmk2GBBhCUINKhEgapVoUpaqU2qQisQUiXUqiRKLbVRY6VSCORHXER+0AhoJSohUKU09AetlLRWibBMEmhRSKB2Co4/DmGwdbbvY8/2Hec11x/2jOdmZ/du1+vDTveVLM/uzrzzzPvxvDN7ZwOOOOKII478v4r0nbPteccMD09cjgm+oA5QuvuWtGHKhd+ViytQuvugdPchF1fo5KRtVnJxBbm4Ak8kZFmHGQMsdfyu7NAIAOD8Szvx9t7HkYsr8DWvMT3hpmvn8cZ6F9Zd/yuyQyP0hxij8eJZNF48a9oAjRfP6hoiF1ew1PFLaj6db9l/AMf+eBIA0LL/AG5t/D4qqn2moubNbQE0b95KdQDAoSMHEagJo/vaFfrs6d/9w1A3iZyNsY8opj3f+yHGd/9SM+fbex9HoCaMxY6/Zf8BDHxznxC/+9XXXnntyW1PIJsZRzYzjurAclzoikOSZbi9lSUtYDpzH3/71x08u+kRquPHP9mDQE0YAFBRIVP9f/nPsK7eXFyBOj6JjbGPcOjIQXi+tALJsWGcnajXjum6hv0/+DYAYLHj/0MsoBnzxH//jmeee26mCAdqwrh7OwoAqK0LCZV7V9bBu7LOcCFEx8YtW3D3dhTJsWHw+kV62d/nX9qJQ0cO0v7Xr16Ff0MTnb9q2wZ4V9bBveVJqmMp4v9k87MAADk5NoxATRhfXtVAPQ58rpkoMxgrWIB3ZR0ygzF67YmEOB1zCyL6AcC/oalgHGlnBmPwb2gqmLP72hVs3LIFqT99StM+d6O34DmZc6nil8kkd29H6YQdb+zD3ug41OiwZhJ+QXLDDOBX4l0Fk5OFsPoBINwdw3Dz+hnvN4TpHHJDGD+7eRF3b88YonnzVnRfu0LH6RWycuP/8ze24kcdsA2/PBqb2UX0fHYTa9c/Rj3NgmeBshOq0WGo0WFkBmPoQU8B+OTYMK5fvUrvEf3qVI7qrWoIzxllMIY4xlBbF6LjR2MjupQCAAR7OfETWrILv8wq7/nsJvV2ZvDBTMr130QKgJdLuYLJAaxd/xhGYyPCSVn92ayMzGBspmDNGiMXV1BR7UMyqWA0NoLua1cwGhtBfHRsVsMy4QLio2Oorq0xxP+r2jG8OWgf/hkdD2zDL8dHx5BMKlQ5AUCUTuWmkIsrmgJGJmdBAkB1bQ291987gEDAV6A/l8vRdCSOIItYvbYR/b0DFFwySdJ2jpdX3OvDeP3MPj+ZVLBr34uSaHE7jp3LV1T78K1n9kg7jp3LF8O/8as7pVK3rTuOncuL8P+05TeSUX8AuNCySyLXu/a9KMlkkXOLBfVaLq5AymQLIoflMraddCka77J6ye+pnHYLV1Hto7oSiVSB8QcG7gD+OQdMTamm9vd8sdTDPx9h8ZsVmSxaK2FTingdyaRCo599pqrVFDAPmnXa6qZGAMDHVz/VnZP0Kbfo4bf0LigQMD4xLlsmW1JM9Ir0s8DJYlbc60MyqSCVSNMx8dExBIP+QupQVY3Dyi0i/BdadkmWHDAwcAcAkEqkkUqkNXREUp73OA+CH09+RPrJGPZIL8syEokU/MEqJJMKNS7JnkDsNu03n5dsevitZIGZcXoOcgWDfjQ2Pgp/sAr+YBUSiZSQkipv3zKcgB8f7R9EtH8QvP6pKZXqKuDoTBbBoB/BoB+JRIo6kH3OZ6S2bpk3gBUhumyhINFNNlLNpiQZTwwuElVVKe3wdYR1vigQ2CIsrl3zoxQzY+xwqouNJJHhWc4VCWtEdjyJZpF+QiOyLBsuntCWu69bk/5WAmUhMqMU5/FzsNTlIlEXDPp1IxYA7q9aJ6QkEpGi8UR3IpGiNFTwfmaWVngHphJpGt3+YBV1GAvcLG+ze3G7KclM3eDbrmL0wxa9UhadSqTRsHolov2DBbpIFhTLKH7+YNAPr9dTckaWaoDFIi42Wonx9DJBlG6kKJLxZKwoG1KJNGRZpmNExmxYvVIzjvTLxRV4vR7Le3C7Dl7zpSsWv4vfIvKFjTWSaCdEKIinj1QiDSU9IdyCzumeLpiHdR6rj8VBMpJ8FFlOvrdTCH4XWaCSnoCSnhAaS2R4PnrJePaaNSC5VlWVOk2W3Rr6Ic5jx5D+7r5uWjc8kdCSMzyLg+AvqAG+quUFCxdFaSm7pFQiXaBLSU/Qa3bM9JrmoqBZLGaelUP4wj7vc4DRvp0X1ngsHbCZwBqdnAtUdRqqOk2/dSByHj/+/qp1UNVpTK9pnlcR1jOeFTrTw280l8hhLjaK2MWLJiDZwN5nM4Q1OH9PRG2eSEgzh15Uy7Jbcx6waiArBheJCL9ZKizpm3EkYnnwpO2JhOCrWm54jihmLFWdhpKewKNfCdOM4Z1RCmUVK3p6+O0oqFYoS+ajzle13BS3yrIb6q0bQKV2D89TiZKeACpqIctuSLOLJovPK0Oa3ZReMNhdUa0UaQ+H35YawBreEwnBEwlBlt2a3Qo7uapOQ1q3QXeCnt6o0KH8oYifQ5QhZqKO4C/FeFaKqZlDnQgr3Ya+deqMRKKUj37CubIsF/W43ja0vaNTYp0gy25qTPJKV8TtSnoCPb1R9PRGdRfCPit12zffiOWdUFHtKzmDRI5wiaLUV7Wcdp7ZtaiGUVosGto7OksCyAdAe0en1N7RKfFGI9iM9Jopjgv9ikIPP60B7R2d0tqmhjxPFXzay7IMt+DzT/5aFJk9vVGsbWqAqk5Dlt0FY9xkLsa/JDOJTE5m4PbN/Z5P1BbDX87XGi6R0fQccX/VOvptCSPOJ5HLRiihIpFjiYGNHHj59FHJEwnh8umjklUq2XHsXL4Y/nJlguYk3N7RKfFRx4u7rxvZoRGN90lKEeMbUdHkZAaTkxlkh0aQv3WDOuTy6aOSkp7AW6fOSLwOyrFSvh0APPW17aRtdrdjhN/s1rNU7uf7sY7QnANETrjvi2j2z/xBR2Q4kVw+fVRavulrBbreP/G6tOPYuXyxALAq21pP5Ivhn+8p2uprCeFB7K1TZ6Tp4X6QaK2c3aOLqMPqweWDtucllnbslg/anpdEbTvx21oDRJFKfowM9f6J160AGSJzkLYVSvkiiMsobSn3h1dTKgKA6eF+24Fk741uKMqlv9j9tBna4dvkt90ZUWodsfwuiAdNdiILleILTUlmnj20DKDUUNge0mkvqGxrPXFvKdMMm42WM2A2UuoXi4HM0FGxSDcy0ILhn6Ujl1lj071sfe2NMtJHvdl6UYxW7HwnZBYLWy8MM2B76/HDACAhf4rcI20pL/2btpnnpYg3EtLqM9BBcPBjisn21uPvzvZ/jxk7286/R9rs89JOtLUafUY6CA4thnn8q4LsUMym43ndQ+Hl+zZ9KlZp5+cBJUTU4aVcDPlIXNTnAJFcanvhVaPrxS6X2l74rtH1onLA9tbjh3kD25UBLH2Rtt1UtL31+Lu8ge3KAJa+SNsqFen+tcODvKuLj3T2HtuujDzSZWZSkZ48pK5S+ouudcZc4iOdvce2K8OhSybxa/XkcamU/vz1kvqHTU+9fHI3AHz42wPvLMUa9NTLJ1tn8bdZdoC33t79MzFm5t5IWYzgjdTYjb8NADJD1v5ezZYMKJfxFkqsGq/suyBH7BfdIuyWtP9yxC3hc/KtKPa5qK+R6Oou0t/UPHnpY9G9vOi5qK8F3UX7C/roZkBn24FPFsrrZnWT/mbGfXjk5/9cKPxmdZP+onG6Dvh668lN5XSK7TuOX/9+ZzmdYnsN0DN27iEWXFFQmI3S7L34ogoKV7loZLHJYskGZxfkOMBxgCOOAxwHOLKUHeDsiJwMcCjIySJrWeRkgJMBjjjiiCOOOOKII4444ogjjjjiiCOOOOKII4444sgCy/8APpnorw9RmmwAAAAASUVORK5CYII=';
 const _WFW  = 96;
 const _WFH  = 88;
 
-// Sprite sheet specs for CSS animation
+// Sprite sheet specs
 const _SPR = {
-  tree:   {url:'sprites/Tree_animation.png',     fw:160, fh:160, n:6, fps:8},
-  statue: {url:'sprites/Statues_animation1.png', fw:160, fh:144, n:6, fps:4},
-  flower: {url:'sprites/flying_flower_animation.png', fw:128, fh:128, n:3, fps:5},
+  tree:   {url:'sprites/Tree_animation.png',          fw:160, fh:160, n:6, fps:8},
+  statue: {url:'sprites/Statues_animation1.png',       fw:160, fh:144, n:6, fps:4},
+  flower: {url:'sprites/flying_flower_animation.png',  fw:128, fh:128, n:3, fps:5},
 };
 
-// Inject animation keyframe CSS once
-(function(){
-  if(document.getElementById('isle-css'))return;
-  let s=document.createElement('style');s.id='isle-css';
-  s.textContent='@keyframes isle-step{from{background-position-x:0}to{background-position-x:-100%}}';
-  document.head.appendChild(s);
-})();
+// Global rAF sprite ticker — one loop drives all active sprites
+const _spriteEls = new Set();
+let _spriteRaf = null;
+function _spriteTick(){
+  const now = performance.now();
+  _spriteEls.forEach(el => {
+    if(!el.isConnected){ _spriteEls.delete(el); return; }
+    const sp = el._sp;
+    const frame = Math.floor(now / (1000/sp.fps)) % sp.n;
+    el.style.backgroundPositionX = -(frame * el._dw) + 'px';
+  });
+  _spriteRaf = requestAnimationFrame(_spriteTick);
+}
+function _startSprites(){ if(!_spriteRaf) _spriteTick(); }
 
 function svgIsle(cfg){
   let {w=180, dec='tree', decW=0, decH=0, badgeHtml='', waterfall=false}=cfg;
   let cx=w/2;
   let bodyH=Math.round(w*0.62);
-  let rimY=Math.round(bodyH*0.21);
+  let rimY=Math.round(bodyH*0.21);   // teal pool top in sprite = ~21% from top
   let totalH=bodyH+10;
 
-  // Waterfall: centred under the rim
+  // Waterfall: centred, starts at rim
   let wfDispW=Math.round(w*0.62), wfDispH=Math.round(wfDispW*(_WFH/_WFW));
   let wfX=Math.round((w-wfDispW)/2), wfY=rimY+Math.round(bodyH*0.04);
   let wfTag=waterfall
     ?`<image href="${_WF}" x="${wfX}" y="${wfY}" width="${wfDispW}" height="${wfDispH}" style="image-rendering:pixelated" opacity="0.92"/>`
     :'';
 
-  // Build the SVG island (body + waterfall only)
   let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}"
       xmlns="http://www.w3.org/2000/svg"
       style="display:block;overflow:visible;image-rendering:pixelated">
@@ -470,23 +476,32 @@ function svgIsle(cfg){
     <ellipse cx="${cx}" cy="${totalH-2}" rx="${Math.round(w*0.28)}" ry="4" fill="rgba(0,0,0,0.12)"/>
   </svg>`;
 
-  // Decoration: CSS animated sprite, sized proportionally to island rim
-  let decEl='';
+  // Decoration sizing: reference image shows dec ~55% of island width, proportional height
   let sp=_SPR[dec];
+  let decHtml='';
+  let decId='dec-'+Math.random().toString(36).slice(2,7);
   if(sp){
-    // Dec height = 80% of rimY so it sits neatly above the grass surface
-    let dh=decH||Math.round(rimY*0.80);
-    let dw=decW||Math.round(dh*(sp.fw/sp.fh));
+    let dw=decW||Math.round(w*0.55);
+    let dh=decH||Math.round(dw*(sp.fh/sp.fw));
     let dx=Math.round((w-dw)/2);
-    // Bottom of decoration touches the grass rim
-    let dy=rimY-dh+2;
+    // Bottom of sprite sits on the grass rim line
+    let dy=rimY-dh+4;
     let sheetW=dw*sp.n;
-    let dur=(sp.n/sp.fps).toFixed(2);
-    decEl=`<div style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;background-image:url('${sp.url}');background-size:${sheetW}px ${dh}px;background-position:0 0;background-repeat:no-repeat;animation:isle-step ${dur}s steps(${sp.n},end) infinite;image-rendering:pixelated;"></div>`;
+    decHtml=`<div id="${decId}" style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;`
+      +`background-image:url('${sp.url}');background-size:${sheetW}px ${dh}px;`
+      +`background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;"></div>`;
+    // Register for rAF animation after DOM insertion
+    requestAnimationFrame(()=>{
+      const el=document.getElementById(decId);
+      if(!el)return;
+      el._sp=sp; el._dw=dw;
+      _spriteEls.add(el);
+      _startSprites();
+    });
   }
 
   return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block">`
-    +badgeHtml+svg+decEl+`</div>`;
+    +badgeHtml+svg+decHtml+`</div>`;
 }
 
 // ── ISLAND MAP ────────────────────────────────────────
