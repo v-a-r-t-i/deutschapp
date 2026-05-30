@@ -433,9 +433,11 @@ const _WFH  = 88;
 
 // Sprite sheet specs
 const _SPR = {
-  tree:   {url:'sprites/Tree_animation.png',          fw:160, fh:160, n:6, fps:8},
-  statue: {url:'sprites/Statues_animation1.png',       fw:160, fh:144, n:6, fps:4},
-  flower: {url:'sprites/flying_flower_animation.png',  fw:128, fh:128, n:3, fps:5},
+  tree:    {url:'sprites/Tree_animation.png',     fw:160, fh:160, n:6, fps:8,  static:false},
+  statue:  {url:'sprites/Statues_animation1.png', fw:160, fh:144, n:6, fps:4,  static:false},
+  statue2: {url:'sprites/Statues_animation2.png', fw:50,  fh:160, n:6, fps:4,  static:false},
+  flower:  {url:'sprites/flower_single.png',      fw:64,  fh:64,  n:3, fps:5,  static:false},
+  crystal: {url:'sprites/crystal.png',            fw:64,  fh:64,  n:1, fps:1,  static:true},
 };
 
 // Global rAF sprite ticker — one loop drives all active sprites
@@ -487,11 +489,11 @@ function svgIsle(cfg){
     // Bottom of sprite sits on the grass rim line
     let dy=rimY-dh+4;
     let sheetW=dw*sp.n;
-    decHtml=`<div id="${decId}" style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;`
+    decHtml=`<div id="${decId}" style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;overflow:hidden;`
       +`background-image:url('${sp.url}');background-size:${sheetW}px ${dh}px;`
       +`background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;"></div>`;
-    // Register for rAF animation after DOM insertion
-    requestAnimationFrame(()=>{
+    // Register for rAF animation after DOM insertion (skip for static sprites)
+    if(!sp.static) requestAnimationFrame(()=>{
       const el=document.getElementById(decId);
       if(!el)return;
       el._sp=sp; el._dw=dw;
