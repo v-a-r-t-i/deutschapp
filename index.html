@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css">
 <script>
-const APP_VERSION = '6.2.4';
+const APP_VERSION = '6.2.5';
 if(localStorage.getItem('app_version') !== APP_VERSION) {
   ['known','done','sm2','streak-n','streak-dt','de-known','de-done'].forEach(k=>localStorage.removeItem(k));
   localStorage.setItem('app_version', APP_VERSION);
@@ -220,5 +220,55 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script src="ai.js"></script>
 <script src="auth.js"></script>
 <script src="ui.js"></script>
+
+<!-- ── UPDATE BANNER ── -->
+<div id="update-banner" style="
+  display:none;
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  z-index:9999;
+  background:linear-gradient(135deg,#6366f1,#7c3aed);
+  color:#fff;padding:14px 22px;border-radius:999px;
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  box-shadow:0 8px 32px rgba(99,102,241,0.45);
+  cursor:pointer;white-space:nowrap;
+  display:none;align-items:center;gap:10px;
+  animation:banner-in 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+">
+  <span style="font-size:18px">🚀</span>
+  <span>New version available — tap to update!</span>
+  <span style="font-size:18px">✨</span>
+</div>
+<style>
+@keyframes banner-in {
+  from { opacity:0; transform:translateX(-50%) translateY(20px) scale(0.9); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0)    scale(1);   }
+}
+#update-banner:hover { filter:brightness(1.12); transform:translateX(-50%) scale(1.03); }
+</style>
+<script>
+(function(){
+  const CURRENT = APP_VERSION;
+  const banner  = document.getElementById('update-banner');
+
+  function showBanner(){
+    banner.style.display='flex';
+    banner.onclick = () => { location.reload(true); };
+  }
+
+  async function checkForUpdate(){
+    try {
+      // Fetch index.html with cache-busting query param
+      const res  = await fetch('index.html?_=' + Date.now(), {cache:'no-store'});
+      const text = await res.text();
+      const m    = text.match(/APP_VERSION\s*=\s*'([^']+)'/);
+      if(m && m[1] !== CURRENT) showBanner();
+    } catch(e) { /* offline or fetch failed — silently ignore */ }
+  }
+
+  // Check immediately after load, then every 5 minutes
+  setTimeout(checkForUpdate, 3000);
+  setInterval(checkForUpdate, 5 * 60 * 1000);
+})();
+</script>
 </body>
 </html>

@@ -435,7 +435,7 @@ const _WFH  = 88;
 const _SPR = {
   tree:   {url:'sprites/Tree_animation.png',     fw:160, fh:160, n:6, fps:8},
   statue: {url:'sprites/Statues_animation1.png', fw:160, fh:144, n:6, fps:4},
-  flower: {url:'sprites/flying_flower_animation.png', fw:96, fh:128, n:4, fps:6},
+  flower: {url:'sprites/flying_flower_animation.png', fw:128, fh:128, n:3, fps:5},
 };
 
 // Inject animation keyframe CSS once
@@ -470,25 +470,19 @@ function svgIsle(cfg){
     <ellipse cx="${cx}" cy="${totalH-2}" rx="${Math.round(w*0.28)}" ry="4" fill="rgba(0,0,0,0.12)"/>
   </svg>`;
 
-  // Decoration: CSS sprite animation overlay
+  // Decoration: CSS animated sprite, sized proportionally to island rim
   let decEl='';
   let sp=_SPR[dec];
   if(sp){
-    // Scale the decoration so its height = ~90% of rimY
-    let dh=Math.round(rimY*0.95);
-    let dw=Math.round(dh*(sp.fw/sp.fh));
-    if(decW)dw=decW; if(decH)dh=decH;
+    // Dec height = 80% of rimY so it sits neatly above the grass surface
+    let dh=decH||Math.round(rimY*0.80);
+    let dw=decW||Math.round(dh*(sp.fw/sp.fh));
     let dx=Math.round((w-dw)/2);
-    let dy=rimY-dh+4;
-    let totalSheetW=dw*sp.n;
+    // Bottom of decoration touches the grass rim
+    let dy=rimY-dh+2;
+    let sheetW=dw*sp.n;
     let dur=(sp.n/sp.fps).toFixed(2);
-    decEl=`<div style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;"
-      +"background-image:url('${sp.url}');"
-      +"background-size:${totalSheetW}px ${dh}px;"
-      +"background-position:0 0;"
-      +"background-repeat:no-repeat;"
-      +"animation:isle-step ${dur}s steps(${sp.n},end) infinite;"
-      +"image-rendering:pixelated;"></div>`;
+    decEl=`<div style="position:absolute;left:${dx}px;top:${dy}px;width:${dw}px;height:${dh}px;background-image:url('${sp.url}');background-size:${sheetW}px ${dh}px;background-position:0 0;background-repeat:no-repeat;animation:isle-step ${dur}s steps(${sp.n},end) infinite;image-rendering:pixelated;"></div>`;
   }
 
   return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block">`
