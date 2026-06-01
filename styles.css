@@ -1246,10 +1246,10 @@ body::before{
 .isle:active{ filter:brightness(0.9); transform:scale(0.97); }
 @keyframes isle-bob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
 
-.isle-lernen  { top:3%;  left:50%; transform:translateX(-50%); z-index:5; animation-delay:0s; }
+.isle-lernen  { top:18%; left:50%; transform:translateX(-50%); z-index:5; animation-delay:0s; }
 .isle-woerter { top:42%; left:3%;  z-index:4; animation-delay:0.8s; }
-.isle-gemein  { top:38%; right:3%; z-index:4; animation-delay:1.4s; }
-.isle-planen  { bottom:4%;left:38%;z-index:3; animation-delay:0.4s; }
+.isle-gemein  { top:35%; right:3%; z-index:4; animation-delay:1.4s; }
+.isle-planen  { bottom:5%;left:38%;z-index:3; animation-delay:0.4s; }
 .isle-lernen:hover{ transform:translateX(-50%) translateY(-6px) scale(1.04); }
 .isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{ transform:translateY(-6px) scale(1.04); }
 
@@ -1306,12 +1306,13 @@ body::before{
 
 /* ── Sprite sheet animations ── */
 .sp-tree{
-  width:160px;height:160px;
+  width:130px;height:130px;
   background:url('sprites/Tree_animation.png') 0 0 no-repeat;
+  background-size:780px 130px;
   image-rendering:pixelated;
   animation:anim-tree 0.7s steps(6) infinite;
 }
-@keyframes anim-tree{to{background-position-x:-960px;}}
+@keyframes anim-tree{to{background-position-x:-780px;}}
 
 /* Flower: 6×64px frames in row-0 of 384×128 sheet, displayed at 2× */
 .sp-flower{
@@ -1323,24 +1324,24 @@ body::before{
 }
 @keyframes anim-flower{to{background-position-x:-768px;}}
 
-/* Angel statue: 6×160px frames, 960×144 sheet — display 96px wide to crop pedestal */
+/* Angel statue: 6×90px frames, 540×144 cropped sheet */
 .sp-angel{
-  width:96px;height:144px;
+  width:90px;height:144px;
   background:url('sprites/Statues_animation1.png') 0 0 no-repeat;
   image-rendering:pixelated;
   animation:anim-angel 1.2s steps(6) infinite;
 }
-@keyframes anim-angel{to{background-position-x:-960px;}}
+@keyframes anim-angel{to{background-position-x:-540px;}}
 
 /* Small statue: 8×38px frames, 304×160 sheet — stretched 1.6× wide to 60px */
 .sp-statue{
   width:60px;height:160px;
   background:url('sprites/Statues_animation2.png') 0 0 no-repeat;
-  background-size:480px 160px;
+  background-size:360px 160px;
   image-rendering:pixelated;
-  animation:anim-statue 1.0s steps(8) infinite;
+  animation:anim-statue 1.0s steps(6) infinite;
 }
-@keyframes anim-statue{to{background-position-x:-480px;}}
+@keyframes anim-statue{to{background-position-x:-360px;}}
 
 
 /* ═══════════════════════════════════════════════════════
