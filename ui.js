@@ -517,13 +517,15 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  // Scale islands responsively — only shrink on mobile, keep desktop sizes
-  let isMobile = window.innerWidth < 700;
-  let mapW = isMobile ? window.innerWidth - 32 : 760;
-  let iL = isMobile ? Math.round(mapW * 0.27) : 196;
-  let iW = isMobile ? Math.round(mapW * 0.21) : 155;
-  let iG = isMobile ? Math.round(mapW * 0.22) : 158;
-  let iP = isMobile ? Math.round(mapW * 0.17) : 122;
+  // Compute map width: on desktop sidebars take ~500px total, on mobile full width minus padding
+  // Breakpoint matches CSS: < 700px = mobile (no sidebars)
+  const _vw = window.innerWidth;
+  const _mapW = _vw < 700 ? _vw - 28 : Math.min(_vw - 520, 760);
+  const _s = _mapW < 480; // is it a small/mobile map?
+  let iL = _s ? Math.round(_mapW * 0.28) : 196;
+  let iW = _s ? Math.round(_mapW * 0.22) : 155;
+  let iG = _s ? Math.round(_mapW * 0.23) : 158;
+  let iP = _s ? Math.round(_mapW * 0.18) : 122;
 
   let lernen=svgIsle({w:iL, dec:'tree',    waterfall:true,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});

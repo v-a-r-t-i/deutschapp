@@ -1774,7 +1774,7 @@ body::before{
   .due-pill{ display:none; }
   .user-btn{ padding:6px 10px; font-size:11px; }
   .tabs{ display:none!important; }
-  .mobile-bottom-nav{ display:flex!important; }
+  .mobile-bottom-nav{ display:none!important; }
   .content{ padding:12px 14px; }
   .study-modes{ padding:8px 14px 0; gap:6px; }
   .mode-pill{ padding:8px 14px; font-size:12px; border-radius:999px; }
