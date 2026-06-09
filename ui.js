@@ -517,14 +517,13 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  // Scale islands to map container width — map is inside .main-col
-  // On mobile (~360px screen) the map is ~340px wide, desktop ~720px
-  // We target islands at ~27% of map width for the big one, scaling down
-  let mapW = Math.min(window.innerWidth - 32, 760);
-  let iL = Math.round(mapW * 0.27);  // Lernen: biggest ~27%
-  let iW = Math.round(mapW * 0.21);  // Wörter
-  let iG = Math.round(mapW * 0.22);  // Gemeinschaft
-  let iP = Math.round(mapW * 0.17);  // Planen: smallest
+  // Scale islands responsively — only shrink on mobile, keep desktop sizes
+  let isMobile = window.innerWidth < 700;
+  let mapW = isMobile ? window.innerWidth - 32 : 760;
+  let iL = isMobile ? Math.round(mapW * 0.27) : 196;
+  let iW = isMobile ? Math.round(mapW * 0.21) : 155;
+  let iG = isMobile ? Math.round(mapW * 0.22) : 158;
+  let iP = isMobile ? Math.round(mapW * 0.17) : 122;
 
   let lernen=svgIsle({w:iL, dec:'tree',    waterfall:true,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
