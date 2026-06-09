@@ -502,7 +502,7 @@ function svgIsle(cfg){
     });
   }
 
-  return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block">`
+  return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block;overflow:visible">`
     +badgeHtml+svg+decHtml+`</div>`;
 }
 
@@ -517,11 +517,20 @@ function rMap(){
   let greeting=getGreeting();
   let name=CP?.display_name||'';
 
-  let lernen=svgIsle({w:196, dec:'tree',    waterfall:true,
+  // Scale islands to map container width — map is inside .main-col
+  // On mobile (~360px screen) the map is ~340px wide, desktop ~720px
+  // We target islands at ~27% of map width for the big one, scaling down
+  let mapW = Math.min(window.innerWidth - 32, 760);
+  let iL = Math.round(mapW * 0.27);  // Lernen: biggest ~27%
+  let iW = Math.round(mapW * 0.21);  // Wörter
+  let iG = Math.round(mapW * 0.22);  // Gemeinschaft
+  let iP = Math.round(mapW * 0.17);  // Planen: smallest
+
+  let lernen=svgIsle({w:iL, dec:'tree',    waterfall:true,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
-  let woerter=svgIsle({w:155, dec:'flower'});
-  let gemein=svgIsle({w:158,  dec:'statue', waterfall:true});
-  let planen=svgIsle({w:122,  dec:'crystal'});
+  let woerter=svgIsle({w:iW, dec:'flower'});
+  let gemein=svgIsle({w:iG,  dec:'statue', waterfall:true});
+  let planen=svgIsle({w:iP,  dec:'crystal'});
 
   c.innerHTML=`
 <div class="map-outer">

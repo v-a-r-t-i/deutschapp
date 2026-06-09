@@ -1189,13 +1189,13 @@ body::before{
 .map-ocean{
   position:relative;
   border-radius:28px;
-  overflow:visible;
+  overflow:hidden;
   background:linear-gradient(175deg,#c8d8e8 0%,#b8ccdc 40%,#a8bece 100%);
   height:500px;
   border:1px solid rgba(160,200,230,0.3);
   box-shadow:0 12px 48px rgba(0,0,0,0.35);
 }
-@media(max-width:700px){ .map-ocean{ height:440px; } }
+@media(max-width:700px){ .map-ocean{ height:420px; border-radius:20px; } }
 
 /* use pixel cloud assets as map atmosphere */
 .map-scatter::before{
@@ -1238,20 +1238,22 @@ body::before{
   position:absolute;
   display:flex; flex-direction:column; align-items:center;
   cursor:pointer;
-  animation:isle-bob 3s ease-in-out infinite;
   transition:filter .2s, transform .2s;
   user-select:none;
 }
 .isle:hover{ filter:brightness(1.2) drop-shadow(0 6px 14px rgba(99,102,241,0.4)); }
 .isle:active{ filter:brightness(0.9); transform:scale(0.97); }
-@keyframes isle-bob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
 
-.isle-lernen  { top:3%;  left:50%; transform:translateX(-50%); z-index:5; animation-delay:0s; }
-.isle-woerter { top:42%; left:3%;  z-index:4; animation-delay:0.8s; }
-.isle-gemein  { top:38%; right:3%; z-index:4; animation-delay:1.4s; }
-.isle-planen  { bottom:4%;left:38%;z-index:3; animation-delay:0.4s; }
-.isle-lernen:hover{ transform:translateX(-50%) translateY(-6px) scale(1.04); }
-.isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{ transform:translateY(-6px) scale(1.04); }
+/* Bob animations — separate for lernen (needs translateX) vs others */
+@keyframes isle-bob     { 0%,100%{transform:translateY(0);}        50%{transform:translateY(-8px);}        }
+@keyframes isle-bob-ctr { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-8px);} }
+
+.isle-lernen  { top:4%;  left:50%; transform:translateX(-50%); z-index:5; animation:isle-bob-ctr 3.2s ease-in-out infinite; }
+.isle-woerter { top:44%; left:3%;  z-index:4; animation:isle-bob 3.5s ease-in-out infinite; animation-delay:0.8s; }
+.isle-gemein  { top:40%; right:3%; z-index:4; animation:isle-bob 3.0s ease-in-out infinite; animation-delay:1.4s; }
+.isle-planen  { bottom:5%;left:38%;z-index:3; animation:isle-bob 3.8s ease-in-out infinite; animation-delay:0.4s; }
+.isle-lernen:hover{ transform:translateX(-50%) translateY(-6px) scale(1.04) !important; }
+.isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{ transform:translateY(-6px) scale(1.04) !important; }
 
 /* waterfall drip animation */
 .map-scatter svg rect[fill="rgba(160,228,255,0.82)"],
