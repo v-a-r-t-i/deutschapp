@@ -2000,3 +2000,116 @@ body::before{
 @media(min-width:701px){
   .hint-txt::after{ content:' · space to reveal · 1–4 to rate'; opacity:0.5; font-size:11px; }
 }
+
+/* ═══════════════════════════════════════════════════
+   WORLD MODE — home screen becomes a full-screen game world
+   Active via body.world-mode (set when tab === 'home')
+═══════════════════════════════════════════════════ */
+
+body.world-mode{ overflow:hidden; }
+body.world-mode .sidebar-left,
+body.world-mode .sidebar-right{ display:none!important; }
+body.world-mode .page-wrap{ padding:0!important; max-width:100%; gap:0; display:block; }
+body.world-mode .main-col{ max-width:100%; }
+body.world-mode .app{ padding-bottom:0; }
+body.world-mode .content{ padding:0; }
+body.world-mode .map-outer{ padding:0; position:relative; }
+
+/* The sky fills everything below the nav */
+body.world-mode .map-ocean{
+  height:calc(100vh - 62px);
+  height:calc(100dvh - 62px);
+  border-radius:0;
+  border:none;
+  box-shadow:none;
+  overflow:hidden;
+}
+@media(max-width:700px){
+  body.world-mode .map-ocean{
+    height:calc(100vh - 54px);
+    height:calc(100dvh - 54px);
+  }
+}
+
+/* Nav becomes a translucent HUD strip floating over the sky */
+body.world-mode .nav{
+  background:linear-gradient(180deg, rgba(8,12,28,0.66) 0%, rgba(8,12,28,0.25) 75%, rgba(8,12,28,0) 100%);
+  border-bottom:none;
+  backdrop-filter:blur(10px);
+}
+
+/* Greeting floats as a glass HUD pill over the world */
+body.world-mode .map-greeting{
+  position:absolute;
+  top:16px; left:20px;
+  z-index:20;
+  margin:0;
+  padding:10px 18px;
+  border-radius:999px;
+  background:rgba(8,12,30,0.40);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.10);
+  color:#fff;
+  font-size:16px;
+  text-shadow:0 1px 6px rgba(0,0,20,0.5);
+}
+body.world-mode .map-greeting b{ color:#c7d2fe; }
+@media(max-width:700px){
+  body.world-mode .map-greeting{ top:10px; left:12px; font-size:14px; padding:8px 14px; }
+}
+
+/* Word of the Day floats as a game UI panel, bottom-left */
+body.world-mode .wotd-card{
+  position:absolute;
+  bottom:22px; left:20px;
+  z-index:20;
+  margin:0;
+  max-width:280px;
+  background:rgba(8,12,30,0.50);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,0.12);
+}
+@media(max-width:700px){
+  body.world-mode .wotd-card{
+    left:12px; right:12px; bottom:12px;
+    max-width:none;
+    padding:12px 16px;
+  }
+  body.world-mode .wotd-de{ font-size:19px; }
+}
+
+/* Island layout spread across the full-screen world */
+body.world-mode .isle-lernen  { top:9%; }
+body.world-mode .isle-woerter { top:46%; left:9%; }
+body.world-mode .isle-gemein  { top:42%; right:9%; }
+body.world-mode .isle-planen  { bottom:9%; left:44%; }
+@media(max-width:700px){
+  body.world-mode .isle-lernen  { top:5%; }
+  body.world-mode .isle-woerter { top:38%; left:2%; }
+  body.world-mode .isle-gemein  { top:34%; right:2%; }
+  body.world-mode .isle-planen  { bottom:19%; left:32%; }
+}
+
+/* Bigger world = labels need more presence */
+body.world-mode .isle-label{ font-size:16px; }
+body.world-mode .isle-sub{ font-size:12px; }
+
+/* Clouds travel the full viewport in world mode */
+@keyframes cloud-drift{
+  from{ transform:translateX(-240px); }
+  to  { transform:translateX(calc(100vw + 60px)); }
+}
+
+/* ── De-buttoning the study screens: glassier, lighter, less "website" ── */
+.sh-mode-btn{
+  border:none;
+  background:rgba(255,255,255,0.045);
+  backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.sh-mode-btn:hover{ background:rgba(99,102,241,0.13); transform:translateY(-3px); }
+.sh-mode-icon{ font-size:26px; }
+.sh-hero{ border:none; background:rgba(255,255,255,0.03); }
+.cat-chip{ border-color:transparent; background:rgba(255,255,255,0.05); }
+.cat-chip.active{ border-color:rgba(99,102,241,0.4); }
+.sc-tabs{ border:none; }

@@ -162,6 +162,7 @@ const studyTabs=['flash','listen','quiz','fill','gender','lesen','studyhome'];
 function setTab(t){
   tab=t;
   localStorage.setItem('app_tab', t);  // persist tab across visits
+  document.body.classList.toggle('world-mode', t==='home');
   setMobNav(t);
   let isStudy=studyTabs.includes(t);
   if(isStudy)lastStudyTab=t;
@@ -541,6 +542,7 @@ function wordOfTheDay(){
 function rMap(){
   let c=document.getElementById('content');
   if(!c)return;
+  document.body.classList.add('world-mode');
   let all=aw(),due=all.filter(w=>s2due(w.de)).length;
   let knownC=all.filter(w=>known.has(w.de)).length;
   let store=getBPStore();
@@ -549,14 +551,21 @@ function rMap(){
   let name=CP?.display_name||'';
   let phase=skyPhase();
 
-  // Compute map width: on desktop sidebars take ~500px total, on mobile full width minus padding
+  // World-mode: the map fills the viewport, so islands scale off the full width
   const _vw = window.innerWidth;
-  const _mapW = _vw < 700 ? _vw - 28 : Math.min(_vw - 520, 760);
-  const _s = _mapW < 480; // is it a small/mobile map?
-  let iL = _s ? Math.round(_mapW * 0.30) : 196;
-  let iW = _s ? Math.round(_mapW * 0.24) : 155;
-  let iG = _s ? Math.round(_mapW * 0.25) : 158;
-  let iP = _s ? Math.round(_mapW * 0.20) : 122;
+  let iL, iW, iG, iP;
+  if(_vw < 700){
+    const _mapW = _vw - 8;
+    iL = Math.round(_mapW * 0.30);
+    iW = Math.round(_mapW * 0.24);
+    iG = Math.round(_mapW * 0.25);
+    iP = Math.round(_mapW * 0.20);
+  } else {
+    iL = Math.min(290, Math.max(200, Math.round(_vw*0.175)));
+    iW = Math.min(230, Math.max(158, Math.round(_vw*0.135)));
+    iG = Math.min(235, Math.max(162, Math.round(_vw*0.140)));
+    iP = Math.min(185, Math.max(125, Math.round(_vw*0.110)));
+  }
 
   let lernen=svgIsle({w:iL, body:'l', dec:'tree',    waterfall:true,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
