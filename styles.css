@@ -1199,6 +1199,136 @@ body::before{
   .map-ocean{ height:420px; border-radius:20px; overflow:hidden; }
 }
 
+/* ── TIME-OF-DAY SKIES ── */
+.map-ocean.sky-morning{
+  background:linear-gradient(178deg,#ffd9b0 0%,#fbc4a8 18%,#cfd8ec 48%,#a9c3dd 100%);
+  border-color:rgba(255,200,150,0.35);
+}
+.map-ocean.sky-day{
+  background:linear-gradient(178deg,#9fd0f0 0%,#b6dcf4 30%,#c8e2ee 65%,#a8c8de 100%);
+  border-color:rgba(150,200,240,0.35);
+}
+.map-ocean.sky-evening{
+  background:linear-gradient(178deg,#f7b267 0%,#ef8e7d 26%,#a87ca8 60%,#5d6494 100%);
+  border-color:rgba(240,160,110,0.35);
+}
+.map-ocean.sky-night{
+  background:linear-gradient(178deg,#141a3c 0%,#1d2552 38%,#2a3464 72%,#37406e 100%);
+  border-color:rgba(110,130,220,0.30);
+}
+/* Night: labels need light text */
+.sky-night .isle-label{ color:rgba(230,236,255,0.95); text-shadow:0 1px 8px rgba(0,0,20,0.8); }
+.sky-night .isle-sub{ color:rgba(190,200,240,0.65); }
+.sky-evening .isle-label{ color:rgba(40,24,40,0.92); text-shadow:0 1px 6px rgba(255,230,200,0.55); }
+
+/* ── SUN / MOON ── */
+.map-celestial{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:1;
+}
+.map-sun{
+  width:64px;height:64px;
+  background:radial-gradient(circle at 38% 38%,#fff8e0,#ffe9a8 55%,rgba(255,220,130,0.0) 72%);
+  box-shadow:0 0 60px 28px rgba(255,226,150,0.45),0 0 140px 70px rgba(255,210,120,0.18);
+  animation:sun-breathe 7s ease-in-out infinite;
+}
+.celestial-morning{ top:9%; left:11%; }
+.celestial-day{ top:6%; right:13%; }
+.celestial-evening{ top:13%; left:9%;
+  background:radial-gradient(circle at 38% 38%,#fff0d0,#ffb070 58%,rgba(255,150,90,0) 74%);
+  box-shadow:0 0 60px 30px rgba(255,160,90,0.5),0 0 150px 80px rgba(250,120,80,0.22);
+}
+.map-moon{
+  width:52px;height:52px;
+  background:radial-gradient(circle at 40% 38%,#f5f7ff,#cdd6f4 60%,rgba(190,200,240,0) 76%);
+  box-shadow:0 0 44px 18px rgba(200,212,255,0.35),0 0 110px 55px rgba(170,185,255,0.12);
+  top:8%; right:12%;
+  animation:sun-breathe 9s ease-in-out infinite;
+}
+@keyframes sun-breathe{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
+
+/* ── STARS (night) ── */
+.map-star{
+  position:absolute;
+  background:#fff;
+  border-radius:50%;
+  opacity:0.85;
+  pointer-events:none;
+  z-index:1;
+  animation:star-twinkle 3.2s ease-in-out infinite;
+}
+@keyframes star-twinkle{ 0%,100%{opacity:0.85;transform:scale(1);} 50%{opacity:0.25;transform:scale(0.7);} }
+
+/* ── DRIFTING PIXEL CLOUDS ── */
+.map-cloudbank{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:2; border-radius:inherit; }
+.drift-cloud{
+  position:absolute;
+  image-rendering:pixelated;
+  opacity:0.55;
+  will-change:transform;
+}
+.dc1{ top:7%;  width:150px; animation:cloud-drift 75s linear infinite; }
+.dc2{ top:21%; width:100px; opacity:0.42; animation:cloud-drift 105s linear infinite; animation-delay:-30s; }
+.dc3{ top:58%; width:120px; opacity:0.35; animation:cloud-drift 90s linear infinite; animation-delay:-62s; }
+.dc4{ top:74%; width:80px;  opacity:0.30; animation:cloud-drift 120s linear infinite; animation-delay:-15s; }
+.dc5{ top:40%; width:65px;  opacity:0.25; animation:cloud-drift 135s linear infinite; animation-delay:-90s; }
+@keyframes cloud-drift{
+  from{ transform:translateX(-180px); }
+  to  { transform:translateX(880px); }
+}
+.sky-night .drift-cloud{ opacity:0.14; filter:brightness(0.5); }
+.sky-evening .drift-cloud{ filter:sepia(0.5) brightness(0.92); }
+
+/* ── SPARKLE MOTES ── */
+.map-mote{
+  position:absolute;
+  bottom:-6px;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:rgba(255,255,240,0.85);
+  box-shadow:0 0 6px 2px rgba(255,255,210,0.4);
+  pointer-events:none;
+  z-index:2;
+  animation:mote-rise 12s linear infinite;
+  opacity:0;
+}
+.sky-night .map-mote{ background:rgba(180,210,255,0.9); box-shadow:0 0 7px 2px rgba(140,180,255,0.5); }
+@keyframes mote-rise{
+  0%  { transform:translateY(0) translateX(0);     opacity:0; }
+  12% { opacity:0.9; }
+  55% { transform:translateY(-260px) translateX(14px); opacity:0.55; }
+  100%{ transform:translateY(-460px) translateX(-8px); opacity:0; }
+}
+
+/* ── WORD OF THE DAY CARD ── */
+.wotd-card{
+  margin-top:14px;
+  padding:16px 20px;
+  border-radius:22px;
+  background:linear-gradient(135deg,rgba(99,102,241,0.16),rgba(46,232,165,0.10));
+  border:1px solid rgba(99,102,241,0.28);
+  cursor:pointer;
+  display:flex; flex-direction:column; gap:2px;
+  transition:transform .18s ease, box-shadow .18s ease;
+  position:relative;
+  overflow:hidden;
+}
+.wotd-card::after{
+  content:'';
+  position:absolute; top:0; left:-60%;
+  width:40%; height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,0.10),transparent);
+  animation:wotd-shine 5s ease-in-out infinite;
+}
+@keyframes wotd-shine{ 0%,60%{left:-60%;} 100%{left:130%;} }
+.wotd-card:hover{ transform:translateY(-2px); box-shadow:0 8px 28px rgba(99,102,241,0.25); }
+.wotd-tag{ font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--indd); }
+.wotd-de{ font-family:'Baloo 2',cursive; font-size:24px; font-weight:800; color:var(--txt); }
+.wotd-en{ font-size:14px; color:var(--txt2); }
+.wotd-hint{ font-size:11px; color:var(--txt3); margin-top:4px; }
+
 /* use pixel cloud assets as map atmosphere */
 .map-scatter::before{
   content:'';
@@ -1246,14 +1376,16 @@ body::before{
 .isle:hover{ filter:brightness(1.2) drop-shadow(0 6px 14px rgba(99,102,241,0.4)); }
 .isle:active{ filter:brightness(0.9); transform:scale(0.97); }
 
-/* Bob animations — separate for lernen (needs translateX) vs others */
-@keyframes isle-bob     { 0%,100%{transform:translateY(0);}        50%{transform:translateY(-8px);}        }
-@keyframes isle-bob-ctr { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-8px);} }
+/* Bob animations — unique amplitude/period per island, negative delays = desynced from load */
+@keyframes bob-a { 0%,100%{transform:translateY(0);}                  50%{transform:translateY(-9px);}  }
+@keyframes bob-b { 0%,100%{transform:translateY(0);}                  50%{transform:translateY(-6px);}  }
+@keyframes bob-c { 0%,100%{transform:translateY(0);}                  50%{transform:translateY(-11px);} }
+@keyframes bob-ctr { 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-8px);} }
 
-.isle-lernen  { top:4%;  left:50%; transform:translateX(-50%); z-index:5; animation:isle-bob-ctr 3.2s ease-in-out infinite; }
-.isle-woerter { top:44%; left:3%;  z-index:4; animation:isle-bob 3.5s ease-in-out infinite; animation-delay:0.8s; }
-.isle-gemein  { top:40%; right:3%; z-index:4; animation:isle-bob 3.0s ease-in-out infinite; animation-delay:1.4s; }
-.isle-planen  { bottom:5%;left:38%;z-index:3; animation:isle-bob 3.8s ease-in-out infinite; animation-delay:0.4s; }
+.isle-lernen  { top:4%;  left:50%; transform:translateX(-50%); z-index:5; animation:bob-ctr 4.7s ease-in-out infinite; animation-delay:-1.2s; }
+.isle-woerter { top:44%; left:3%;  z-index:4; animation:bob-a 3.9s ease-in-out infinite; animation-delay:-2.6s; }
+.isle-gemein  { top:40%; right:3%; z-index:4; animation:bob-b 5.6s ease-in-out infinite; animation-delay:-0.7s; }
+.isle-planen  { bottom:5%;left:38%;z-index:3; animation:bob-c 4.3s ease-in-out infinite; animation-delay:-3.4s; }
 .isle-lernen:hover{ transform:translateX(-50%) translateY(-6px) scale(1.04) !important; }
 .isle-woerter:hover,.isle-gemein:hover,.isle-planen:hover{ transform:translateY(-6px) scale(1.04) !important; }
 
@@ -1812,3 +1944,54 @@ body::before{
   details.cat-picker{ display:block; }
   details.cat-picker .cat-sheet{ display:flex!important; }
 }
+
+/* ═══ v6.3.1 POLISH PACK ═══ */
+
+/* XP bar shimmer — a light sweep across the fill */
+.xp-bar-fill, .prog-fill{ position:relative; overflow:hidden; }
+.xp-bar-fill::after, .prog-fill::after{
+  content:'';
+  position:absolute; top:0; left:-40%;
+  width:35%; height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,0.45),transparent);
+  animation:xp-shine 3.2s ease-in-out infinite;
+}
+@keyframes xp-shine{ 0%,55%{left:-40%;} 100%{left:130%;} }
+
+/* Streak pill gentle pulse when hot */
+.streak:not(.cold){ animation:streak-glow 2.6s ease-in-out infinite; }
+@keyframes streak-glow{
+  0%,100%{ box-shadow:0 0 0 0 rgba(251,191,36,0); }
+  50%    { box-shadow:0 0 12px 2px rgba(251,191,36,0.28); }
+}
+
+/* Correct answer pop */
+.q-opt.correct, .quiz-option.correct, .g-btn.correct{
+  animation:correct-pop 0.38s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes correct-pop{
+  0%{ transform:scale(1); }
+  45%{ transform:scale(1.07); }
+  100%{ transform:scale(1); }
+}
+/* Wrong answer shake */
+.q-opt.wrong, .quiz-option.wrong, .g-btn.wrong{
+  animation:wrong-shake 0.4s ease;
+}
+@keyframes wrong-shake{
+  0%,100%{ transform:translateX(0); }
+  25%{ transform:translateX(-5px); }
+  50%{ transform:translateX(5px); }
+  75%{ transform:translateX(-3px); }
+}
+
+/* Content sections fade up on render */
+#content > *{ animation:content-in 0.32s ease both; }
+@keyframes content-in{
+  from{ opacity:0; transform:translateY(8px); }
+  to  { opacity:1; transform:translateY(0); }
+}
+
+/* Island labels — slightly bolder presence */
+.isle-label{ letter-spacing:-0.01em; }
+.isle:hover .isle-label{ text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:2px; }

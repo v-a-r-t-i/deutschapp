@@ -507,6 +507,26 @@ function svgIsle(cfg){
 }
 
 // ── ISLAND MAP ────────────────────────────────────────
+// Sky changes with time of day to match the greeting:
+//   morning (5-12) warm peach · day (12-17) bright blue
+//   evening (17-21) golden dusk · night (21-5) deep indigo + stars
+function skyPhase(){
+  let h=new Date().getHours();
+  if(h>=5&&h<12)return'morning';
+  if(h>=12&&h<17)return'day';
+  if(h>=17&&h<21)return'evening';
+  return'night';
+}
+
+function wordOfTheDay(){
+  // Deterministic per calendar day so it stays stable all day
+  let words=aw();
+  if(!words.length)return null;
+  let d=new Date();
+  let seed=d.getFullYear()*372+(d.getMonth()+1)*31+d.getDate();
+  return words[seed%words.length];
+}
+
 function rMap(){
   let c=document.getElementById('content');
   if(!c)return;
@@ -516,16 +536,16 @@ function rMap(){
   let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
   let greeting=getGreeting();
   let name=CP?.display_name||'';
+  let phase=skyPhase();
 
   // Compute map width: on desktop sidebars take ~500px total, on mobile full width minus padding
-  // Breakpoint matches CSS: < 700px = mobile (no sidebars)
   const _vw = window.innerWidth;
   const _mapW = _vw < 700 ? _vw - 28 : Math.min(_vw - 520, 760);
   const _s = _mapW < 480; // is it a small/mobile map?
-  let iL = _s ? Math.round(_mapW * 0.28) : 196;
-  let iW = _s ? Math.round(_mapW * 0.22) : 155;
-  let iG = _s ? Math.round(_mapW * 0.23) : 158;
-  let iP = _s ? Math.round(_mapW * 0.18) : 122;
+  let iL = _s ? Math.round(_mapW * 0.30) : 196;
+  let iW = _s ? Math.round(_mapW * 0.24) : 155;
+  let iG = _s ? Math.round(_mapW * 0.25) : 158;
+  let iP = _s ? Math.round(_mapW * 0.20) : 122;
 
   let lernen=svgIsle({w:iL, dec:'tree',    waterfall:true,
     badgeHtml:due>0?`<div class="isle-badge" style="position:absolute;top:-8px;right:-4px;z-index:10">${due} due</div>`:''});
@@ -533,11 +553,48 @@ function rMap(){
   let gemein=svgIsle({w:iG,  dec:'statue', waterfall:true});
   let planen=svgIsle({w:iP,  dec:'crystal'});
 
+  // Night sky stars (only rendered at night)
+  let stars='';
+  if(phase==='night'){
+    for(let i=0;i<26;i++){
+      let x=(Math.random()*96+2).toFixed(1), y=(Math.random()*55+2).toFixed(1);
+      let s=(Math.random()*1.6+1).toFixed(1), d=(Math.random()*3).toFixed(1);
+      stars+=`<div class="map-star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${d}s"></div>`;
+    }
+  }
+
+  // Sparkle motes (all phases, subtle)
+  let motes='';
+  for(let i=0;i<8;i++){
+    let x=(Math.random()*92+4).toFixed(1), dl=(Math.random()*9).toFixed(1);
+    let dur=(9+Math.random()*7).toFixed(1);
+    motes+=`<div class="map-mote" style="left:${x}%;animation-delay:${dl}s;animation-duration:${dur}s"></div>`;
+  }
+
+  // Word of the Day
+  let wotd=wordOfTheDay();
+  let wotdHtml=wotd?`
+  <div class="wotd-card" onclick="speak('${(wotd.de||'').replace(/'/g,"\\'")}')">
+    <div class="wotd-tag">✨ Wort des Tages</div>
+    <div class="wotd-de">${wotd.art?wotd.art+' ':''}${wotd.de}</div>
+    <div class="wotd-en">${wotd.en}</div>
+    <div class="wotd-hint">🔊 tap to listen</div>
+  </div>`:'';
+
   c.innerHTML=`
 <div class="map-outer">
   <div class="map-greeting">${greeting}${name?', <b>'+name+'</b>':''}</div>
-  <div class="map-ocean">
-    <div class="map-wave mw1"></div><div class="map-wave mw2"></div><div class="map-wave mw3"></div>
+  <div class="map-ocean sky-${phase}">
+    <div class="map-celestial ${phase==='night'?'map-moon':'map-sun'} celestial-${phase}"></div>
+    ${stars}
+    <div class="map-cloudbank">
+      <img src="sprites/cloud1.png" class="drift-cloud dc1" alt="">
+      <img src="sprites/cloud2.png" class="drift-cloud dc2" alt="">
+      <img src="sprites/cloud3.png" class="drift-cloud dc3" alt="">
+      <img src="sprites/cloud2.png" class="drift-cloud dc4" alt="">
+      <img src="sprites/cloud1.png" class="drift-cloud dc5" alt="">
+    </div>
+    ${motes}
     <div class="map-scatter">
 
       <div class="isle isle-lernen" onclick="setTab('studyhome')">
@@ -566,6 +623,7 @@ function rMap(){
 
     </div>
   </div>
+  ${wotdHtml}
 </div>`;
 
   updateMapFAB();
