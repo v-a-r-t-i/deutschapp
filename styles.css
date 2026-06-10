@@ -1995,3 +1995,8 @@ body::before{
 /* Island labels — slightly bolder presence */
 .isle-label{ letter-spacing:-0.01em; }
 .isle:hover .isle-label{ text-decoration:underline; text-underline-offset:3px; text-decoration-thickness:2px; }
+
+/* Desktop keyboard shortcut hint on flashcards */
+@media(min-width:701px){
+  .hint-txt::after{ content:' · space to reveal · 1–4 to rate'; opacity:0.5; font-size:11px; }
+}
