@@ -614,6 +614,12 @@ function rMap(){
       <img src="sprites/cloud2.png" class="drift-cloud dc4" alt="">
       <img src="sprites/cloud1.png" class="drift-cloud dc5" alt="">
     </div>
+    <div class="sky-traffic">
+      <img src="sprites/balloon1.png" class="fly fly-balloon-a" alt="">
+      <img src="sprites/balloon2.png" class="fly fly-balloon-b" alt="">
+      <img src="sprites/airship.png"  class="fly fly-airship"   alt="">
+      <img src="sprites/dragon.png"   class="fly fly-dragon"    alt="">
+    </div>
     ${motes}
     <div class="map-scatter">
 

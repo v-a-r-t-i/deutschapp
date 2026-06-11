@@ -2113,3 +2113,58 @@ body.world-mode .isle-sub{ font-size:12px; }
 .cat-chip{ border-color:transparent; background:rgba(255,255,255,0.05); }
 .cat-chip.active{ border-color:rgba(99,102,241,0.4); }
 .sc-tabs{ border:none; }
+
+/* ═══ SKY TRAFFIC — old flying machines + a wandering dragon ═══ */
+.map-scatter{ z-index:4; }
+.sky-traffic{
+  position:absolute; inset:0;
+  overflow:hidden; pointer-events:none;
+  z-index:3; border-radius:inherit;
+}
+.fly{
+  position:absolute;
+  image-rendering:pixelated;
+  will-change:transform;
+  filter:drop-shadow(0 6px 8px rgba(0,0,30,0.18));
+}
+
+/* Left → right gentle voyage with bobbing */
+@keyframes fly-ltr{
+  0%  { transform:translate(-140px, 0); }
+  25% { transform:translate(calc(25vw), -12px); }
+  50% { transform:translate(calc(50vw), 5px); }
+  75% { transform:translate(calc(75vw), -9px); }
+  100%{ transform:translate(calc(100vw + 100px), 0); }
+}
+/* Right → left */
+@keyframes fly-rtl{
+  0%  { transform:translate(calc(100vw + 100px), 0); }
+  25% { transform:translate(calc(75vw), -10px); }
+  50% { transform:translate(calc(50vw), 6px); }
+  75% { transform:translate(calc(25vw), -12px); }
+  100%{ transform:translate(-160px, 0); }
+}
+/* Dragon: a rare pass right→left, then waits off-screen most of the cycle */
+@keyframes dragon-pass{
+  0%   { transform:translate(calc(100vw + 200px), 0); }
+  9%   { transform:translate(calc(60vw), -20px); }
+  18%  { transform:translate(calc(20vw), -4px); }
+  26%  { transform:translate(-220px, -14px); }
+  100% { transform:translate(-220px, -14px); }
+}
+
+.fly-balloon-a{ top:16%; width:50px; animation:fly-ltr 105s linear infinite; animation-delay:-25s; }
+.fly-balloon-b{ top:36%; width:42px; opacity:0.92; animation:fly-rtl 130s linear infinite; animation-delay:-78s; }
+.fly-airship  { top:11%; width:86px; animation:fly-rtl 88s linear infinite; animation-delay:-50s; }
+.fly-dragon   { top:24%; width:118px; opacity:0.95; animation:dragon-pass 95s linear infinite; animation-delay:-12s; }
+
+@media(max-width:700px){
+  .fly-balloon-a{ width:34px; }
+  .fly-balloon-b{ width:28px; }
+  .fly-airship  { width:58px; }
+  .fly-dragon   { width:80px; }
+}
+
+/* Atmosphere tinting */
+.sky-night .fly{ filter:brightness(0.5) saturate(0.75) drop-shadow(0 6px 8px rgba(0,0,30,0.3)); }
+.sky-evening .fly{ filter:sepia(0.35) brightness(0.95) drop-shadow(0 6px 8px rgba(60,20,30,0.25)); }
