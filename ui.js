@@ -1945,19 +1945,46 @@ document.addEventListener('keydown',function(e){
   let loaded = 0, total = 0;
   let W, H;
 
-  // Island anchor points (% of canvas size) — these match the CSS positions
-  // lernen=top-centre, woerter=mid-left, gemein=mid-right, planen=bottom-centre
-  function anchors(){
-    let isMob = W < 700;
-    return {
-      lernen:  { x: W*0.50, y: H*0.25 },
-      woerter: { x: W*(isMob?0.22:0.18), y: H*0.58 },
-      gemein:  { x: W*(isMob?0.78:0.82), y: H*0.56 },
-      planen:  { x: W*0.50, y: H*0.76 },
+  // Island anchor points — measured from the actual DOM elements each frame
+  // so they're always accurate regardless of screen size or CSS changes
+  let _anchorCache = null;
+  let _anchorFrame = -1;
+  function anchors(now){
+    // Recompute at most once per animation frame
+    if(_anchorFrame === now) return _anchorCache;
+    _anchorFrame = now;
+    let ocean = document.querySelector('.map-ocean');
+    if(!ocean){ _anchorCache=null; return null; }
+    let or = ocean.getBoundingClientRect();
+    function measure(sel){
+      let el = document.querySelector(sel);
+      if(!el) return null;
+      let r = el.getBoundingClientRect();
+      // Centre of the island element, relative to the ocean container
+      return { x: r.left - or.left + r.width/2, y: r.top - or.top + r.height/2 };
+    }
+    _anchorCache = {
+      lernen:  measure('.isle-lernen'),
+      woerter: measure('.isle-woerter'),
+      gemein:  measure('.isle-gemein'),
+      planen:  measure('.isle-planen'),
     };
+    // Fallback to % estimates if DOM not ready
+    if(!_anchorCache.lernen){
+      let isMob = W < 700;
+      _anchorCache = {
+        lernen:  { x: W*0.50, y: H*0.22 },
+        woerter: { x: W*(isMob?0.22:0.17), y: H*0.56 },
+        gemein:  { x: W*(isMob?0.78:0.83), y: H*0.54 },
+        planen:  { x: W*0.50, y: H*0.74 },
+      };
+    }
+    return _anchorCache;
   }
 
-  // Catmull-Rom spline interpolation
+  // Catmull-Rom spline interpolation with arc lift
+  // The 'lift' parameter pushes the path perpendicularly so it
+  // arcs visibly even between nearby islands
   function catmull(p0, p1, p2, p3, t){
     const t2=t*t, t3=t2*t;
     return {
@@ -2045,7 +2072,16 @@ document.addEventListener('keydown',function(e){
     let p1 = pts[seg%n];
     let p2 = pts[(seg+1)%n];
     let p3 = pts[(seg+2)%n];
-    return catmull(p0,p1,p2,p3,frac);
+    let pos = catmull(p0, p1, p2, p3, frac);
+    // Arc bow: push path perpendicular (upward) mid-segment for visible curve
+    let bow = Math.sin(frac * Math.PI) * 60;
+    let dx = p2.x - p1.x, dy = p2.y - p1.y;
+    let len = Math.sqrt(dx*dx+dy*dy)||1;
+    let nx = -dy/len, ny = dx/len;
+    if(ny > 0){ nx=-nx; ny=-ny; } // always bow upward
+    pos.x += nx * bow;
+    pos.y += ny * bow;
+    return pos;
   }
 
   let last = null;
@@ -2058,7 +2094,8 @@ document.addEventListener('keydown',function(e){
     let dt = last ? Math.min((now-last)/1000, 0.1) : 0;
     last = now;
 
-    let anch = anchors();
+    let anch = anchors(now);
+    if(!anch){ rafId = requestAnimationFrame(tick); return; }
     ctx.clearRect(0,0,W,H);
 
     // Time-of-day alpha
