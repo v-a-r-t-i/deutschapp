@@ -163,6 +163,7 @@ function setTab(t){
   tab=t;
   localStorage.setItem('app_tab', t);  // persist tab across visits
   document.body.classList.toggle('world-mode', t==='home');
+  if(t!=='home' && window._stopSkyTraffic) _stopSkyTraffic();
   setMobNav(t);
   let isStudy=studyTabs.includes(t);
   if(isStudy)lastStudyTab=t;
@@ -614,12 +615,7 @@ function rMap(){
       <img src="sprites/cloud2.png" class="drift-cloud dc4" alt="">
       <img src="sprites/cloud1.png" class="drift-cloud dc5" alt="">
     </div>
-    <div class="sky-traffic">
-      <img src="sprites/balloon1.png" class="fly fly-balloon-a" alt="">
-      <img src="sprites/balloon2.png" class="fly fly-balloon-b" alt="">
-      <img src="sprites/airship.png"  class="fly fly-airship"   alt="">
-      <img src="sprites/dragon.png"   class="fly fly-dragon"    alt="">
-    </div>
+    <canvas class="sky-traffic-canvas" id="sky-canvas"></canvas>
     ${motes}
     <div class="map-scatter">
 
@@ -653,6 +649,8 @@ function rMap(){
 </div>`;
 
   updateMapFAB();
+  // Kick off sky traffic after DOM is ready
+  requestAnimationFrame(()=>{ if(window._initSkyTraffic)_initSkyTraffic(); });
 }
 
 
@@ -1935,3 +1933,209 @@ document.addEventListener('keydown',function(e){
     if(hint&&hint.offsetParent!==null){revCard();e.preventDefault();}
   }
 });
+
+
+// ── SKY TRAFFIC ENGINE ────────────────────────────────
+// Canvas-based: vehicles follow spline paths between island anchors.
+// Each vehicle has its own route (subset of islands), speed, hover time.
+
+(function skyTraffic(){
+  let canvas, ctx;
+  const imgs = {};
+  let loaded = 0, total = 0;
+  let W, H;
+
+  // Island anchor points (% of canvas size) — these match the CSS positions
+  // lernen=top-centre, woerter=mid-left, gemein=mid-right, planen=bottom-centre
+  function anchors(){
+    let isMob = W < 700;
+    return {
+      lernen:  { x: W*0.50, y: H*0.25 },
+      woerter: { x: W*(isMob?0.22:0.18), y: H*0.58 },
+      gemein:  { x: W*(isMob?0.78:0.82), y: H*0.56 },
+      planen:  { x: W*0.50, y: H*0.76 },
+    };
+  }
+
+  // Catmull-Rom spline interpolation
+  function catmull(p0, p1, p2, p3, t){
+    const t2=t*t, t3=t2*t;
+    return {
+      x: 0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+      y: 0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3),
+    };
+  }
+
+  // Each vehicle: img key, display width, route (island names in order, loops),
+  // speed (0-1 per second through route), hover seconds at each stop, phase offset
+  const VEHICLES = [
+    {
+      key:'balloon1', w:48,
+      route:['lernen','woerter','planen','gemein'],
+      speed:0.025,   // full route in ~40s
+      hover:3.0,     // lingers 3s at each island
+      phase:0,       // starts at t=0 of route
+      flipX:false,
+    },
+    {
+      key:'balloon2', w:40,
+      route:['woerter','planen','gemein','lernen'],
+      speed:0.022,
+      hover:2.5,
+      phase:0.5,
+      flipX:false,
+    },
+    {
+      key:'airship', w:82,
+      route:['lernen','gemein','planen','woerter'],
+      speed:0.04,    // faster — it's a machine
+      hover:1.5,
+      phase:0.25,
+      flipX:false,
+    },
+    {
+      key:'dragon', w:110,
+      route:['gemein','lernen','woerter','planen'],
+      speed:0.055,   // fastest
+      hover:0.8,     // barely pauses
+      phase:0.75,
+      flipX:false,
+    },
+  ];
+
+  // State per vehicle
+  const state = VEHICLES.map(v=>({
+    ...v,
+    t: v.phase,       // current position through route [0, route.length)
+    hovering: false,
+    hoverLeft: 0,
+    x: 0, y: 0,
+    facing: 1,        // 1=right, -1=left
+  }));
+
+  function loadImgs(cb){
+    const keys = [...new Set(VEHICLES.map(v=>v.key))];
+    total = keys.length;
+    if(!total){ cb(); return; }
+    keys.forEach(k=>{
+      let img = new Image();
+      img.src = 'sprites/'+k+'.png';
+      img.onload = ()=>{ imgs[k]=img; loaded++; if(loaded===total)cb(); };
+      img.onerror = ()=>{ loaded++; if(loaded===total)cb(); };
+    });
+  }
+
+  function resize(){
+    if(!canvas)return;
+    let ocean = document.querySelector('.map-ocean');
+    if(!ocean)return;
+    let r = ocean.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width  = W;
+    canvas.height = H;
+  }
+
+  // Get spline position for vehicle at continuous t
+  function getPos(v, t, anch){
+    let pts = v.route.map(k=>anch[k]||{x:W/2,y:H/2});
+    let n = pts.length;
+    let seg = Math.floor(t) % n;
+    let frac = t - Math.floor(t);
+    let p0 = pts[(seg-1+n)%n];
+    let p1 = pts[seg%n];
+    let p2 = pts[(seg+1)%n];
+    let p3 = pts[(seg+2)%n];
+    return catmull(p0,p1,p2,p3,frac);
+  }
+
+  let last = null;
+  function tick(now){
+    if(!canvas||!ctx)return;
+    if(!document.body.classList.contains('world-mode')){
+      rafId = requestAnimationFrame(tick);
+      return;
+    }
+    let dt = last ? Math.min((now-last)/1000, 0.1) : 0;
+    last = now;
+
+    let anch = anchors();
+    ctx.clearRect(0,0,W,H);
+
+    // Time-of-day alpha
+    let phase = document.querySelector('.map-ocean')?.className||'';
+    let nightAlpha = phase.includes('night') ? 0.45 : 1.0;
+
+    state.forEach(v=>{
+      if(v.hovering){
+        v.hoverLeft -= dt;
+        if(v.hoverLeft <= 0){ v.hovering=false; }
+      } else {
+        let prevT = v.t;
+        v.t += v.speed * dt;
+        // Check if we just crossed an integer (arrived at next island)
+        if(Math.floor(v.t) !== Math.floor(prevT)){
+          v.hovering = true;
+          v.hoverLeft = v.hover;
+          v.t = Math.floor(v.t); // snap to integer = island centre
+        }
+        v.t = v.t % v.route.length;
+      }
+
+      let pos = getPos(v, v.t, anch);
+      // Bob while hovering; gentle undulation while moving
+      let bob = v.hovering
+        ? Math.sin(now/800) * 5
+        : Math.sin(now/1400 + v.phase*10) * 3;
+      let px = pos.x, py = pos.y + bob;
+
+      // Face direction of travel
+      if(!v.hovering){
+        let next = getPos(v, v.t+0.01, anch);
+        v.facing = next.x > pos.x ? 1 : -1;
+      }
+
+      // Shadow
+      ctx.save();
+      ctx.globalAlpha = 0.12 * nightAlpha;
+      ctx.fillStyle='rgba(0,0,40,1)';
+      ctx.beginPath();
+      ctx.ellipse(px, py+v.w*0.38, v.w*0.38, 5, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // Sprite
+      let img = imgs[v.key];
+      if(!img)return;
+      let dw = v.w;
+      let dh = Math.round(dw * img.naturalHeight / img.naturalWidth);
+      ctx.save();
+      ctx.globalAlpha = nightAlpha;
+      ctx.translate(px, py);
+      if(v.facing===-1){ ctx.scale(-1,1); }
+      ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+      ctx.restore();
+    });
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  let rafId = null;
+
+  function init(){
+    // Called whenever rMap renders; find or create the canvas
+    let ocean = document.querySelector('.map-ocean');
+    if(!ocean)return;
+    canvas = document.getElementById('sky-canvas');
+    if(!canvas)return;
+    ctx = canvas.getContext('2d');
+    resize();
+    window.addEventListener('resize', resize);
+    if(!rafId){
+      loadImgs(()=>{ rafId=requestAnimationFrame(tick); });
+    }
+  }
+
+  // Expose so rMap can kick it off after innerHTML is set
+  window._initSkyTraffic = init;
+  window._stopSkyTraffic = ()=>{ if(rafId)cancelAnimationFrame(rafId); rafId=null; last=null; };
+})();
