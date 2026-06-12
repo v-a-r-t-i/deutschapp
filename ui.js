@@ -472,14 +472,16 @@ function svgIsle(cfg){
   let cx=w/2;
   // Exact native aspect — zero distortion
   let bodyH=Math.round(w*(B.nh/B.nw));
-  let totalH=bodyH+10;
   // The teal pool (top-down oval) spans ~3%–53% of sprite height.
-  // Decorations stand planted mid-pool: their base sits at 36% of bodyH.
-  let surfY=Math.round(bodyH*0.36);
+  // Decorations stand planted mid-pool: base at 42% of bodyH.
+  let surfY=Math.round(bodyH*0.42);
 
-  // Waterfall pours over the pool's front edge (~48% down), hangs over stalactites
-  let wfDispW=Math.round(w*0.44), wfDispH=Math.round(wfDispW*(_WFH/_WFW));
-  let wfX=Math.round((w-wfDispW)/2), wfY=Math.round(bodyH*0.46);
+  // Waterfall pours over the pool's FRONT edge (~52% down) and hangs
+  // well below the island bottom like the reference art
+  let wfDispW=Math.round(w*0.40), wfDispH=Math.round(wfDispW*(_WFH/_WFW)*1.25);
+  let wfX=Math.round(w*0.30), wfY=Math.round(bodyH*0.50);
+  let hang=waterfall?Math.max(0, wfY+wfDispH-bodyH):0;
+  let totalH=bodyH+10+hang;
   let wfTag=waterfall
     ?`<image href="${_WF}" x="${wfX}" y="${wfY}" width="${wfDispW}" height="${wfDispH}" style="image-rendering:pixelated" opacity="0.9"/>`
     :'';
@@ -608,6 +610,14 @@ function rMap(){
   <div class="map-ocean sky-${phase}">
     <div class="map-celestial ${phase==='night'?'map-moon':'map-sun'} celestial-${phase}"></div>
     ${stars}
+
+    <!-- Distant background islands: depth layer, slow parallax -->
+    <div class="bg-isles">
+      <img src="sprites/isle_s.png"  class="bg-isle bgi1" alt="">
+      <img src="sprites/islet_w.png" class="bg-isle bgi2" alt="">
+      <img src="sprites/isle_s.png"  class="bg-isle bgi3" alt="">
+    </div>
+
     <div class="map-cloudbank">
       <img src="sprites/cloud1.png" class="drift-cloud dc1" alt="">
       <img src="sprites/cloud2.png" class="drift-cloud dc2" alt="">
@@ -619,31 +629,33 @@ function rMap(){
     ${motes}
     <div class="map-scatter">
 
+      <!-- Satellite islets: small companions drifting near the main islands -->
+      <img src="sprites/islet_w.png" class="islet islet1" alt="">
+      <img src="sprites/isle_s.png"  class="islet islet2" alt="">
+      <img src="sprites/islet_w.png" class="islet islet3" alt="">
+
       <div class="isle isle-lernen" onclick="setTab('studyhome')">
         ${lernen}
-        <div class="isle-label">Lernen</div>
-        <div class="isle-sub">${knownC} known</div>
+        <div class="isle-plate"><div class="isle-label">Lernen</div><div class="isle-sub">${knownC} known</div></div>
       </div>
 
       <div class="isle isle-woerter" onclick="setTab('browse')">
         ${woerter}
-        <div class="isle-label">Wörter</div>
-        <div class="isle-sub">${Object.keys(DATA).length} Kategorien</div>
+        <div class="isle-plate"><div class="isle-label">Wörter</div><div class="isle-sub">${Object.keys(DATA).length} Kategorien</div></div>
       </div>
 
       <div class="isle isle-gemein" onclick="setTab('social')">
         ${gemein}
-        <div class="isle-label">Gemeinschaft</div>
-        <div class="isle-sub">${weekBP} BP this week</div>
+        <div class="isle-plate"><div class="isle-label">Gemeinschaft</div><div class="isle-sub">${weekBP} BP this week</div></div>
       </div>
 
       <div class="isle isle-planen" onclick="setTab('plan')">
         ${planen}
-        <div class="isle-label">Planen</div>
-        <div class="isle-sub">Study plan</div>
+        <div class="isle-plate"><div class="isle-label">Planen</div><div class="isle-sub">Study plan</div></div>
       </div>
 
     </div>
+    <div class="horizon-haze"></div>
   </div>
   ${wotdHtml}
 </div>`;
@@ -1960,8 +1972,8 @@ document.addEventListener('keydown',function(e){
       let el = document.querySelector(sel);
       if(!el) return null;
       let r = el.getBoundingClientRect();
-      // Centre of the island element, relative to the ocean container
-      return { x: r.left - or.left + r.width/2, y: r.top - or.top + r.height/2 };
+      // Hover point: centred, just above the island's pool surface
+      return { x: r.left - or.left + r.width/2, y: r.top - or.top + r.height*0.10 };
     }
     _anchorCache = {
       lernen:  measure('.isle-lernen'),
@@ -2027,6 +2039,17 @@ document.addEventListener('keydown',function(e){
       hover:0.8,     // barely pauses
       phase:0.75,
       flipX:false,
+      alt:-34,
+    },
+    {
+      key:'bird', w:24, frames:2, noShadow:true,
+      route:['woerter','lernen','gemein'],
+      speed:0.10, hover:0.5, phase:0.2, alt:-46,
+    },
+    {
+      key:'bird', w:19, frames:2, noShadow:true,
+      route:['planen','gemein','lernen','woerter'],
+      speed:0.085, hover:0.7, phase:0.65, alt:-38,
     },
   ];
 
@@ -2123,7 +2146,7 @@ document.addEventListener('keydown',function(e){
       let bob = v.hovering
         ? Math.sin(now/800) * 5
         : Math.sin(now/1400 + v.phase*10) * 3;
-      let px = pos.x, py = pos.y + bob;
+      let px = pos.x, py = pos.y + bob + (v.alt||0);
 
       // Face direction of travel
       if(!v.hovering){
@@ -2132,6 +2155,7 @@ document.addEventListener('keydown',function(e){
       }
 
       // Shadow
+      if(!v.noShadow){
       ctx.save();
       ctx.globalAlpha = 0.12 * nightAlpha;
       ctx.fillStyle='rgba(0,0,40,1)';
@@ -2139,17 +2163,22 @@ document.addEventListener('keydown',function(e){
       ctx.ellipse(px, py+v.w*0.38, v.w*0.38, 5, 0, 0, Math.PI*2);
       ctx.fill();
       ctx.restore();
+      }
 
       // Sprite
       let img = imgs[v.key];
       if(!img)return;
+      let nFrames = v.frames||1;
+      let fw = img.naturalWidth/nFrames;
+      let fh = img.naturalHeight;
+      let fi = nFrames>1 ? Math.floor(now/170)%nFrames : 0;
       let dw = v.w;
-      let dh = Math.round(dw * img.naturalHeight / img.naturalWidth);
+      let dh = Math.round(dw * fh / fw);
       ctx.save();
       ctx.globalAlpha = nightAlpha;
       ctx.translate(px, py);
       if(v.facing===-1){ ctx.scale(-1,1); }
-      ctx.drawImage(img, -dw/2, -dh/2, dw, dh);
+      ctx.drawImage(img, fi*fw, 0, fw, fh, -dw/2, -dh/2, dw, dh);
       ctx.restore();
     });
 

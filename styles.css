@@ -2123,3 +2123,99 @@ body.world-mode .isle-sub{ font-size:12px; }
   image-rendering:pixelated;
 }
 /* Atmosphere tinting via canvas globalAlpha / filter set in JS */
+
+/* ═══════════════════════════════════════════════════
+   WORLD v2 — depth, satellites, haze, label plates
+═══════════════════════════════════════════════════ */
+
+/* ── Distant background islands (depth layer, behind clouds) ── */
+.bg-isles{ position:absolute; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+.bg-isle{
+  position:absolute;
+  image-rendering:pixelated;
+  opacity:0.30;
+  filter:saturate(0.55) brightness(1.08) blur(0.4px);
+}
+.bgi1{ top:13%; left:14%; width:64px; animation:bg-drift 160s linear infinite alternate; }
+.bgi2{ top:30%; left:62%; width:46px; animation:bg-drift 200s linear infinite alternate-reverse; }
+.bgi3{ top:55%; left:35%; width:38px; opacity:0.22; animation:bg-drift 240s linear infinite alternate; }
+@keyframes bg-drift{ from{ transform:translateX(0); } to{ transform:translateX(60px); } }
+.sky-night .bg-isle{ opacity:0.14; filter:saturate(0.3) brightness(0.6); }
+
+/* ── Satellite islets near the main islands ── */
+.islet{
+  position:absolute;
+  image-rendering:pixelated;
+  pointer-events:none;
+  opacity:0.92;
+  filter:drop-shadow(0 10px 10px rgba(0,0,40,0.10));
+}
+.islet1{ top:20%; left:27%; width:52px; animation:bob-b 6.2s ease-in-out infinite; animation-delay:-2.1s; }
+.islet2{ top:62%; left:66%; width:60px; animation:bob-a 5.1s ease-in-out infinite; animation-delay:-3.7s; }
+.islet3{ top:46%; left:44%; width:42px; opacity:0.85; animation:bob-c 7.0s ease-in-out infinite; animation-delay:-1.2s; }
+@media(max-width:700px){
+  .islet1{ width:34px; }
+  .islet2{ width:38px; }
+  .islet3{ display:none; }
+}
+
+/* ── Horizon haze: soft atmospheric band over the lower world ── */
+.horizon-haze{
+  position:absolute; left:0; right:0; bottom:0;
+  height:34%;
+  pointer-events:none;
+  z-index:6;
+  background:linear-gradient(180deg, transparent, rgba(255,255,255,0.13) 75%, rgba(255,255,255,0.20));
+}
+.sky-night .horizon-haze{
+  background:linear-gradient(180deg, transparent, rgba(18,26,64,0.30) 75%, rgba(14,20,52,0.42));
+}
+.sky-evening .horizon-haze{
+  background:linear-gradient(180deg, transparent, rgba(255,176,112,0.12) 75%, rgba(120,80,140,0.18));
+}
+
+/* ── Label plates: parchment chips hanging under each island ── */
+.isle-plate{
+  margin-top:6px;
+  padding:6px 14px 7px;
+  border-radius:12px;
+  background:linear-gradient(180deg, #f4ead2, #e8dcbe);
+  border:2px solid #b9a47e;
+  box-shadow:0 3px 0 #8f7c5a, 0 6px 14px rgba(40,30,10,0.25);
+  text-align:center;
+  transition:transform .15s ease;
+}
+.isle:hover .isle-plate{ transform:translateY(-2px); }
+.isle-plate .isle-label{
+  font-family:'Baloo 2',cursive;
+  font-size:15px; font-weight:800;
+  color:#4a3a22 !important;
+  text-shadow:none !important;
+  text-decoration:none !important;
+  letter-spacing:0;
+  line-height:1.1;
+}
+.isle-plate .isle-sub{
+  font-size:11px;
+  color:#8a7452 !important;
+  margin-top:1px;
+}
+.isle:hover .isle-label{ text-decoration:none !important; }
+body.world-mode .isle-plate .isle-label{ font-size:15px; }
+@media(max-width:700px){
+  .isle-plate{ padding:4px 10px 5px; border-radius:10px; border-width:1.5px; }
+  .isle-plate .isle-label{ font-size:12px; }
+  .isle-plate .isle-sub{ font-size:9px; }
+}
+
+/* ── World composition: a gentle arc, asymmetric for life ── */
+body.world-mode .isle-lernen  { top:7%; }
+body.world-mode .isle-woerter { top:42%; left:8%; }
+body.world-mode .isle-gemein  { top:38%; right:8%; }
+body.world-mode .isle-planen  { bottom:8%; left:41%; }
+@media(max-width:700px){
+  body.world-mode .isle-lernen  { top:4%; }
+  body.world-mode .isle-woerter { top:36%; left:2%; }
+  body.world-mode .isle-gemein  { top:32%; right:2%; }
+  body.world-mode .isle-planen  { bottom:17%; left:30%; }
+}
