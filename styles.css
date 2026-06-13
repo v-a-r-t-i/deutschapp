@@ -1068,35 +1068,61 @@ body::before{
 .mark-btn.known{ background:rgba(46,232,165,0.15); color:var(--green); }
 
 /* ── SOCIAL / RANK ── */
-.sc-hero{
-  display:flex; gap:0;
-  background:rgba(255,255,255,0.038);
-  border:1px solid var(--bor);
-  border-radius:20px; margin-bottom:16px; overflow:hidden;
+/* ── SEASON BANNER: BP framed as a standing, not a cold stat box ── */
+.sc-banner{
+  position:relative;
+  padding:22px 24px 20px;
+  margin-bottom:16px;
+  border-radius:22px;
+  overflow:hidden;
+  background:
+    radial-gradient(130% 150% at 88% -20%, rgba(46,232,165,0.20), transparent 58%),
+    linear-gradient(180deg, rgba(99,102,241,0.10), rgba(255,255,255,0.025));
+  border:1px solid rgba(46,232,165,0.22);
 }
-.sc-hero-stat{
-  flex:1; padding:18px 16px; text-align:center;
-  border-right:1px solid rgba(255,255,255,0.06);
+.sc-banner-eyebrow{
+  font-family:'Baloo 2',cursive;
+  font-size:12px; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--gd); opacity:0.85; margin-bottom:8px;
 }
-.sc-hero-stat:last-child{ border-right:none; }
-.sc-hero-n{ font-size:30px; font-weight:800; line-height:1; }
-.sc-hero-l{ font-size:12px; color:var(--txt2); margin-top:4px; }
+.sc-banner-main{ display:flex; align-items:baseline; gap:9px; }
+.sc-banner-bp{
+  font-family:'Baloo 2',cursive;
+  font-size:42px; font-weight:800; line-height:1;
+  color:var(--green);
+}
+.sc-banner-unit{ font-size:15px; font-weight:700; color:var(--txt2); }
+.sc-banner-countdown{ font-size:12.5px; color:var(--txt3); margin-top:8px; }
+.sc-banner-urgent{ border-color:rgba(251,191,36,0.45); }
+.sc-banner-urgent .sc-banner-countdown{ color:var(--yd); font-weight:700; }
 
+/* ── WOODEN SUB-TABS: same carved language as study trail-signs ── */
 .sc-tabs{
-  display:flex; gap:8px; margin-bottom:18px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--bor);
-  border-radius:16px; padding:5px;
+  display:flex; gap:6px; margin-bottom:18px;
+  padding:5px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#e4d4b0,#d4c198);
+  box-shadow:0 3px 0 #b09872, inset 0 1px 2px rgba(255,255,255,0.3);
 }
 .sc-tab{
   flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
   padding:11px 8px; border:none; background:transparent;
-  color:rgba(255,255,255,0.42); font-size:13px; font-weight:700;
-  border-radius:12px; cursor:pointer; transition:.18s ease; font-family:inherit;
+  color:#7a6646; font-size:14px; font-weight:800;
+  font-family:'Baloo 2',cursive;
+  border-radius:11px; cursor:pointer; transition:.16s ease;
 }
-.sc-tab:hover{ background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); }
-.sc-tab.active{ background:rgba(255,255,255,0.09); color:white; }
-.sc-tab-icon{ font-size:16px; }
+.sc-tab:hover{ background:rgba(74,58,34,0.08); color:#5a4628; }
+.sc-tab.active{
+  background:linear-gradient(180deg,#f4ead2,#fff8e8);
+  color:#3f3017;
+  box-shadow:0 2px 0 #b9a47e, 0 4px 8px rgba(40,30,10,0.15);
+}
+.sc-tab-icon{ font-size:17px; }
+@media(max-width:700px){
+  .sc-banner-bp{ font-size:34px; }
+  .sc-tab{ font-size:13px; padding:10px 6px; }
+}
 
 .social-tabs{ display:flex; gap:10px; margin-bottom:20px; }
 .social-tab{
@@ -2157,7 +2183,6 @@ body.world-mode .isle-sub{ font-size:12px; }
 /* ── De-buttoning the study screens: glassier, lighter, less "website" ── */
 .cat-chip{ border-color:transparent; background:rgba(255,255,255,0.05); }
 .cat-chip.active{ border-color:rgba(99,102,241,0.4); }
-.sc-tabs{ border:none; }
 
 /* ═══ SKY TRAFFIC — JS-driven island-to-island routes (see ui.js skyTraffic) ═══ */
 .map-scatter{ z-index:4; }

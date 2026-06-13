@@ -1054,14 +1054,23 @@ function rSocial(){
   }
   let store=getBPStore();
   let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
-  let tabs=[['friends','👥','Friends'],['river','🚤','River'],['battle','⚔️','Battle']];
+  let daysLeft=getDaysUntilReset();
+  let tabs=[['friends','🤝','Friends'],['river','🚣','River'],['battle','⚔️','Battle']];
   let tabHtml='<div class="sc-tabs">'+tabs.map(([t,ic,l])=>{
     let active=ranksSubTab===t?' active':'';
     return '<button class="sc-tab'+active+'" onclick="ranksSubTab=\''+t+'\';rSocial()"><span class="sc-tab-icon">'+ic+'</span><span>'+l+'</span></button>';
   }).join('')+'</div>';
-  let html='<div class="sc-hero"><div class="sc-hero-stat"><div class="sc-hero-n">'+weekBP+'</div><div class="sc-hero-l">BP this week</div></div>'+
-    '<div class="sc-hero-stat"><div class="sc-hero-n">'+getDaysUntilReset()+'d</div><div class="sc-hero-l">until reset</div></div></div>'+
-    tabHtml;
+  // Season banner: BP framed as a standing in this week's season, not a cold stat
+  let urgency = daysLeft<=1 ? 'sc-banner-urgent' : '';
+  let countdownTxt = daysLeft<=0 ? 'Season ends today'
+    : daysLeft===1 ? 'Season ends tomorrow'
+    : 'Season ends in '+daysLeft+' days';
+  let html='<header class="sc-banner '+urgency+'">'
+    +'<div class="sc-banner-eyebrow">Gemeinschaft · This week</div>'
+    +'<div class="sc-banner-main"><span class="sc-banner-bp">'+weekBP+'</span><span class="sc-banner-unit">BP earned</span></div>'
+    +'<div class="sc-banner-countdown">'+countdownTxt+' · Monday resets the board</div>'
+    +'</header>'
+    +tabHtml;
   if(ranksSubTab==='river')html+=rRiverUI();
   else if(ranksSubTab==='battle')html+=rBattleUI();
   else html+=rFriendsUI();
