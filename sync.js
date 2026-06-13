@@ -147,19 +147,21 @@ function addXP(amt,type){
     let newCount=sessionCorrect+(store.weeklyCorrectBase||0);
     let prevMilestone=Math.floor(prevCount/BP_PER_N);
     let newMilestone=Math.floor(newCount/BP_PER_N);
+    store.weeklyCorrect=newCount;
     if(newMilestone>prevMilestone){
       let gained=newMilestone-prevMilestone;
-      store.delta=(store.delta||0)+gained;
-      store.weeklyCorrect=newCount;
+      store.studyBP=(store.studyBP||0)+gained;
       saveBPStore(store);
-      // Show BP popup
+      // Persist to the shared ledger so the River shows it to everyone.
+      // Self-entry: winner==loser, room_id='study' → counts as +gained for me only.
+      if(typeof saveStudyBP==='function') saveStudyBP(gained);
+      // BP popup (green, matching the BP theme — not purple)
       let bp=document.createElement('div');
-      bp.style.cssText='position:fixed;top:60px;right:20px;background:rgba(139,92,246,0.9);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;z-index:200;animation:fadeup 1.5s ease forwards;pointer-events:none;margin-top:30px;';
+      bp.style.cssText='position:fixed;top:60px;right:20px;background:rgba(46,232,165,0.92);color:#06281c;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;z-index:200;animation:fadeup 1.5s ease forwards;pointer-events:none;margin-top:30px;';
       bp.textContent='+'+gained+' BP';
       document.body.appendChild(bp);
       setTimeout(()=>bp.remove(),1500);
     }else{
-      store.weeklyCorrect=newCount;
       saveBPStore(store);
     }
   }

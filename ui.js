@@ -476,14 +476,14 @@ function svgIsle(cfg){
   // Decorations stand planted mid-pool: base at 42% of bodyH.
   let surfY=Math.round(bodyH*0.42);
 
-  // Waterfall pours over the pool's FRONT edge (~52% down) and hangs
-  // well below the island bottom like the reference art
-  let wfDispW=Math.round(w*0.40), wfDispH=Math.round(wfDispW*(_WFH/_WFW)*1.25);
-  let wfX=Math.round(w*0.30), wfY=Math.round(bodyH*0.50);
+  // Waterfall pours from the pool's front lip down past the stalactites.
+  // Centred on the island, starting where the teal pool meets the rock face.
+  let wfDispW=Math.round(w*0.46), wfDispH=Math.round(wfDispW*(_WFH/_WFW)*1.35);
+  let wfX=Math.round((w-wfDispW)/2), wfY=Math.round(bodyH*0.40);
   let hang=waterfall?Math.max(0, wfY+wfDispH-bodyH):0;
   let totalH=bodyH+10+hang;
   let wfTag=waterfall
-    ?`<image href="${_WF}" x="${wfX}" y="${wfY}" width="${wfDispW}" height="${wfDispH}" style="image-rendering:pixelated" opacity="0.9"/>`
+    ?`<image href="${_WF}" x="${wfX}" y="${wfY}" width="${wfDispW}" height="${wfDispH}" style="image-rendering:pixelated" opacity="0.92"/>`
     :'';
 
   let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}"
@@ -549,7 +549,7 @@ function rMap(){
   let all=aw(),due=all.filter(w=>s2due(w.de)).length;
   let knownC=all.filter(w=>known.has(w.de)).length;
   let store=getBPStore();
-  let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
+  let weekBP=getMyWeeklyBP();
   let greeting=getGreeting();
   let name=CP?.display_name||'';
   let phase=skyPhase();
@@ -1053,7 +1053,7 @@ function rSocial(){
     return;
   }
   let store=getBPStore();
-  let weekBP=Math.max(0,(store.delta||0)+Math.floor((store.weeklyCorrect||0)/5));
+  let weekBP=getMyWeeklyBP();
   let daysLeft=getDaysUntilReset();
   let tabs=[['friends','🤝','Friends'],['river','🚣','River'],['battle','⚔️','Battle']];
   let tabHtml='<div class="sc-tabs">'+tabs.map(([t,ic,l])=>{
@@ -1170,10 +1170,19 @@ function getDaysUntilReset(){
   return Math.ceil((next-now)/86400000);
 }
 function getBPStore(){
-  if(!CU)return{delta:0,battles:[]};
+  if(!CU)return{battleDelta:0,studyBP:0,weeklyCorrect:0,battles:[]};
   let key='bp_'+CU.id+'_'+getWeekStart();
-  try{let s=localStorage.getItem(key);if(s)return JSON.parse(s);}catch(e){}
-  return{delta:0,battles:[]};
+  try{let s=localStorage.getItem(key);if(s){let o=JSON.parse(s);
+    // migrate old 'delta' field → split into battleDelta/studyBP
+    if(o.delta!==undefined && o.battleDelta===undefined){
+      o.studyBP=Math.floor((o.weeklyCorrect||0)/5);
+      o.battleDelta=(o.delta||0)-o.studyBP;
+      delete o.delta;
+    }
+    o.battleDelta=o.battleDelta||0; o.studyBP=o.studyBP||0;
+    return o;
+  }}catch(e){}
+  return{battleDelta:0,studyBP:0,weeklyCorrect:0,battles:[]};
 }
 function saveBPStore(store){
   if(!CU)return;
@@ -1181,9 +1190,10 @@ function saveBPStore(store){
   try{localStorage.setItem(key,JSON.stringify(store));}catch(e){}
 }
 function getBP(xp){
+  // Lifetime BP shown in Battle = XP/10 baseline + this week's battle delta
   let base=Math.floor((xp||0)/10);
   let store=getBPStore();
-  return Math.max(0,base+(store.delta||0));
+  return Math.max(0,base+(store.battleDelta||0));
 }
 async function syncBPFromSupabase(){
   if(!CU)return;
@@ -1191,25 +1201,31 @@ async function syncBPFromSupabase(){
   try{
     let rows=await sbFetch('battle_log',
       'or=(winner_id.eq.'+CU.id+',loser_id.eq.'+CU.id+')&week_start=eq.'+week,true);
-    if(!Array.isArray(rows)||!rows.length)return;
-    let delta=0,battles=[];
+    if(!Array.isArray(rows))return;
+    let battleDelta=0,battles=[];
     rows.forEach(r=>{
+      if(r.room_id==='study'||r.winner_id===r.loser_id)return; // skip study entries
       let won=r.winner_id===CU.id;
-      delta+=won?r.stake:-r.stake;
+      battleDelta+=won?r.stake:-r.stake;
       battles.push({opponentId:won?r.loser_id:r.winner_id,won,week,delta:won?r.stake:-r.stake,room_id:r.room_id});
     });
     let store=getBPStore();
-    // Preserve weeklyCorrect (study BP) — don't overwrite with battle-only data
-    store.delta=delta;store.battles=battles;
-    // Re-add study BP on top of battle delta
-    let studyBP=Math.floor((store.weeklyCorrect||0)/5);
-    store.delta+=studyBP;
+    store.battleDelta=battleDelta;
+    store.battles=battles;
     saveBPStore(store);
   }catch(e){}
 }
 async function saveBattleResult(winnerId,loserId,roomId,stake){
   try{
     await sbUpsert('battle_log',{winner_id:winnerId,loser_id:loserId,room_id:roomId,stake,week_start:getWeekStart()});
+  }catch(e){}
+}
+
+// Record study BP as a self-entry in the shared ledger (visible on the River)
+async function saveStudyBP(amount){
+  if(!CU||amount<=0)return;
+  try{
+    await sbUpsert('battle_log',{winner_id:CU.id,loser_id:CU.id,room_id:'study',stake:amount,week_start:getWeekStart()});
   }catch(e){}
 }
 
@@ -1221,33 +1237,48 @@ async function loadRiver(){
     let week=getWeekStart();
     let [profiles,battles]=await Promise.all([
       sbFetch('profiles','select=id,display_name&limit=100'),
-      sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake',true)
+      sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake,room_id',true)
     ]);
     let pMap={};(profiles||[]).forEach(p=>pMap[p.id]=p.display_name||'Learner');
 
-    // Compute weekly BP per user from battle_log
+    // Compute weekly BP per user from battle_log.
+    // A "study" entry has room_id='study' and winner_id==loser_id: it adds
+    // `stake` BP to that user only (no opponent penalty). Real battles
+    // transfer stake from loser to winner as before.
     let weeklyBP={};
     (battles||[]).forEach(b=>{
-      weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
-      weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+      if(b.room_id==='study' || b.winner_id===b.loser_id){
+        weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||0);
+      } else {
+        weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
+        weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+      }
     });
 
-    // Include all known profiles on the river; BP comes from battle_log only.
-    // Users with no battles this week sit at 0 — still visible, just at the start line.
     let allIds=new Set([...Object.keys(pMap),...Object.keys(weeklyBP)]);
     if(CU)allIds.add(CU.id);
     let users=[...allIds].map(id=>({
       id,name:pMap[id]||id.slice(0,8),
       weekBP:Math.max(0,weeklyBP[id]||0),
       isMe:id===CU?.id
-    })).filter(u=>u.isMe||pMap[u.id]); // only show users we have a display name for
+    })).filter(u=>u.isMe||pMap[u.id]);
 
-    // Override my own weekly BP with local store (most up-to-date)
-    // Must include BOTH battle delta AND study BP (weeklyCorrect / BP_PER_N)
-    let myStore=getBPStore();
-    let battleDelta=myStore.delta||0;
-    let studyBP=Math.floor((myStore.weeklyCorrect||0)/5);
-    let myWeekBP=Math.max(0,battleDelta+studyBP);
+    // Bots gain BP steadily across the week via a deterministic curve, so the
+    // board looks alive even with few real players. Each bot has a weekly
+    // target; we reveal a fraction of it based on how far into the week we are.
+    let weekFrac=getWeekFraction();
+    users.forEach(u=>{
+      let target=BOT_TARGETS[u.name];
+      if(target!==undefined){
+        // ease-out so they gain faster early, then taper
+        let prog=1-Math.pow(1-weekFrac,1.7);
+        u.weekBP=Math.max(u.weekBP, Math.round(target*prog));
+        u.isBot=true;
+      }
+    });
+
+    // My own weekly BP from the local store (most up-to-date)
+    let myWeekBP=getMyWeeklyBP();
     if(CU){
       let me=users.find(u=>u.isMe);
       if(me)me.weekBP=myWeekBP;
@@ -1259,6 +1290,23 @@ async function loadRiver(){
   }catch(e){
     if(wrap)wrap.innerHTML='<div style="color:var(--rd);font-size:13px;padding:12px">Could not load river data.</div>';
   }
+}
+
+// Weekly BP targets for bots (named to match their profile display_name)
+const BOT_TARGETS={Lena:34,Jonas:28,Mei:41,Tomas:19,Amara:23,Pavel:12,Yuki:37};
+
+// Fraction of the current week elapsed (0 at Monday 00:00, 1 at next Monday)
+function getWeekFraction(){
+  let now=new Date();
+  let day=(now.getDay()+6)%7; // Mon=0 .. Sun=6
+  let elapsed=day*86400000 + now.getHours()*3600000 + now.getMinutes()*60000;
+  return Math.min(1, elapsed/(7*86400000));
+}
+
+// My weekly BP = battle delta + study BP, both from the local store
+function getMyWeeklyBP(){
+  let s=getBPStore();
+  return Math.max(0,(s.battleDelta||0)+(s.studyBP||0));
 }
 function renderRiver(users,wrap,compact=false){
   users=users.slice().sort((a,b)=>b.weekBP-a.weekBP);
@@ -1464,17 +1512,24 @@ async function loadFriends(){
       let skd=sk.find(x=>x.user_id===fid);
       return {id:fid,name:p?.display_name||fid.slice(0,8),xp:skd?.xp_total||0,streak:skd?.streak_count||0,isMe:false};
     });
-    // Fetch this week's battle_log to get accurate weekly BP for friends
-    let myStore=getBPStore();
     let week=getWeekStart();
-    sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake',true).then(battles=>{
+    sbFetch('battle_log','week_start=eq.'+week+'&select=winner_id,loser_id,stake,room_id',true).then(battles=>{
       let weeklyBP={};
       (battles||[]).forEach(b=>{
-        weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
-        weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+        if(b.room_id==='study'||b.winner_id===b.loser_id){
+          weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||0);
+        }else{
+          weeklyBP[b.winner_id]=(weeklyBP[b.winner_id]||0)+(b.stake||5);
+          weeklyBP[b.loser_id]=(weeklyBP[b.loser_id]||0)-(b.stake||5);
+        }
       });
-      riverUsers.forEach(u=>{u.weekBP=Math.max(0,weeklyBP[u.id]||0);});
-      riverUsers.push({id:CU.id,name:CP?.display_name||'You',weekBP:Math.max(0,myStore.delta||0),xp:xpTotal,streak:streakN,isMe:true});
+      let weekFrac=getWeekFraction();
+      riverUsers.forEach(u=>{
+        u.weekBP=Math.max(0,weeklyBP[u.id]||0);
+        let target=BOT_TARGETS[u.name];
+        if(target!==undefined){ let prog=1-Math.pow(1-weekFrac,1.7); u.weekBP=Math.max(u.weekBP,Math.round(target*prog)); u.isBot=true; }
+      });
+      riverUsers.push({id:CU.id,name:CP?.display_name||'You',weekBP:getMyWeeklyBP(),xp:xpTotal,streak:streakN,isMe:true});
       riverUsers.sort((a,b)=>b.weekBP-a.weekBP);
       renderRiver(riverUsers,riverWrap,true);
     });
