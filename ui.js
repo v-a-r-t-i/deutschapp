@@ -688,46 +688,64 @@ function rStudyHome(){
   let all=aw(),due=all.filter(w=>s2due(w.de)).length;
   let known_c=all.filter(w=>known.has(w.de)).length;
   let streak=streakN||0;
-  let modes=[
-    {id:'flash',icon:'📖',label:'Flash'},
-    {id:'listen',icon:'👂',label:'Listen'},
-    {id:'quiz',icon:'❓',label:'Quiz'},
-    {id:'fill',icon:'✏️',label:'Fill-in'},
-    {id:'gender',icon:'🏷️',label:'Gender'},
-    {id:'lesen',icon:'📄',label:'Lesen'},
+  let last=lastStudyTab||'flash';
+
+  // Two real groups: Review = spaced-repetition recall; Practice = active testing.
+  // The split encodes how each mode trains you, not just a grid for layout's sake.
+  let review=[
+    {id:'flash', icon:'📖', label:'Flashcards', desc:'See it, flip it, rate your recall'},
+    {id:'listen',icon:'🎧', label:'Listening',  desc:'Hear the word, recall the meaning'},
   ];
+  let practice=[
+    {id:'quiz',  icon:'⚡', label:'Quiz',     desc:'Pick the right answer against the clock'},
+    {id:'fill',  icon:'✍️', label:'Fill-in',  desc:'Type the word from memory'},
+    {id:'gender',icon:'⚥',  label:'Gender',   desc:'der, die or das — train the articles'},
+    {id:'lesen', icon:'📜', label:'Reading',   desc:'Read a passage, answer in context'},
+  ];
+
+  // Hero copy reframes the dashboard as an expedition. The due count is the
+  // single characteristic figure; known + streak ride quietly beside it.
+  let heroLine = due>0
+    ? `<span class="sh-due-n">${due}</span> ${due===1?'word waits':'words wait'} for review`
+    : `<span class="sh-due-n sh-due-clear">All caught up</span>`;
+  let heroSub = due>0
+    ? `Pick a path below and clear today's review.`
+    : `Nothing due. Explore a mode to learn something new.`;
+
+  let card=(m)=>`<button class="trail-sign${last===m.id?' trail-active':''}" onclick="setTab('${m.id}')">
+      <span class="trail-icon">${m.icon}</span>
+      <span class="trail-text"><span class="trail-name">${m.label}</span><span class="trail-desc">${m.desc}</span></span>
+      <span class="trail-arrow">→</span>
+    </button>`;
+
   c.innerHTML=`
 <div class="sh-wrap">
 
-  <div class="sh-hero">
-    <div class="sh-stat-row">
-      <div class="sh-stat">
-        <div class="sh-num ${due>0?'sh-num-alert':''}">${due}</div>
-        <div class="sh-lbl">due today</div>
-      </div>
-      <div class="sh-divider-v"></div>
-      <div class="sh-stat">
-        <div class="sh-num">${known_c}</div>
-        <div class="sh-lbl">known</div>
-      </div>
-      <div class="sh-divider-v"></div>
-      <div class="sh-stat">
-        <div class="sh-num sh-num-streak">🔥${streak}</div>
-        <div class="sh-lbl">day streak</div>
-      </div>
+  <header class="sh-banner">
+    <div class="sh-banner-eyebrow">Lernen · Heute</div>
+    <h1 class="sh-banner-line">${heroLine}</h1>
+    <p class="sh-banner-sub">${heroSub}</p>
+    <div class="sh-meta">
+      <span class="sh-meta-item"><b>${known_c}</b> known</span>
+      <span class="sh-meta-dot">·</span>
+      <span class="sh-meta-item">🔥 <b>${streak}</b> day${streak===1?'':'s'}</span>
     </div>
+  </header>
+
+  <div class="sh-group">
+    <div class="sh-group-head"><span class="sh-group-name">Review</span><span class="sh-group-note">strengthen what you know</span></div>
+    <div class="trail-list">${review.map(card).join('')}</div>
   </div>
 
-  <div class="sh-section-lbl">Choose a mode</div>
-  <div class="sh-modes">
-    ${modes.map(m=>`<button class="sh-mode-btn${(lastStudyTab||'flash')===m.id?' sh-mode-active':''}" onclick="setTab('${m.id}')">
-      <span class="sh-mode-icon">${m.icon}</span>
-      <span class="sh-mode-name">${m.label}</span>
-    </button>`).join('')}
+  <div class="sh-group">
+    <div class="sh-group-head"><span class="sh-group-name">Practice</span><span class="sh-group-note">test it from every angle</span></div>
+    <div class="trail-list">${practice.map(card).join('')}</div>
   </div>
 
-  <div class="sh-section-lbl" style="margin-top:20px">Category</div>
-  ${catH()}
+  <div class="sh-group">
+    <div class="sh-group-head"><span class="sh-group-name">Words</span><span class="sh-group-note">choose what to study</span></div>
+    ${catH()}
+  </div>
 </div>`;
 }
 

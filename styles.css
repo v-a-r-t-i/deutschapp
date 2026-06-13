@@ -1489,7 +1489,7 @@ body::before{
 /* ═══════════════════════════════════════════════════════
    STUDY HOME
 ═══════════════════════════════════════════════════════ */
-.sh-wrap{padding:4px 0 20px;}
+.sh-wrap{padding:4px 0 24px;}
 .sh-back{
   background:none; border:none;
   color:var(--txt3); font-size:13px; font-weight:600;
@@ -1497,65 +1497,119 @@ body::before{
   display:flex; align-items:center; gap:4px; transition:color .15s;
 }
 .sh-back:hover{ color:var(--txt2); }
-.sh-hero{
-  background:rgba(255,255,255,0.038);
-  border:1px solid rgba(99,102,241,0.16);
-  border-radius:28px; padding:28px 24px; margin-bottom:24px;
-  position:relative; overflow:hidden;
+
+/* ── BANNER: the hero is a single decisive line, not a stat row ── */
+.sh-banner{
+  position:relative;
+  padding:30px 26px 26px;
+  margin-bottom:26px;
+  border-radius:24px;
+  overflow:hidden;
+  background:
+    radial-gradient(120% 140% at 85% -10%, rgba(99,102,241,0.20), transparent 60%),
+    linear-gradient(180deg, rgba(46,232,165,0.06), rgba(255,255,255,0.025));
+  border:1px solid rgba(99,102,241,0.18);
 }
-/* pixel tree inside study hero */
-.sh-hero::after{
+/* faint island-tree watermark, tying the banner to the world */
+.sh-banner::after{
   content:'';
-  position:absolute; bottom:0; right:20px;
-  width:64px; height:74px;
+  position:absolute; bottom:-6px; right:14px;
+  width:88px; height:96px;
   background-image:var(--img-tree2);
   background-size:contain; background-repeat:no-repeat;
-  opacity:0.16; image-rendering:pixelated;
+  opacity:0.12; image-rendering:pixelated;
+  pointer-events:none;
 }
-.sh-stat-row{
-  display:flex; align-items:center;
-  justify-content:space-around; margin-bottom:24px;
+.sh-banner-eyebrow{
+  font-family:'Baloo 2',cursive;
+  font-size:12px; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase;
+  color:var(--indd); opacity:0.8;
+  margin-bottom:10px;
 }
-.sh-stat{ text-align:center; }
-.sh-num{ font-size:38px; font-weight:800; line-height:1; }
-.sh-num-alert{ color:var(--green); }
-.sh-num-streak{ font-size:28px; }
-.sh-lbl{ font-size:12px; color:var(--txt2); margin-top:4px; font-weight:500; }
-.sh-divider-v{ width:1px; height:48px; background:rgba(255,255,255,0.07); }
-.sh-start-btn{
-  width:100%; padding:16px; border:none; border-radius:18px;
-  background:linear-gradient(135deg, var(--ind), #7c3aed);
-  color:#fff; font-size:16px; font-weight:800;
-  cursor:pointer; transition:all .2s ease; letter-spacing:-.01em;
+.sh-banner-line{
+  font-family:'Baloo 2',cursive;
+  font-size:30px; font-weight:800; line-height:1.12;
+  letter-spacing:-0.01em;
+  color:var(--txt);
+  margin:0 0 8px;
+  max-width:78%;
+}
+.sh-due-n{ color:var(--green); }
+.sh-due-clear{ color:var(--indd); }
+.sh-banner-sub{
+  font-size:14px; color:var(--txt2);
+  margin:0 0 16px; max-width:78%;
+}
+.sh-meta{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--txt2); }
+.sh-meta-item b{ color:var(--txt); font-weight:800; }
+.sh-meta-dot{ color:var(--txt3); }
+
+/* ── GROUPS: Review / Practice / Words — structure that means something ── */
+.sh-group{ margin-bottom:22px; }
+.sh-group-head{
+  display:flex; align-items:baseline; gap:10px;
+  margin-bottom:12px; padding-left:2px;
+}
+.sh-group-name{
+  font-family:'Baloo 2',cursive;
+  font-size:16px; font-weight:800; color:var(--txt);
+}
+.sh-group-note{ font-size:12px; color:var(--txt3); }
+
+/* ── TRAIL SIGNS: wooden signposts, the signature element ── */
+.trail-list{ display:flex; flex-direction:column; gap:10px; }
+.trail-sign{
+  display:flex; align-items:center; gap:14px;
+  width:100%; text-align:left;
+  padding:14px 16px;
+  border:none; cursor:pointer;
   font-family:inherit;
+  border-radius:14px;
+  background:linear-gradient(180deg, #f4ead2, #e8dcbe);
+  box-shadow:0 3px 0 #b9a47e, 0 7px 16px rgba(40,30,10,0.22);
+  transition:transform .14s ease, box-shadow .14s ease;
 }
-.sh-start-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(99,102,241,0.38); }
-.sh-section-lbl{
-  font-size:11px; font-weight:800;
-  text-transform:uppercase; letter-spacing:.06em;
-  color:var(--txt3); margin-bottom:12px;
+.trail-sign:hover{
+  transform:translateY(-2px);
+  box-shadow:0 5px 0 #b9a47e, 0 11px 22px rgba(40,30,10,0.28);
 }
-.sh-modes{
-  display:grid; grid-template-columns:repeat(3,1fr);
-  gap:10px; margin-bottom:8px;
+.trail-sign:active{
+  transform:translateY(2px);
+  box-shadow:0 1px 0 #b9a47e, 0 4px 10px rgba(40,30,10,0.22);
 }
-.sh-mode-btn{
-  display:flex; flex-direction:column;
-  align-items:center; gap:6px;
-  padding:14px 8px; border-radius:18px;
-  border:1.5px solid rgba(255,255,255,0.07);
-  background:rgba(255,255,255,0.038);
-  color:rgba(255,255,255,0.55);
-  cursor:pointer; transition:.18s ease; font-family:inherit;
+.trail-icon{
+  flex-shrink:0;
+  width:42px; height:42px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+  border-radius:11px;
+  background:rgba(74,58,34,0.10);
+  box-shadow:inset 0 0 0 1.5px rgba(143,124,90,0.45);
 }
-.sh-mode-btn:hover{ background:rgba(99,102,241,0.1); color:white; transform:translateY(-2px); }
-.sh-mode-active{
-  background:rgba(99,102,241,0.14)!important;
-  border-color:rgba(99,102,241,0.38)!important;
-  color:var(--indd)!important;
+.trail-text{ display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.trail-name{
+  font-family:'Baloo 2',cursive;
+  font-size:16px; font-weight:800; color:#3f3017; line-height:1.1;
 }
-.sh-mode-icon{ font-size:22px; }
-.sh-mode-name{ font-size:12px; font-weight:700; }
+.trail-desc{ font-size:12.5px; color:#8a7452; line-height:1.25; }
+.trail-arrow{
+  flex-shrink:0; font-size:18px; color:#b9a47e;
+  transition:transform .14s ease, color .14s ease;
+}
+.trail-sign:hover .trail-arrow{ transform:translateX(3px); color:#8f7c5a; }
+.trail-active{
+  box-shadow:0 3px 0 #2a9d72, 0 7px 16px rgba(46,232,165,0.25), inset 0 0 0 2px rgba(46,160,114,0.55);
+}
+.trail-active .trail-icon{ background:rgba(46,160,114,0.16); box-shadow:inset 0 0 0 1.5px rgba(46,160,114,0.5); }
+
+@media(max-width:700px){
+  .sh-banner{ padding:24px 18px 20px; }
+  .sh-banner-line{ font-size:24px; max-width:88%; }
+  .sh-banner-sub{ max-width:92%; }
+  .trail-name{ font-size:15px; }
+  .trail-desc{ font-size:12px; }
+}
 
 /* ── GENDER DRILL ── */
 .gender-score{ display:flex; gap:12px; margin-bottom:14px; }
@@ -2101,15 +2155,6 @@ body.world-mode .isle-sub{ font-size:12px; }
 }
 
 /* ── De-buttoning the study screens: glassier, lighter, less "website" ── */
-.sh-mode-btn{
-  border:none;
-  background:rgba(255,255,255,0.045);
-  backdrop-filter:blur(8px);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05);
-}
-.sh-mode-btn:hover{ background:rgba(99,102,241,0.13); transform:translateY(-3px); }
-.sh-mode-icon{ font-size:26px; }
-.sh-hero{ border:none; background:rgba(255,255,255,0.03); }
 .cat-chip{ border-color:transparent; background:rgba(255,255,255,0.05); }
 .cat-chip.active{ border-color:rgba(99,102,241,0.4); }
 .sc-tabs{ border:none; }
@@ -2218,4 +2263,22 @@ body.world-mode .isle-planen  { bottom:8%; left:41%; }
   body.world-mode .isle-woerter { top:36%; left:2%; }
   body.world-mode .isle-gemein  { top:32%; right:2%; }
   body.world-mode .isle-planen  { bottom:17%; left:30%; }
+}
+
+/* ═══ ACCESSIBILITY QUALITY FLOOR ═══ */
+/* Respect reduced-motion: kill ambient animation, keep instant feedback */
+@media(prefers-reduced-motion:reduce){
+  .drift-cloud, .bg-isle, .islet, .map-mote, .map-star,
+  .map-sun, .map-moon, .wotd-card::after,
+  .xp-bar-fill::after, .prog-fill::after, .streak{
+    animation:none !important;
+  }
+  .isle{ animation:none !important; }
+  .trail-sign, .trail-arrow{ transition:none !important; }
+  #content > *{ animation:none !important; }
+}
+/* Visible keyboard focus on the new trail signs */
+.trail-sign:focus-visible{
+  outline:3px solid var(--ind);
+  outline-offset:2px;
 }
