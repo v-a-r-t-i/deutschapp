@@ -448,6 +448,8 @@ const _SPR = {
   flower:  {url:'sprites/flower_single.png',      fw:64,  fh:64,  n:3, fps:5,  static:false},
   crystal: {url:'sprites/crystal.png',            fw:64,  fh:64,  n:1, fps:1,  static:true},
 };
+// Animated waterfall sprite (hand-drawn, 4 frames)
+const _WFSPR = {url:'sprites/waterfall.png', fw:80, fh:112, n:4, fps:8};
 // Per-decoration width as a fraction of island width (tuned to reference art)
 const _DECFRAC = {tree:0.50, statue:0.38, statue2:0.16, flower:0.28, crystal:0.24};
 
@@ -476,24 +478,36 @@ function svgIsle(cfg){
   // Decorations stand planted mid-pool: base at 42% of bodyH.
   let surfY=Math.round(bodyH*0.42);
 
-  // Waterfall pours from the pool's front lip down past the stalactites.
-  // Centred on the island, starting where the teal pool meets the rock face.
-  let wfDispW=Math.round(w*0.46), wfDispH=Math.round(wfDispW*(_WFH/_WFW)*1.35);
-  let wfX=Math.round((w-wfDispW)/2), wfY=Math.round(bodyH*0.40);
-  let hang=waterfall?Math.max(0, wfY+wfDispH-bodyH):0;
-  let totalH=bodyH+10+hang;
-  let wfTag=waterfall
-    ?`<image href="${_WF}" x="${wfX}" y="${wfY}" width="${wfDispW}" height="${wfDispH}" style="image-rendering:pixelated" opacity="0.92"/>`
-    :'';
+  // Animated waterfall sprite: 4 frames, pours from the pool's front lip.
+  let wfHtml='', wfId='';
+  let wfHang=0;
+  if(waterfall){
+    let wfDispW=Math.round(w*0.40);
+    let wfDispH=Math.round(wfDispW*(_WFSPR.fh/_WFSPR.fw));
+    let wfX=Math.round((w-wfDispW)/2);
+    let wfY=Math.round(bodyH*0.46);   // starts at the pool's front edge
+    wfHang=Math.max(0, wfY+wfDispH-bodyH);
+    wfId='wf-'+Math.random().toString(36).slice(2,7);
+    let sheetW=wfDispW*_WFSPR.n;
+    wfHtml=`<div id="${wfId}" style="position:absolute;left:${wfX}px;top:${wfY}px;width:${wfDispW}px;height:${wfDispH}px;overflow:hidden;z-index:1;`
+      +`background-image:url('${_WFSPR.url}');background-size:${sheetW}px ${wfDispH}px;`
+      +`background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;opacity:0.9;"></div>`;
+  }
+  let totalH=bodyH+10+wfHang;
 
   let svg=`<svg viewBox="0 0 ${w} ${totalH}" width="${w}" height="${totalH}"
       xmlns="http://www.w3.org/2000/svg"
       style="display:block;overflow:visible;image-rendering:pixelated">
     <image href="${B.url}" x="0" y="0" width="${w}" height="${bodyH}"
            preserveAspectRatio="none" style="image-rendering:pixelated"/>
-    ${wfTag}
     <ellipse cx="${cx}" cy="${totalH-2}" rx="${Math.round(w*0.30)}" ry="4" fill="rgba(0,0,0,0.12)"/>
   </svg>`;
+  if(wfId) requestAnimationFrame(()=>{
+    const el=document.getElementById(wfId);
+    if(!el)return;
+    el._sp=_WFSPR; el._dw=Math.round(w*0.40);
+    _spriteEls.add(el); _startSprites();
+  });
 
   // Decoration: animated sprite planted in the pool
   let sp=_SPR[dec];
@@ -518,7 +532,7 @@ function svgIsle(cfg){
   }
 
   return `<div style="position:relative;width:${w}px;height:${totalH}px;display:inline-block;overflow:visible">`
-    +badgeHtml+svg+decHtml+`</div>`;
+    +badgeHtml+svg+wfHtml+decHtml+`</div>`;
 }
 
 // ── ISLAND MAP ────────────────────────────────────────
@@ -1063,8 +1077,8 @@ function rSocial(){
   // Season banner: BP framed as a standing in this week's season, not a cold stat
   let urgency = daysLeft<=1 ? 'sc-banner-urgent' : '';
   let countdownTxt = daysLeft<=0 ? 'Season ends today'
-    : daysLeft===1 ? 'Season ends tomorrow'
-    : 'Season ends in '+daysLeft+' days';
+    : daysLeft===1 ? 'Ends tomorrow · resets Monday'
+    : 'Ends in '+daysLeft+' days · resets Monday';
   let html='<header class="sc-banner '+urgency+'">'
     +'<div class="sc-banner-eyebrow">Gemeinschaft · This week</div>'
     +'<div class="sc-banner-main"><span class="sc-banner-bp">'+weekBP+'</span><span class="sc-banner-unit">BP earned</span></div>'
